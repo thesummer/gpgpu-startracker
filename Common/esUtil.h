@@ -164,6 +164,15 @@ GLuint ESUTIL_API esLoadShader ( GLenum type, const char *shaderSrc );
 
 //
 ///
+/// \brief Load a shader, check for compile errors, print error messages to output log
+/// \param type Type of shader (GL_VERTEX_SHADER or GL_FRAGMENT_SHADER)
+/// \param shaderSrc Shader source string
+/// \return A new shader object on success, 0 on failure
+//
+GLuint ESUTIL_API esLoadProgramFromFile ( const char *vertShaderFilename, const char *fragShaderFilename );
+
+//
+///
 /// \brief Load a vertex and fragment shader, create a program object, link program.
 ///        Errors output to log.
 /// \param vertShaderSrc Vertex shader source code

@@ -82,31 +82,13 @@ GLuint CreateSimpleTexture2D( )
 ///
 // Initialize the shader and program object
 //
-int Init ( ESContext *esContext )
+int Init ( ESContext *esContext, const char* vertShaderFile, const char* fragShaderFile)
 {
    esContext->userData = malloc(sizeof(UserData));	
    UserData *userData = esContext->userData;
-   GLbyte vShaderStr[] =  
-      "attribute vec4 a_position;   \n"
-      "attribute vec2 a_texCoord;   \n"
-      "varying vec2 v_texCoord;     \n"
-      "void main()                  \n"
-      "{                            \n"
-      "   gl_Position = a_position; \n"
-      "   v_texCoord = a_texCoord;  \n"
-      "}                            \n";
-   
-   GLbyte fShaderStr[] =  
-      "precision mediump float;                            \n"
-      "varying vec2 v_texCoord;                            \n"
-      "uniform sampler2D s_texture;                        \n"
-      "void main()                                         \n"
-      "{                                                   \n"
-      "  gl_FragColor = texture2D( s_texture, v_texCoord );\n"
-      "}                                                   \n";
 
    // Load the shaders and get a linked program object
-   userData->programObject = esLoadProgram ( vShaderStr, fShaderStr );
+   userData->programObject = esLoadProgramFromFile( vertShaderFile, fragShaderFile );
 
    // Get the attribute locations
    userData->positionLoc = glGetAttribLocation ( userData->programObject, "a_position" );
@@ -215,7 +197,7 @@ int main ( int argc, char *argv[] )
 
    esCreateWindow ( &esContext, "Simple Texture 2D", 320, 240, ES_WINDOW_RGB );
 
-   if ( !Init ( &esContext ) )
+   if ( !Init ( &esContext, "vertShader.glsl", "fragShader.glsl" ) )
       return 0;
 
    glBindFramebuffer(GL_FRAMEBUFFER, 0);

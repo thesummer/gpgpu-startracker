@@ -16,8 +16,10 @@
 ///
 //  Includes
 //
-#include "esUtil.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include "esUtil.h"
 
 //////////////////////////////////////////////////////////////////
 //
@@ -82,6 +84,101 @@ GLuint ESUTIL_API esLoadShader ( GLenum type, const char *shaderSrc )
 
    return shader;
 
+}
+
+
+//
+///
+/// \brief Load a vertex and fragment shader from file, create a program object, link program.
+//         Errors output to log.
+/// \param vertShaderFilename Vertex shader source file
+/// \param fragShaderFilename Fragment shader source file
+/// \return A new program object linked with the vertex/fragment shader pair, 0 on failure
+//
+GLuint ESUTIL_API esLoadProgramFromFile ( const char *vertShaderFilename, const char *fragShaderFilename )
+{
+   GLuint vertexShader;
+   GLuint fragmentShader;
+   GLuint programObject;
+   GLint linked;
+
+   struct stat st;
+   stat(vertShaderFilename, &st);
+   int vertShaderSize = st.st_size+1;
+   char * vertShaderSrc = malloc(vertShaderSize);
+
+   stat(fragShaderFilename, &st);
+   int fragShaderSize = st.st_size+1;
+   char * fragShaderSrc = malloc(fragShaderSize);
+
+   FILE *vertFile   = fopen(vertShaderFilename, "r");
+   FILE *fragFile  = fopen(fragShaderFilename, "r");
+
+   fread(vertShaderSrc, sizeof(char), vertShaderSize, vertFile);
+   fread(fragShaderSrc, sizeof(char), fragShaderSize, fragFile);
+
+   fclose(vertFile);
+   fclose(fragFile);
+
+   // Load the vertex/fragment shaders
+   vertexShader = esLoadShader ( GL_VERTEX_SHADER, vertShaderSrc );
+   if ( vertexShader == 0 )
+      goto error;
+
+   fragmentShader = esLoadShader ( GL_FRAGMENT_SHADER, fragShaderSrc );
+   if ( fragmentShader == 0 )
+   {
+      glDeleteShader( vertexShader );
+      goto error;
+   }
+
+   // Create the program object
+   programObject = glCreateProgram ( );
+
+   if ( programObject == 0 )
+      goto error;
+
+   glAttachShader ( programObject, vertexShader );
+   glAttachShader ( programObject, fragmentShader );
+
+   // Link the program
+   glLinkProgram ( programObject );
+
+   // Check the link status
+   glGetProgramiv ( programObject, GL_LINK_STATUS, &linked );
+
+   if ( !linked )
+   {
+      GLint infoLen = 0;
+
+      glGetProgramiv ( programObject, GL_INFO_LOG_LENGTH, &infoLen );
+
+      if ( infoLen > 1 )
+      {
+         char* infoLog = malloc (sizeof(char) * infoLen );
+
+         glGetProgramInfoLog ( programObject, infoLen, NULL, infoLog );
+         esLogMessage ( "Error linking program:\n%s\n", infoLog );
+
+         free ( infoLog );
+      }
+
+      glDeleteProgram ( programObject );
+      goto error;
+   }
+
+   // Free up no longer needed shader resources
+   glDeleteShader ( vertexShader );
+   glDeleteShader ( fragmentShader );
+
+   return programObject;
+
+error:
+   glDeleteShader ( vertexShader );
+   glDeleteShader ( fragmentShader );
+   free(vertShaderSrc);
+   free(fragShaderSrc);
+   return 0;
 }
 
 

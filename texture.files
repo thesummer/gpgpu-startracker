@@ -4,3 +4,5 @@ Common/esTransform.c
 Common/esUtil.c
 Common/esUtil.h
 main.c
+vertShader.glsl
+fragShader.glsl
