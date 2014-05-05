@@ -15,6 +15,7 @@
 //    the basics of 2D texturing
 //
 #include <stdlib.h>
+#include <FreeImage.h>
 #include "esUtil.h"
 
 typedef struct
@@ -31,6 +32,12 @@ typedef struct
 
    // Texture handle
    GLuint textureId;
+
+   // Framebuffer
+   GLuint fboId ;
+
+   // Texture to attach to the frambuffer
+   GLuint fboTexId;
 
 } UserData;
 
@@ -111,7 +118,25 @@ int Init ( ESContext *esContext )
    // Load the texture
    userData->textureId = CreateSimpleTexture2D ();
 
-   glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f );
+   // Create a framebuffer object
+   glGenFramebuffers(1, &(userData->fboId));
+
+   // Create a texture for the frambuffer
+   glGenTextures(1, &(userData->fboTexId));
+   glBindTexture(GL_TEXTURE_2D, userData->fboTexId);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, esContext->width, esContext->height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+   glBindFramebuffer(GL_FRAMEBUFFER, userData->fboId);
+   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                          userData->fboTexId, 0);
+
+   GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+   if (status != GL_FRAMEBUFFER_COMPLETE)
+   {
+       printf("Framebuffer is not complete\n");
+   }
+
+   glClearColor ( 0.0f, 0.0f, 0.0f, 1.0f );
    return GL_TRUE;
 }
 
@@ -182,6 +207,8 @@ int main ( int argc, char *argv[] )
 {
    ESContext esContext;
    UserData  userData;
+   GLenum err ;
+
 
    esInitContext ( &esContext );
    esContext.userData = &userData;
@@ -191,9 +218,38 @@ int main ( int argc, char *argv[] )
    if ( !Init ( &esContext ) )
       return 0;
 
-   esRegisterDrawFunc ( &esContext, Draw );
+   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-   esMainLoop ( &esContext );
+    Draw( &esContext);
+
+   err = glGetError();
+   if (err != GL_NO_ERROR)
+       printf("Error\n");
+
+   // Make the BYTE array, factor of 3 because it's RBG.
+   GLubyte* pixels = malloc(4*esContext.width*esContext.height*sizeof(GLubyte));
+
+  glReadPixels(0, 0, esContext.width, esContext.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+   err = glGetError();
+   if (err != GL_NO_ERROR)
+       printf("Error: %X \n", err);
+
+   // Convert to FreeImage format & save to file
+   FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, esContext.width, esContext.height, 4 * esContext.width, 32, 0, 0, 0, 0);
+   FreeImage_Save(FIF_BMP, image, "./test.bmp", 0);
+
+   // Free resources
+   FreeImage_Unload(image);
+   free(pixels);
+
+   eglSwapBuffers(esContext.eglDisplay, esContext.eglSurface);
+
+   sleep(2);
+
+//   esRegisterDrawFunc ( &esContext, Draw );
+
+//   esMainLoop ( &esContext );
 
    ShutDown ( &esContext );
 }
