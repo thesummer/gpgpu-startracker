@@ -15,6 +15,7 @@
 //    the basics of 2D texturing
 //
 #include <stdlib.h>
+#include <stdio.h>
 #include <FreeImage.h>
 #include "esUtil.h"
 
@@ -234,4 +235,6 @@ int main ( int argc, char *argv[] )
 //   esMainLoop ( &esContext );
 
    ShutDown ( &esContext );
+
+   return 0;
 }
