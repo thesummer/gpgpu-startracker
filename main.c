@@ -19,8 +19,8 @@
 #include <FreeImage.h>
 #include "esUtil.h"
 
-#define WIDTH 2
-#define HEIGHT 2
+#define WIDTH 4
+#define HEIGHT 4
 
 typedef struct
 {
@@ -173,7 +173,7 @@ void Draw ( ESContext *esContext )
 
    // Set the sampler texture unit to 0
    GL_CHECK( glUniform1i ( userData->samplerLoc, 0 ) );
-   GL_CHECK( glUniform2f ( userData->texDimLoc, 1.0f*WIDTH, 1.0f*HEIGHT ) );
+   GL_CHECK( glUniform2f ( userData->texDimLoc, WIDTH, HEIGHT) );
 
    GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices ) );
 
@@ -220,9 +220,9 @@ int main ( int argc, char *argv[] )
    GL_CHECK( glReadPixels(0, 0, esContext.width, esContext.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
 
    printf("Pixels after rendering:\n");
-   for (GLubyte i=0; i<(WIDTH*HEIGHT*4); i++)
+   for (GLubyte i=0; i<(WIDTH*HEIGHT*4); i+=4)
    {
-       printf("%d\n", pixels[i]);
+       printf("%d  %d  %d  %d: %d, %d\n", pixels[i], pixels[i+1], pixels[i+2], pixels[i+3], *(GLushort*) (pixels+i), *(GLushort*) (pixels+i+2));
    }
 
 
