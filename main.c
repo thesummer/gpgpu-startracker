@@ -19,6 +19,9 @@
 #include <FreeImage.h>
 #include "esUtil.h"
 
+#define WIDTH 2
+#define HEIGHT 2
+
 typedef struct
 {
    // Handle to a program object
@@ -51,10 +54,10 @@ GLuint CreateSimpleTexture2D( )
    GLuint textureId;
    
    // 4x4 Image, 4 bytes per pixel (R, G, B, A)
-   GLubyte pixels[4 * 4 * 4];
+   GLubyte pixels[WIDTH * HEIGHT * 4];
 
    printf("Pixels before rendering:\n");
-   for (GLubyte i=0; i<64; i++)
+   for (GLubyte i=0; i<(WIDTH*HEIGHT*4); i++)
    {
        pixels[i] = i;
        printf("%d\n", i);
@@ -62,20 +65,20 @@ GLuint CreateSimpleTexture2D( )
 
 
    // Use tightly packed data
-   glPixelStorei ( GL_UNPACK_ALIGNMENT, 1 );
+   GL_CHECK( glPixelStorei ( GL_UNPACK_ALIGNMENT, 1 ) );
 
    // Generate a texture object
-   glGenTextures ( 1, &textureId );
+   GL_CHECK( glGenTextures ( 1, &textureId ) );
 
    // Bind the texture object
-   glBindTexture ( GL_TEXTURE_2D, textureId );
+   GL_CHECK( glBindTexture ( GL_TEXTURE_2D, textureId ) );
 
    // Load the texture
-   glTexImage2D ( GL_TEXTURE_2D, 0, GL_RGBA, 4, 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels );
+   GL_CHECK( glTexImage2D ( GL_TEXTURE_2D, 0, GL_RGBA, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels ) );
 
    // Set the filtering mode
-   glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-   glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+   GL_CHECK( glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST ) );
+   GL_CHECK( glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST ) );
 
    return textureId;
 
@@ -104,16 +107,16 @@ int Init ( ESContext *esContext, const char* vertShaderFile, const char* fragSha
    userData->textureId = CreateSimpleTexture2D ();
 
    // Create a framebuffer object
-   glGenFramebuffers(1, &(userData->fboId));
+   GL_CHECK( glGenFramebuffers(1, &(userData->fboId)) );
 
    // Create a texture for the frambuffer
-   glGenTextures(1, &(userData->fboTexId));
-   glBindTexture(GL_TEXTURE_2D, userData->fboTexId);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, esContext->width, esContext->height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+   GL_CHECK( glGenTextures(1, &(userData->fboTexId)) );
+   GL_CHECK( glBindTexture(GL_TEXTURE_2D, userData->fboTexId) );
+   GL_CHECK( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, esContext->width, esContext->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL) );
 
-   glBindFramebuffer(GL_FRAMEBUFFER, userData->fboId);
-   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                          userData->fboTexId, 0);
+   GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, userData->fboId) );
+   GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                          userData->fboTexId, 0) );
 
    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
    if (status != GL_FRAMEBUFFER_COMPLETE)
@@ -121,7 +124,8 @@ int Init ( ESContext *esContext, const char* vertShaderFile, const char* fragSha
        printf("Framebuffer is not complete\n");
    }
 
-   glClearColor ( 0.0f, 0.0f, 0.0f, 1.0f );
+   GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
+
    return GL_TRUE;
 }
 
@@ -143,32 +147,32 @@ void Draw ( ESContext *esContext )
    GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
       
    // Set the viewport
-   glViewport ( 0, 0, esContext->width, esContext->height );
+   GL_CHECK( glViewport ( 0, 0, esContext->width, esContext->height ) );
    
    // Clear the color buffer
-   glClear ( GL_COLOR_BUFFER_BIT );
+   GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
 
    // Use the program object
-   glUseProgram ( userData->programObject );
+   GL_CHECK( glUseProgram ( userData->programObject ) );
 
    // Load the vertex position
-   glVertexAttribPointer ( userData->positionLoc, 3, GL_FLOAT, 
-                           GL_FALSE, 5 * sizeof(GLfloat), vVertices );
+   GL_CHECK( glVertexAttribPointer ( userData->positionLoc, 3, GL_FLOAT,
+                           GL_FALSE, 5 * sizeof(GLfloat), vVertices ) );
    // Load the texture coordinate
-   glVertexAttribPointer ( userData->texCoordLoc, 2, GL_FLOAT,
-                           GL_FALSE, 5 * sizeof(GLfloat), &vVertices[3] );
+   GL_CHECK( glVertexAttribPointer ( userData->texCoordLoc, 2, GL_FLOAT,
+                           GL_FALSE, 5 * sizeof(GLfloat), &vVertices[3] ) );
 
-   glEnableVertexAttribArray ( userData->positionLoc );
-   glEnableVertexAttribArray ( userData->texCoordLoc );
+   GL_CHECK( glEnableVertexAttribArray ( userData->positionLoc ) );
+   GL_CHECK( glEnableVertexAttribArray ( userData->texCoordLoc ) );
 
    // Bind the texture
-   glActiveTexture ( GL_TEXTURE0 );
-   glBindTexture ( GL_TEXTURE_2D, userData->textureId );
+   GL_CHECK( glActiveTexture ( GL_TEXTURE0 ) );
+   GL_CHECK( glBindTexture ( GL_TEXTURE_2D, userData->textureId ) );
 
    // Set the sampler texture unit to 0
-   glUniform1i ( userData->samplerLoc, 0 );
+   GL_CHECK( glUniform1i ( userData->samplerLoc, 0 ) );
 
-   glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices );
+   GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices ) );
 
 }
 
@@ -180,12 +184,12 @@ void ShutDown ( ESContext *esContext )
    UserData *userData = esContext->userData;
 
    // Delete texture object
-   glDeleteTextures ( 1, &userData->textureId );
-   glDeleteFramebuffers(1, &userData->fboId);
-   glDeleteTextures(1, &userData->fboTexId);
+   GL_CHECK( glDeleteTextures ( 1, &userData->textureId ) );
+   GL_CHECK( glDeleteFramebuffers(1, &userData->fboId) );
+   GL_CHECK( glDeleteTextures(1, &userData->fboTexId) );
 
    // Delete program object
-   glDeleteProgram ( userData->programObject );
+   GL_CHECK( glDeleteProgram ( userData->programObject ) );
 	
    free(esContext->userData);
 }
@@ -194,35 +198,26 @@ int main ( int argc, char *argv[] )
 {
    ESContext esContext;
    UserData  userData;
-   GLenum err ;
 
 
    esInitContext ( &esContext );
    esContext.userData = &userData;
 
-   esCreateWindow ( &esContext, "Simple Texture 2D", 4, 4, ES_WINDOW_RGB );
+   esCreateWindow ( &esContext, "Simple Texture 2D", WIDTH, HEIGHT, ES_WINDOW_RGB | ES_WINDOW_ALPHA);
 
    if ( !Init ( &esContext, "vertShader.glsl", "fragShader.glsl" ) )
-      return 0;
+       return 0;
 
 
    Draw( &esContext);
 
-   err = glGetError();
-   if (err != GL_NO_ERROR)
-       printf("Error\n");
-
    // Make the BYTE array, factor of 3 because it's RBG.
    GLubyte* pixels = malloc(4*esContext.width*esContext.height*sizeof(GLubyte));
 
-  glReadPixels(0, 0, esContext.width, esContext.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-
-   err = glGetError();
-   if (err != GL_NO_ERROR)
-       printf("Error: %X \n", err);
+   GL_CHECK( glReadPixels(0, 0, esContext.width, esContext.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
 
    printf("Pixels after rendering:\n");
-   for (GLubyte i=0; i<64; i++)
+   for (GLubyte i=0; i<(WIDTH*HEIGHT*4); i++)
    {
        printf("%d\n", pixels[i]);
    }
