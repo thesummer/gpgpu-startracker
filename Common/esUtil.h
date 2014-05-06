@@ -48,6 +48,15 @@ extern "C" {
 #define ES_WINDOW_MULTISAMPLE   8
 
 
+#ifdef _DEBUG
+    #define GL_CHECK(stmt) do { \
+            stmt; \
+            esCheckOpenGLError(#stmt, __FILE__, __LINE__); \
+        } while (0)
+#else
+    #define GL_CHECK(stmt) stmt
+#endif
+
 ///
 // Types
 //
@@ -218,6 +227,8 @@ int ESUTIL_API esGenCube ( float scale, GLfloat **vertices, GLfloat **normals,
 ///  \return Pointer to loaded image.  NULL on failure. 
 //
 char* ESUTIL_API esLoadTGA ( char *fileName, int *width, int *height );
+
+void esCheckOpenGLError(const char* stmt, const char* fname, int line);
 
 
 //
