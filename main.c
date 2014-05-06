@@ -50,14 +50,16 @@ GLuint CreateSimpleTexture2D( )
    // Texture object handle
    GLuint textureId;
    
-   // 2x2 Image, 3 bytes per pixel (R, G, B)
-   GLubyte pixels[4 * 3] =
-   {  
-      255,   0,   0, // Red
-        0, 255,   0, // Green
-        0,   0, 255, // Blue
-      255, 255,   0  // Yellow
-   };
+   // 4x4 Image, 4 bytes per pixel (R, G, B, A)
+   GLubyte pixels[4 * 4 * 4];
+
+   printf("Pixels before rendering:\n");
+   for (GLubyte i=0; i<64; i++)
+   {
+       pixels[i] = i;
+       printf("%d\n", i);
+   }
+
 
    // Use tightly packed data
    glPixelStorei ( GL_UNPACK_ALIGNMENT, 1 );
@@ -69,7 +71,7 @@ GLuint CreateSimpleTexture2D( )
    glBindTexture ( GL_TEXTURE_2D, textureId );
 
    // Load the texture
-   glTexImage2D ( GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels );
+   glTexImage2D ( GL_TEXTURE_2D, 0, GL_RGBA, 4, 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels );
 
    // Set the filtering mode
    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
@@ -129,13 +131,13 @@ int Init ( ESContext *esContext, const char* vertShaderFile, const char* fragSha
 void Draw ( ESContext *esContext )
 {
    UserData *userData = esContext->userData;
-   GLfloat vVertices[] = { -0.5f,  0.5f, 0.0f,  // Position 0
+   GLfloat vVertices[] = { -1.0f,  1.0f, 0.0f,  // Position 0
                             0.0f,  0.0f,        // TexCoord 0 
-                           -0.5f, -0.5f, 0.0f,  // Position 1
+                           -1.0f, -1.0f, 0.0f,  // Position 1
                             0.0f,  1.0f,        // TexCoord 1
-                            0.5f, -0.5f, 0.0f,  // Position 2
+                            1.0f, -1.0f, 0.0f,  // Position 2
                             1.0f,  1.0f,        // TexCoord 2
-                            0.5f,  0.5f, 0.0f,  // Position 3
+                            1.0f,  1.0f, 0.0f,  // Position 3
                             1.0f,  0.0f         // TexCoord 3
                          };
    GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
@@ -179,6 +181,8 @@ void ShutDown ( ESContext *esContext )
 
    // Delete texture object
    glDeleteTextures ( 1, &userData->textureId );
+   glDeleteFramebuffers(1, &userData->fboId);
+   glDeleteTextures(1, &userData->fboTexId);
 
    // Delete program object
    glDeleteProgram ( userData->programObject );
@@ -196,14 +200,13 @@ int main ( int argc, char *argv[] )
    esInitContext ( &esContext );
    esContext.userData = &userData;
 
-   esCreateWindow ( &esContext, "Simple Texture 2D", 320, 240, ES_WINDOW_RGB );
+   esCreateWindow ( &esContext, "Simple Texture 2D", 4, 4, ES_WINDOW_RGB );
 
    if ( !Init ( &esContext, "vertShader.glsl", "fragShader.glsl" ) )
       return 0;
 
-   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    Draw( &esContext);
+   Draw( &esContext);
 
    err = glGetError();
    if (err != GL_NO_ERROR)
@@ -218,21 +221,25 @@ int main ( int argc, char *argv[] )
    if (err != GL_NO_ERROR)
        printf("Error: %X \n", err);
 
-   // Convert to FreeImage format & save to file
-   FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, esContext.width, esContext.height, 4 * esContext.width, 32, 0, 0, 0, 0);
-   FreeImage_Save(FIF_BMP, image, "./test.bmp", 0);
+   printf("Pixels after rendering:\n");
+   for (GLubyte i=0; i<64; i++)
+   {
+       printf("%d\n", pixels[i]);
+   }
 
-   // Free resources
-   FreeImage_Unload(image);
-   free(pixels);
 
-   eglSwapBuffers(esContext.eglDisplay, esContext.eglSurface);
+//   // Convert to FreeImage format & save to file
+//   FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, esContext.width, esContext.height, 4 * esContext.width, 32, 0, 0, 0, 0);
+//   FreeImage_Save(FIF_BMP, image, "./test.bmp", 0);
 
-   sleep(2);
+//   // Free resources
+//   FreeImage_Unload(image);
+//   free(pixels);
 
-//   esRegisterDrawFunc ( &esContext, Draw );
-
-//   esMainLoop ( &esContext );
+//   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//   eglSwapBuffers(esContext.eglDisplay, esContext.eglSurface);
+//   Draw();
+//   sleep(2);
 
    ShutDown ( &esContext );
 
