@@ -30,6 +30,7 @@ typedef struct
    // Attribute locations
    GLint  positionLoc;
    GLint  texCoordLoc;
+   GLint  texDimLoc;
 
    // Sampler location
    GLint samplerLoc;
@@ -99,9 +100,10 @@ int Init ( ESContext *esContext, const char* vertShaderFile, const char* fragSha
    // Get the attribute locations
    userData->positionLoc = glGetAttribLocation ( userData->programObject, "a_position" );
    userData->texCoordLoc = glGetAttribLocation ( userData->programObject, "a_texCoord" );
-   
+
    // Get the sampler location
    userData->samplerLoc = glGetUniformLocation ( userData->programObject, "s_texture" );
+   userData->texDimLoc  = glGetUniformLocation ( userData->programObject, "u_texDimensions" );
 
    // Load the texture
    userData->textureId = CreateSimpleTexture2D ();
@@ -171,6 +173,7 @@ void Draw ( ESContext *esContext )
 
    // Set the sampler texture unit to 0
    GL_CHECK( glUniform1i ( userData->samplerLoc, 0 ) );
+   GL_CHECK( glUniform2f ( userData->texDimLoc, 1.0f*WIDTH, 1.0f*HEIGHT ) );
 
    GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices ) );
 
