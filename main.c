@@ -254,20 +254,6 @@ int main ( int argc, char *argv[] )
         printf("%d  %d  %d  %d: %d, %d\n", pixels[i], pixels[i+1], pixels[i+2], pixels[i+3], *(GLushort*) (pixels+i), *(GLushort*) (pixels+i+2));
     }
 
-
-//    // Convert to FreeImage format & save to file
-//    FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, esContext.width, esContext.height, 4 * esContext.width, 32, 0, 0, 0, 0);
-//    FreeImage_Save(FIF_BMP, image, "./test.bmp", 0);
-
-//    // Free resources
-//    FreeImage_Unload(image);
-//    free(pixels);
-
-//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-//    eglSwapBuffers(esContext.eglDisplay, esContext.eglSurface);
-//    Draw();
-//    sleep(2);
-
     ShutDown ( &esContext );
 
     return 0;
