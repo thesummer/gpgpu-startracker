@@ -28,7 +28,13 @@ typedef struct
     // Attribute locations
     GLint  positionLoc;
     GLint  texCoordLoc;
-    GLint  texDimLoc;
+
+    // Uniform locations
+    GLint  u_texDimLoc;
+    GLint  u_thresholdLoc;
+
+    // Uniform values
+    float u_threshold;
 
     // Sampler location
     GLint samplerLoc;
@@ -90,8 +96,9 @@ int Init ( ESContext *esContext, const char* vertShaderFile, const char* fragSha
     userData->texCoordLoc = glGetAttribLocation ( userData->programObject, "a_texCoord" );
 
     // Get the sampler location
-    userData->samplerLoc = glGetUniformLocation ( userData->programObject, "s_texture" );
-    userData->texDimLoc  = glGetUniformLocation ( userData->programObject, "u_texDimensions" );
+    userData->samplerLoc      = glGetUniformLocation ( userData->programObject, "s_texture" );
+    userData->u_texDimLoc     = glGetUniformLocation ( userData->programObject, "u_texDimensions" );
+    userData->u_thresholdLoc  = glGetUniformLocation ( userData->programObject, "u_threshold" );
 
     // Load the texture
     userData->textureId = CreateSimpleTexture2D (userData->tgaImage, userData->tgaData);
@@ -161,7 +168,10 @@ void Draw ( ESContext *esContext )
 
     // Set the sampler texture unit to 0
     GL_CHECK( glUniform1i ( userData->samplerLoc, 0 ) );
-    GL_CHECK( glUniform2f ( userData->texDimLoc, userData->tgaImage->hdr.width, userData->tgaImage->hdr.height) );
+
+    // Set the uniforms
+    GL_CHECK( glUniform2f ( userData->u_texDimLoc, userData->tgaImage->hdr.width, userData->tgaImage->hdr.height) );
+    GL_CHECK( glUniform1f ( userData->u_thresholdLoc, userData->u_threshold) );
 
     GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices ) );
 
@@ -225,9 +235,10 @@ int main ( int argc, char *argv[] )
 
     userData.tgaImage = tgaImage;
     userData.tgaData  = &tgaData;
+    userData.u_threshold = 128 / 255.0;
 
     esCreateWindow ( &esContext, "Simple Texture 2D", header->width, header->height, ES_WINDOW_RGB | ES_WINDOW_ALPHA);
-    if ( !Init ( &esContext, "vertShader.glsl", "fragShader.glsl" ) )
+    if ( !Init ( &esContext, "vertShader.glsl", "fragInitShader.glsl" ) )
         return 0;
 
     Draw( &esContext);
