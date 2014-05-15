@@ -243,16 +243,34 @@ int main ( int argc, char *argv[] )
 
     Draw( &esContext);
 
+    printf("Pixels before rendering:\n");
+    tbyte *img = tgaData.img_data;
+    for(int i=0; i<header->height; i++)
+    {
+        for(int j=0; j<header->width; j++)
+        {
+            int index = 4*(i*header->width + j);
+            printf("%3d %3d %3d %3d | ", img[index], img[index+1], img[index+2], img[index+3]);
+        }
+        printf("\n");
+    }
+
     // Make the BYTE array, factor of 3 because it's RBG.
     GLubyte* pixels = malloc(4*esContext.width*esContext.height*sizeof(GLubyte));
 
     GL_CHECK( glReadPixels(0, 0, esContext.width, esContext.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
 
     printf("Pixels after rendering:\n");
-    for (GLubyte i=0; i<(header->width*header->height*4); i+=4)
+    for(int i=0; i<header->height; i++)
     {
-        printf("%d  %d  %d  %d: %d, %d\n", pixels[i], pixels[i+1], pixels[i+2], pixels[i+3], *(GLushort*) (pixels+i), *(GLushort*) (pixels+i+2));
+        for(int j=0; j<header->width; j++)
+        {
+            int index = 4*(i*header->width + j);
+            printf("%4d %4d | ", *(GLushort*) (pixels+index), *(GLushort*) (pixels+index+2) );
+        }
+        printf("\n");
     }
+
 
     ShutDown ( &esContext );
 
