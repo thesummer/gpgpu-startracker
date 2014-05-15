@@ -1,7 +1,7 @@
 # Straight forward Makefile to compile all examples in a row
 
 INCLUDES=-I./Common -I./include
-LIBS=-lGLESv2 -lEGL -lm -lX11 -lfreeimage -Llib -ltga
+LIBS=-lGLESv2 -lEGL -lm -Llib -ltga -lX11 -lfreeimage 
 
 CFLAGS=-g -Wall -std=c99 -D_DEBUG
 
