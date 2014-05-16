@@ -75,16 +75,67 @@ ty = (2*py+1)/2dimY
 in vec2: image coordinates in [0, width], [0, height]
 return vec2: texture coordinates in [0,1], [0,1]
 */
-vec2 imgCoord2tex(in vec2 imgCoord)
+vec2 img2texCoord(in vec2 imgCoord)
 {
     return (2.0f*imgCoord + 1.0f)/(2.0f*u_texDimensions);
 }
 
 
+void getForwardMask(in vec2 imgCoord, out vec4 outX, out vec4 outY)
+{
+
+    vec4 tempRGBA  = texture2D( s_texture, img2texCoord(imgCoord + vec2(1.0f, 0.0f) )  );
+    vec2 tempLabel = unpack2shorts(tempRGBA);
+    outX.x = tempLabel.x;
+    outY.x = tempLabel.y;
+
+    vec4 tempRGBA  = texture2D( s_texture, img2texCoord(imgCoord + vec2(-1.0f, 1.0f) )  );
+    vec2 tempLabel = unpack2shorts(tempRGBA);
+    outX.y = tempLabel.x;
+    outY.y = tempLabel.y;
+
+    vec4 tempRGBA  = texture2D( s_texture, img2texCoord(imgCoord + vec2(0.0f, 1.0f) )  );
+    vec2 tempLabel = unpack2shorts(tempRGBA);
+    outX.z = tempLabel.x;
+    outY.z = tempLabel.y;
+
+    vec4 tempRGBA  = texture2D( s_texture, img2texCoord(imgCoord + vec2(1.0f, 1.0f) )  );
+    vec2 tempLabel = unpack2shorts(tempRGBA);
+    outX.w = tempLabel.x;
+    outY.w = tempLabel.y;
+}
+
+
+void getBackwardMask(in vec2 imgCoord, out vec4 outX, out vec4 outY)
+{
+
+    vec4 tempRGBA  = texture2D( s_texture, img2texCoord(imgCoord - vec2(1.0f, 0.0f) )  );
+    vec2 tempLabel = unpack2shorts(tempRGBA);
+    outX.x = tempLabel.x;
+    outY.x = tempLabel.y;
+
+    vec4 tempRGBA  = texture2D( s_texture, img2texCoord(imgCoord - vec2(-1.0f, 1.0f) )  );
+    vec2 tempLabel = unpack2shorts(tempRGBA);
+    outX.y = tempLabel.x;
+    outY.y = tempLabel.y;
+
+    vec4 tempRGBA  = texture2D( s_texture, img2texCoord(imgCoord - vec2(0.0f, 1.0f) )  );
+    vec2 tempLabel = unpack2shorts(tempRGBA);
+    outX.z = tempLabel.x;
+    outY.z = tempLabel.y;
+
+    vec4 tempRGBA  = texture2D( s_texture, img2texCoord(imgCoord - vec2(1.0f, 1.0f) )  );
+    vec2 tempLabel = unpack2shorts(tempRGBA);
+    outX.w = tempLabel.x;
+    outY.w = tempLabel.y;
+}
+
 /*
 Shader will do the following steps for each pixel:
-    1. Threshold with u_threshold
-    2. pack image coordinates for into RGBA value for non-zero pixels
+    1. Get current pixel label
+    2. get labels of forward or backward mask
+    3. search for the smallest label
+    4. assign smallest label to pixel
 
     It is assumed that the input texture is a gray scale RGBA-image (c,c,c,255)
 */
@@ -94,11 +145,17 @@ void main()
     vec2 imgCoord = tex2imgCoord(v_texCoord);
 
     // Get the input pixel value
-    gl_FragColor = texture2D( s_texture, v_texCoord );
+    vec4 currentLabel = texture2D( s_texture, v_texCoord );
+    vec4 xLabels, yLabels;
 
-    // Threshold operation
-    gl_FragColor.a = gl_FragColor.r;
-    gl_FragColor = step(vec4(u_threshold), gl_FragColor);
+    if(u_forward == 1)
+    {
+        getForwardMask(imgCoord, xLabels, yLabels);
+    }
+    else
+    {
+        getBackwardMask(imgCoord, xLabels, yLabels);
+    }
 
     // pack image coordinates for the non-zero pixels
     gl_FragColor = pack2shorts(imgCoord) * gl_FragColor;
