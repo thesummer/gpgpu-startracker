@@ -6,3 +6,4 @@ Common/esUtil.h
 main.c
 vertShader.glsl
 fragInitShader.glsl
+fragLabelShader.glsl

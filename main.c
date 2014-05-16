@@ -271,7 +271,6 @@ int main ( int argc, char *argv[] )
         printf("\n");
     }
 
-
     ShutDown ( &esContext );
 
     return 0;
