@@ -66,6 +66,22 @@ vec2 tex2imgCoord(in vec2 texCoord)
 
 
 /*
+Reverse function of tex2imgCoord. Takes image coordinates and
+return the  corresponding texture coordinates.
+
+tx = (2*px+1)/2dimX
+ty = (2*py+1)/2dimY
+
+in vec2: image coordinates in [0, width], [0, height]
+return vec2: texture coordinates in [0,1], [0,1]
+*/
+vec2 imgCoord2tex(in vec2 imgCoord)
+{
+    return (2.0f*imgCoord + 1.0f)/(2.0f*u_texDimensions);
+}
+
+
+/*
 Shader will do the following steps for each pixel:
     1. Threshold with u_threshold
     2. pack image coordinates for into RGBA value for non-zero pixels
