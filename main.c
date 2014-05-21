@@ -20,6 +20,9 @@
 #include "include/tga.h"
 #include "esUtil.h"
 
+#define NUM_FBO 2
+#define NUM_TEX 2
+
 typedef struct
 {
     // Handle to a program object
@@ -32,10 +35,11 @@ typedef struct
     // Uniform locations
     GLint  u_texDimLoc;
     GLint  u_thresholdLoc;
+    GLint  u_passLoc;
 
     // Uniform values
     float u_threshold;
-
+    GLint u_pass;
     // Sampler location
     GLint samplerLoc;
 
@@ -45,17 +49,19 @@ typedef struct
     TGAData *tgaData;
 
     // Framebuffer
-    GLuint fboId ;
+    GLuint fboId[NUM_FBO] ;
+    GLuint write;
+    GLuint read;
 
     // Texture to attach to the frambuffer
-    GLuint fboTexId;
+    GLuint fboTexId[NUM_FBO];
 
 } UserData;
 
 ///
 // Create a simple 2x2 texture image with four different colors
 //
-GLuint CreateSimpleTexture2D(TGA *image, TGAData *imgData)
+GLuint CreateSimpleTexture2D(TGA *image, tbyte *imgData)
 {
     // Texture object handle
     GLuint textureId;
@@ -71,7 +77,7 @@ GLuint CreateSimpleTexture2D(TGA *image, TGAData *imgData)
     // Bind the texture object
     GL_CHECK( glBindTexture ( GL_TEXTURE_2D, textureId ) );
     // Load the texture
-    GL_CHECK( glTexImage2D ( GL_TEXTURE_2D, 0, GL_RGBA, header->width, header->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imgData->img_data) );
+    GL_CHECK( glTexImage2D ( GL_TEXTURE_2D, 0, GL_RGBA, header->width, header->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imgData) );
 
     // Set the filtering mode
     GL_CHECK( glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST ) );
@@ -99,26 +105,28 @@ int Init ( ESContext *esContext, const char* vertShaderFile, const char* fragSha
     userData->samplerLoc      = glGetUniformLocation ( userData->programObject, "s_texture" );
     userData->u_texDimLoc     = glGetUniformLocation ( userData->programObject, "u_texDimensions" );
     userData->u_thresholdLoc  = glGetUniformLocation ( userData->programObject, "u_threshold" );
+    userData->u_passLoc       = glGetUniformLocation ( userData->programObject, "u_pass" );
 
-    // Load the texture
-    userData->textureId = CreateSimpleTexture2D (userData->tgaImage, userData->tgaData);
 
     // Create a framebuffer object
-    GL_CHECK( glGenFramebuffers(1, &(userData->fboId)) );
+    GL_CHECK( glGenFramebuffers(NUM_FBO, userData->fboId) );
 
     // Create a texture for the frambuffer
-    GL_CHECK( glGenTextures(1, &(userData->fboTexId)) );
-    GL_CHECK( glBindTexture(GL_TEXTURE_2D, userData->fboTexId) );
-    GL_CHECK( glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, esContext->width, esContext->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL) );
+    userData->fboTexId[userData->read]  = CreateSimpleTexture2D(userData->tgaImage, userData->tgaData->img_data);
+    userData->fboTexId[userData->write] = CreateSimpleTexture2D(userData->tgaImage, NULL);
 
-    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, userData->fboId) );
-    GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                                     userData->fboTexId, 0) );
-
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE)
+    // Bind the textures to the corresponding fbo
+    for(int i=0; i<NUM_FBO; ++i)
     {
-        printf("Framebuffer is not complete\n");
+        GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, userData->fboId[i]) );
+        GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+        GL_CHECK( glBindTexture(GL_TEXTURE_2D, userData->fboTexId[i]) );
+        GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, userData->fboTexId[i], 0) );
+        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (status != GL_FRAMEBUFFER_COMPLETE)
+        {
+            printf("Framebuffer is not complete\n");
+        }
     }
 
     GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
@@ -143,6 +151,9 @@ void Draw ( ESContext *esContext )
                           };
     GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
 
+    // Bind the FBO to write to
+    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, userData->fboId[userData->write]) );
+
     // Set the viewport
     GL_CHECK( glViewport ( 0, 0, esContext->width, esContext->height ) );
 
@@ -162,17 +173,18 @@ void Draw ( ESContext *esContext )
     GL_CHECK( glEnableVertexAttribArray ( userData->positionLoc ) );
     GL_CHECK( glEnableVertexAttribArray ( userData->texCoordLoc ) );
 
+
     // Bind the texture
-    GL_CHECK( glActiveTexture ( GL_TEXTURE0 ) );
-    GL_CHECK( glBindTexture ( GL_TEXTURE_2D, userData->textureId ) );
+//    GL_CHECK( glActiveTexture ( GL_TEXTURE0 + ) );
+//    GL_CHECK( glBindTexture ( GL_TEXTURE_2D, userData->fboTexId[userData->read] ) );
 
     // Set the sampler texture unit to 0
-    GL_CHECK( glUniform1i ( userData->samplerLoc, 0 ) );
+    GL_CHECK( glUniform1i ( userData->samplerLoc, userData->read ) );
 
     // Set the uniforms
     GL_CHECK( glUniform2f ( userData->u_texDimLoc, userData->tgaImage->hdr.width, userData->tgaImage->hdr.height) );
     GL_CHECK( glUniform1f ( userData->u_thresholdLoc, userData->u_threshold) );
-
+    GL_CHECK( glUniform1i ( userData->u_passLoc, userData->u_pass) );
     GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices ) );
 
 }
@@ -186,8 +198,8 @@ void ShutDown ( ESContext *esContext )
 
     // Delete texture object
     GL_CHECK( glDeleteTextures ( 1, &userData->textureId ) );
-    GL_CHECK( glDeleteFramebuffers(1, &userData->fboId) );
-    GL_CHECK( glDeleteTextures(1, &userData->fboTexId) );
+    GL_CHECK( glDeleteFramebuffers(NUM_FBO, userData->fboId) );
+    GL_CHECK( glDeleteTextures(NUM_FBO, userData->fboTexId) );
 
     // Delete program object
     GL_CHECK( glDeleteProgram ( userData->programObject ) );
@@ -217,6 +229,9 @@ int main ( int argc, char *argv[] )
 
     esInitContext ( &esContext );
     esContext.userData = &userData;
+    userData.read  = 0;
+    userData.write = 1;
+
 
     if(!tgaImage || tgaImage->last != TGA_OK)
     {
@@ -238,8 +253,10 @@ int main ( int argc, char *argv[] )
     userData.u_threshold = 128 / 255.0;
 
     esCreateWindow ( &esContext, "Simple Texture 2D", header->width, header->height, ES_WINDOW_RGB | ES_WINDOW_ALPHA);
-    if ( !Init ( &esContext, "vertShader.glsl", "fragInitShader.glsl" ) )
+    if ( !Init ( &esContext, "vertShader.glsl", "fragCreateRuns.glsl" ) )
         return 0;
+
+    userData.u_pass = 0;
 
     Draw( &esContext);
 
@@ -258,6 +275,23 @@ int main ( int argc, char *argv[] )
     // Make the BYTE array, factor of 3 because it's RBG.
     GLubyte* pixels = malloc(4*esContext.width*esContext.height*sizeof(GLubyte));
 
+    GL_CHECK( glReadPixels(0, 0, esContext.width, esContext.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+
+    printf("Pixels after rendering:\n");
+    for(int i=0; i<header->height; i++)
+    {
+        for(int j=0; j<header->width; j++)
+        {
+            int index = 4*(i*header->width + j);
+            printf("%4d %4d | ", *(GLushort*) (pixels+index), *(GLushort*) (pixels+index+2) );
+        }
+        printf("\n");
+    }
+
+    userData.u_pass = 1;
+    userData.read  = 1;
+    userData.write = 0;
+    Draw( &esContext);
     GL_CHECK( glReadPixels(0, 0, esContext.width, esContext.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
 
     printf("Pixels after rendering:\n");
