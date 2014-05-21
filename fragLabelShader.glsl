@@ -132,10 +132,10 @@ void getBackwardMask(in vec2 imgCoord, out vec4 outX, out vec4 outY)
 
 /*
 Shader will do the following steps for each pixel:
-    1. Get current pixel label
-    2. get labels of forward or backward mask
-    3. search for the smallest label
-    4. assign smallest label to pixel
+    1.  Get current pixel label
+    2.  get labels of forward or backward mask
+    3.  search for the smallest label
+    4.  assign smallest label to pixel
 
     It is assumed that the input texture is a gray scale RGBA-image (c,c,c,255)
 */
@@ -156,6 +156,7 @@ void main()
     {
         getBackwardMask(imgCoord, xLabels, yLabels);
     }
+
 
     // pack image coordinates for the non-zero pixels
     gl_FragColor = pack2shorts(imgCoord) * gl_FragColor;
