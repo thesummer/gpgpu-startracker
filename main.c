@@ -142,54 +142,7 @@ int Init ( ESContext *esContext, const char* vertShaderFile, const char* fragSha
 //
 void Draw ( ESContext *esContext )
 {
-    UserData *userData = esContext->userData;
-    GLfloat vVertices[] = { -1.0f, -1.0f, 0.0f,  // Position 0
-                            0.0f,  0.0f,        // TexCoord 0
-                            -1.0f,  1.0f, 0.0f,  // Position 1
-                            0.0f,  1.0f,        // TexCoord 1
-                            1.0f,  1.0f, 0.0f,  // Position 2
-                            1.0f,  1.0f,        // TexCoord 2
-                            1.0f, -1.0f, 0.0f,  // Position 3
-                            1.0f,  0.0f         // TexCoord 3
-                          };
-    GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
-
-    // Bind the FBO to write to
-    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, userData->fboId[userData->write]) );
-
-    // Set the viewport
-    GL_CHECK( glViewport ( 0, 0, esContext->width, esContext->height ) );
-
-    // Clear the color buffer
-    GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
-
-    // Use the program object
-    GL_CHECK( glUseProgram ( userData->programObject ) );
-
-    // Load the vertex position
-    GL_CHECK( glVertexAttribPointer ( userData->positionLoc, 3, GL_FLOAT,
-                                      GL_FALSE, 5 * sizeof(GLfloat), vVertices ) );
-    // Load the texture coordinate
-    GL_CHECK( glVertexAttribPointer ( userData->texCoordLoc, 2, GL_FLOAT,
-                                      GL_FALSE, 5 * sizeof(GLfloat), &vVertices[3] ) );
-
-    GL_CHECK( glEnableVertexAttribArray ( userData->positionLoc ) );
-    GL_CHECK( glEnableVertexAttribArray ( userData->texCoordLoc ) );
-
-
-    // Bind the texture
-//    GL_CHECK( glActiveTexture ( GL_TEXTURE0 + ) );
-//    GL_CHECK( glBindTexture ( GL_TEXTURE_2D, userData->fboTexId[userData->read] ) );
-
-    // Set the sampler texture unit to 0
-    GL_CHECK( glUniform1i ( userData->samplerLoc, userData->read ) );
-
-    // Set the uniforms
-    GL_CHECK( glUniform2f ( userData->u_texDimLoc, userData->tgaImage->hdr.width, userData->tgaImage->hdr.height) );
-    GL_CHECK( glUniform1f ( userData->u_thresholdLoc, userData->u_threshold) );
-    GL_CHECK( glUniform1i ( userData->u_passLoc, userData->u_pass) );
-    GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices ) );
-
+//    UserData *userData = esContext->userData;
 }
 
 ///
@@ -306,14 +259,56 @@ void createRuns(ESContext * esContext)
 {
     UserData *userData = esContext->userData;
 
-    // Make the BYTE array, factor of 3 because it's RBGA.
+    // Setup geometry
+    GLfloat vVertices[] = { -1.0f, -1.0f, 0.0f,  // Position 0
+                            0.0f,  0.0f,        // TexCoord 0
+                            -1.0f,  1.0f, 0.0f,  // Position 1
+                            0.0f,  1.0f,        // TexCoord 1
+                            1.0f,  1.0f, 0.0f,  // Position 2
+                            1.0f,  1.0f,        // TexCoord 2
+                            1.0f, -1.0f, 0.0f,  // Position 3
+                            1.0f,  0.0f         // TexCoord 3
+                          };
+    GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
+
+    // Setup OpenGL
+
+    // Set the viewport
+    GL_CHECK( glViewport ( 0, 0, esContext->width, esContext->height ) );
+    // Clear the color buffer
+    GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
+    // Use the program object
+    GL_CHECK( glUseProgram ( userData->programObject ) );
+    // Load the vertex position
+    GL_CHECK( glVertexAttribPointer ( userData->positionLoc, 3, GL_FLOAT,
+                                      GL_FALSE, 5 * sizeof(GLfloat), vVertices ) );
+    // Load the texture coordinates
+    GL_CHECK( glVertexAttribPointer ( userData->texCoordLoc, 2, GL_FLOAT,
+                                      GL_FALSE, 5 * sizeof(GLfloat), &vVertices[3] ) );
+    GL_CHECK( glEnableVertexAttribArray ( userData->positionLoc ) );
+    GL_CHECK( glEnableVertexAttribArray ( userData->texCoordLoc ) );
+
+    // Set the uniforms
+    GL_CHECK( glUniform2f ( userData->u_texDimLoc, userData->tgaImage->hdr.width, userData->tgaImage->hdr.height) );
+    GL_CHECK( glUniform1f ( userData->u_thresholdLoc, userData->u_threshold) );
+
+    // Do the runs
+
+    // Make the BYTE array, factor of 3 because it's RGBA.
     GLubyte* pixels = malloc(4*esContext->width*esContext->height*sizeof(GLubyte));
 
     for (int i = 0; i < logBase2(esContext->height); i++)
     {
-
         userData->u_pass = i;
-        Draw( esContext);
+
+        // Bind the FBO to write to
+        GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, userData->fboId[userData->write]) );
+        // Set the sampler texture unit to 0
+        GL_CHECK( glUniform1i ( userData->samplerLoc, userData->read ) );
+        // Set the pass index
+        GL_CHECK( glUniform1i ( userData->u_passLoc, userData->u_pass) );
+        // Draw scene
+        GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices ) );
 
         GL_CHECK( glReadPixels(0, 0, esContext->width, esContext->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
 
@@ -323,9 +318,7 @@ void createRuns(ESContext * esContext)
         // Switch read and write texture
         userData->read  = 1 - userData->read;
         userData->write = 1 - userData->write;
-
     }
 
     free(pixels);
-
 }
