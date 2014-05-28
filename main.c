@@ -58,6 +58,9 @@ typedef struct
 
 } UserData;
 
+
+void createRuns(ESContext * esContext);
+
 ///
 // Create a simple 2x2 texture image with four different colors
 //
@@ -268,10 +271,6 @@ int main ( int argc, char *argv[] )
     if ( !Init ( &esContext, "vertShader.glsl", "fragCreateRuns.glsl" ) )
         return 0;
 
-    userData.u_pass = 0;
-
-    Draw( &esContext);
-
     printf("Pixels before rendering:\n");
     tbyte *img = tgaData.img_data;
     for(int i=0; i<header->height; i++)
@@ -284,24 +283,49 @@ int main ( int argc, char *argv[] )
         printf("\n");
     }
 
-    // Make the BYTE array, factor of 3 because it's RBG.
-    GLubyte* pixels = malloc(4*esContext.width*esContext.height*sizeof(GLubyte));
-
-    GL_CHECK( glReadPixels(0, 0, esContext.width, esContext.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-
-    printf("Pixels after rendering:\n");
-    printLabels(header, pixels);
-
-    userData.u_pass = 1;
-    userData.read  = 1;
-    userData.write = 0;
-    Draw( &esContext);
-    GL_CHECK( glReadPixels(0, 0, esContext.width, esContext.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-
-    printf("Pixels after rendering:\n");
-    printLabels(header, pixels);
+    createRuns(&esContext);
 
     ShutDown ( &esContext );
 
     return 0;
+}
+
+int logBase2(int n)
+{
+    int ret = 0;
+    while (n >= 1)
+    {
+        ret++;
+        n = n >> 1;
+    }
+
+    return ret;
+}
+
+void createRuns(ESContext * esContext)
+{
+    UserData *userData = esContext->userData;
+
+    // Make the BYTE array, factor of 3 because it's RBGA.
+    GLubyte* pixels = malloc(4*esContext->width*esContext->height*sizeof(GLubyte));
+
+    for (int i = 0; i < logBase2(esContext->height); i++)
+    {
+
+        userData->u_pass = i;
+        Draw( esContext);
+
+        GL_CHECK( glReadPixels(0, 0, esContext->width, esContext->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+
+        printf("Pixels after pass %d:\n", userData->u_pass);
+        printLabels(&userData->tgaImage->hdr, pixels);
+
+        // Switch read and write texture
+        userData->read  = 1 - userData->read;
+        userData->write = 1 - userData->write;
+
+    }
+
+    free(pixels);
+
 }
