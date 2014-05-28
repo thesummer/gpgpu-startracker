@@ -217,6 +217,18 @@ void ShutDown ( ESContext *esContext )
     //   free(esContext->userData); not necessary
 }
 
+void printLabels(TGAHeader *header, GLubyte *pixels)
+{
+    for(int i=0; i<header->height; i++)
+    {
+        for(int j=0; j<header->width; j++)
+        {
+            int index = 4*(i*header->width + j);
+            printf("%4d %4d | ", *(GLushort*) (pixels+index), *(GLushort*) (pixels+index+2) );
+        }
+        printf("\n");
+    }
+}
 
 int main ( int argc, char *argv[] )
 {
@@ -278,15 +290,7 @@ int main ( int argc, char *argv[] )
     GL_CHECK( glReadPixels(0, 0, esContext.width, esContext.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
 
     printf("Pixels after rendering:\n");
-    for(int i=0; i<header->height; i++)
-    {
-        for(int j=0; j<header->width; j++)
-        {
-            int index = 4*(i*header->width + j);
-            printf("%4d %4d | ", *(GLushort*) (pixels+index), *(GLushort*) (pixels+index+2) );
-        }
-        printf("\n");
-    }
+    printLabels(header, pixels);
 
     userData.u_pass = 1;
     userData.read  = 1;
@@ -295,15 +299,7 @@ int main ( int argc, char *argv[] )
     GL_CHECK( glReadPixels(0, 0, esContext.width, esContext.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
 
     printf("Pixels after rendering:\n");
-    for(int i=0; i<header->height; i++)
-    {
-        for(int j=0; j<header->width; j++)
-        {
-            int index = 4*(i*header->width + j);
-            printf("%4d %4d | ", *(GLushort*) (pixels+index), *(GLushort*) (pixels+index+2) );
-        }
-        printf("\n");
-    }
+    printLabels(header, pixels);
 
     ShutDown ( &esContext );
 
