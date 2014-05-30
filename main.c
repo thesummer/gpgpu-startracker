@@ -60,6 +60,7 @@ typedef struct
 
 
 void createRuns(ESContext * esContext);
+int loadTgaImage(TGA *image, TGAData *data, const char *filename);
 
 ///
 // Create a simple 2x2 texture image with four different colors
@@ -189,8 +190,10 @@ void printLabels(TGAHeader *header, GLubyte *pixels)
 int main ( int argc, char *argv[] )
 {
 
-    TGA *tgaImage = TGAOpen("test.tga", "r");
-    TGAData tgaData = {0, 0, 0, TGA_IMAGE_DATA | TGA_RGB};
+    TGA *tgaImage;
+    TGAData tgaData;
+
+    loadTgaImage(tgaImage, &tgaData, "test.tga");
 
     ESContext esContext;
     UserData  userData;
@@ -199,18 +202,6 @@ int main ( int argc, char *argv[] )
     esContext.userData = &userData;
     userData.read  = 0;
     userData.write = 1;
-
-
-    if(!tgaImage || tgaImage->last != TGA_OK)
-    {
-        printf("Opening tga-file failed\n");
-        return 1;
-    }
-
-    if(TGAReadImage(tgaImage, &tgaData) == TGA_OK)
-    {
-        printf("tga-file successfully read\n");
-    }
 
     TGAHeader *header = &tgaImage->hdr;
     printf("image dimensions:\n width: %d\t height:%d\t depth:%d bpp\n",
@@ -321,4 +312,23 @@ void createRuns(ESContext * esContext)
     }
 
     free(pixels);
+}
+
+int loadTgaImage(TGA *image, TGAData *data, const char *filename)
+{
+    image = TGAOpen(filename, "r");
+    data = {0, 0, 0, TGA_IMAGE_DATA | TGA_RGB};
+
+    if(!image || image->last != TGA_OK)
+    {
+        printf("Opening tga-file failed\n");
+        return image->last;
+    }
+
+    if(TGAReadImage(image, &data) != TGA_OK)
+    {
+        printf("Failed to read tga-file\n");
+        return image->last;
+    }
+    return TGA_OK;
 }
