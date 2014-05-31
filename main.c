@@ -60,7 +60,8 @@ typedef struct
 
 
 void createRuns(ESContext * esContext);
-int loadTgaImage(TGA *image, TGAData *data, const char *filename);
+int loadTgaImage(TGA **image, TGAData *data, char *filename);
+int writeTgaImage(ESContext * esContext, char *filename, GLubyte *pixels);
 
 ///
 // Create a simple 2x2 texture image with four different colors
@@ -166,8 +167,8 @@ void ShutDown ( ESContext *esContext )
         free(userData->tgaData->img_data);
     if(userData->tgaData->cmap != NULL)
         free(userData->tgaData->cmap);
-    if(userData->tgaData->img_id != NULL)
-        free(userData->tgaData->img_id);
+//    if(userData->tgaData->img_id != NULL)
+//        free(userData->tgaData->img_id);
 
     TGAClose (userData->tgaImage);
 
@@ -190,10 +191,9 @@ void printLabels(TGAHeader *header, GLubyte *pixels)
 int main ( int argc, char *argv[] )
 {
 
-    TGA *tgaImage;
+    TGA *tgaImage = 0; // TGAOpen("test.tga", "r");
     TGAData tgaData;
-
-    loadTgaImage(tgaImage, &tgaData, "test.tga");
+    loadTgaImage(&tgaImage, &tgaData, "test.tga");
 
     ESContext esContext;
     UserData  userData;
@@ -288,7 +288,7 @@ void createRuns(ESContext * esContext)
     // Make the BYTE array, factor of 3 because it's RGBA.
     GLubyte* pixels = malloc(4*esContext->width*esContext->height*sizeof(GLubyte));
 
-    for (int i = 0; i < logBase2(esContext->height); i++)
+    for (int i = 0; i < logBase2(esContext->height)+5; i++)
     {
         userData->u_pass = i;
 
@@ -305,6 +305,9 @@ void createRuns(ESContext * esContext)
 
         printf("Pixels after pass %d:\n", userData->u_pass);
         printLabels(&userData->tgaImage->hdr, pixels);
+        char filename[50];
+        sprintf(filename, "out%03d.tga", userData->u_pass);
+        writeTgaImage(esContext, filename, pixels);
 
         // Switch read and write texture
         userData->read  = 1 - userData->read;
@@ -314,21 +317,75 @@ void createRuns(ESContext * esContext)
     free(pixels);
 }
 
-int loadTgaImage(TGA *image, TGAData *data, const char *filename)
+int loadTgaImage(TGA **image, TGAData *data, char *filename)
 {
-    image = TGAOpen(filename, "r");
-    data = {0, 0, 0, TGA_IMAGE_DATA | TGA_RGB};
+    *image = TGAOpen(filename, "r");
+    data->flags = TGA_IMAGE_DATA | TGA_RGB;
 
+    if(!*image || (*image)->last != TGA_OK)
+    {
+        printf("Opening tga-file failed\n");
+        return (*image)->last;
+    }
+
+    if(TGAReadImage(*image, data) != TGA_OK)
+    {
+        printf("Failed to read tga-file\n");
+        return (*image)->last;
+    }
+    return TGA_OK;
+}
+
+int writeTgaImage(ESContext * esContext, char *filename, GLubyte *pixels)
+{
+    TGA *image = TGAOpen(filename, "w");
     if(!image || image->last != TGA_OK)
     {
         printf("Opening tga-file failed\n");
         return image->last;
     }
 
-    if(TGAReadImage(image, &data) != TGA_OK)
+    image->hdr.height = esContext->height;
+    image->hdr.width  = esContext->width;
+    image->hdr.alpha  = 8;
+    image->hdr.depth  = 32;
+    image->hdr.img_t  = 2;
+    image->hdr.id_len = 0;
+    image->hdr.vert   = 1;
+    image->hdr.horz   = 1;
+
+    TGAData data = {0, 0, 0, TGA_IMAGE_DATA | TGA_RGB};
+    data.img_data = malloc(4*sizeof(char) * esContext->width * esContext->height);
+
+    for(int i=0; i<(4*esContext->width*esContext->height); i+=4)
     {
-        printf("Failed to read tga-file\n");
+        unsigned test = *(unsigned*) &pixels[i];
+        if( test == 0 )
+        {
+            data.img_data[i+0] = 0;
+            data.img_data[i+1] = 0;
+            data.img_data[i+2] = 0;
+            data.img_data[i+3] = 255;
+        }
+        else
+        {
+            data.img_data[i+0] = ( (5*pixels[i+0] + 7*pixels[i+1] + 1) * (pixels[i+2] + pixels[i+3]+1) )%256;
+            data.img_data[i+1] = ( (3*pixels[i+2] + 2*pixels[i+1] + 1) * (pixels[i+0] + pixels[i+3]+1) )%256;
+            data.img_data[i+2] = ( pixels[i+0] + pixels[i+1] + pixels[i+2] + pixels[i+3])%256;
+            data.img_data[i+3] = 255;
+        }
+    }
+
+    if (TGAWriteImage(image, &data) != TGA_OK)
+    {
+        printf("Writing tga-file failed\n");
         return image->last;
     }
-    return TGA_OK;
+    // Add footer for tga 2.0 files
+    fseek(image->fd, 0, SEEK_END);
+    fwrite("\0\0\0\0\0\0\0\0TRUEVISION-XFILE.\0", 1, 26, image->fd);
+    free(data.img_data);
+    TGAClose(image);
+
+    return 0;
 }
