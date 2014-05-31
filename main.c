@@ -19,6 +19,7 @@
 #include <FreeImage.h>
 #include "include/tga.h"
 #include "esUtil.h"
+#include "include/getTime.h"
 
 #define NUM_FBO 2
 #define NUM_TEX 2
@@ -36,10 +37,15 @@ typedef struct
     GLint  u_texDimLoc;
     GLint  u_thresholdLoc;
     GLint  u_passLoc;
+    GLint  u_debugLoc;
+    GLint  u_factorLoc;
 
     // Uniform values
     float u_threshold;
     GLint u_pass;
+    GLint u_debug;
+    GLint u_factor;
+
     // Sampler location
     GLint samplerLoc;
 
@@ -111,6 +117,8 @@ int Init ( ESContext *esContext, const char* vertShaderFile, const char* fragSha
     userData->u_texDimLoc     = glGetUniformLocation ( userData->programObject, "u_texDimensions" );
     userData->u_thresholdLoc  = glGetUniformLocation ( userData->programObject, "u_threshold" );
     userData->u_passLoc       = glGetUniformLocation ( userData->programObject, "u_pass" );
+    userData->u_debugLoc      = glGetUniformLocation ( userData->programObject, "u_debug" );
+    userData->u_factorLoc     = glGetUniformLocation ( userData->programObject, "u_factor" );
 
 
     // Create a framebuffer object
@@ -209,23 +217,23 @@ int main ( int argc, char *argv[] )
 
     userData.tgaImage = tgaImage;
     userData.tgaData  = &tgaData;
-    userData.u_threshold = 128 / 255.0;
+    userData.u_threshold = 64 / 255.0;
 
     esCreateWindow ( &esContext, "Simple Texture 2D", header->width, header->height, ES_WINDOW_RGB | ES_WINDOW_ALPHA);
     if ( !Init ( &esContext, "vertShader.glsl", "fragCreateRuns.glsl" ) )
         return 0;
 
-    printf("Pixels before rendering:\n");
-    tbyte *img = tgaData.img_data;
-    for(int i=0; i<header->height; i++)
-    {
-        for(int j=0; j<header->width; j++)
-        {
-            int index = 4*(i*header->width + j);
-            printf("%3d %3d %3d %3d | ", img[index], img[index+1], img[index+2], img[index+3]);
-        }
-        printf("\n");
-    }
+//    printf("Pixels before rendering:\n");
+//    tbyte *img = tgaData.img_data;
+//    for(int i=0; i<header->height; i++)
+//    {
+//        for(int j=0; j<header->width; j++)
+//        {
+//            int index = 4*(i*header->width + j);
+//            printf("%3d %3d %3d %3d | ", img[index], img[index+1], img[index+2], img[index+3]);
+//        }
+//        printf("\n");
+//    }
 
     createRuns(&esContext);
 
@@ -287,32 +295,54 @@ void createRuns(ESContext * esContext)
 
     // Make the BYTE array, factor of 3 because it's RGBA.
     GLubyte* pixels = malloc(4*esContext->width*esContext->height*sizeof(GLubyte));
+    userData->u_factor = -1.0;
 
-    for (int i = 0; i < logBase2(esContext->height)+5; i++)
+    double startTime, endTime;
+
+    startTime = getRealTime();
+
+    for (int i = 0; i < logBase2(esContext->height)+10; i++)
     {
-        userData->u_pass = i;
+        if( i%2 == 1)
+        {
+            userData->u_pass = 1;
+            userData->u_factor *= -1.0;
+            userData->u_debug = 0;
+        }
+        else
+        {
+            userData->u_pass = i;
+            userData->u_debug = 0;
+        }
+
 
         // Bind the FBO to write to
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, userData->fboId[userData->write]) );
         // Set the sampler texture unit to 0
         GL_CHECK( glUniform1i ( userData->samplerLoc, userData->read ) );
         // Set the pass index
-        GL_CHECK( glUniform1i ( userData->u_passLoc, userData->u_pass) );
+        GL_CHECK( glUniform1i ( userData->u_passLoc,  userData->u_pass) );
+        GL_CHECK( glUniform1i ( userData->u_debugLoc, userData->u_debug) );
+        GL_CHECK( glUniform1f ( userData->u_factorLoc, userData->u_factor) );
         // Draw scene
         GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices ) );
 
+#ifdef _DEBUG
         GL_CHECK( glReadPixels(0, 0, esContext->width, esContext->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-
-        printf("Pixels after pass %d:\n", userData->u_pass);
-        printLabels(&userData->tgaImage->hdr, pixels);
+        printf("Pixels after pass %d:\n", i);
+//        printLabels(&userData->tgaImage->hdr, pixels);
         char filename[50];
-        sprintf(filename, "out%03d.tga", userData->u_pass);
+        sprintf(filename, "out%03d.tga", i);
         writeTgaImage(esContext, filename, pixels);
+#endif
 
         // Switch read and write texture
         userData->read  = 1 - userData->read;
         userData->write = 1 - userData->write;
     }
+    endTime = getRealTime();
+
+    printf("Time: %f ms\n", (endTime-startTime)*1000);
 
     free(pixels);
 }

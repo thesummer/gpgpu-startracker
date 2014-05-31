@@ -8,3 +8,7 @@ vertShader.glsl
 fragInitShader.glsl
 fragLabelShader.glsl
 fragCreateRuns.glsl
+getTime.c
+include/tgaconfig.h
+include/tga.h
+include/getTime.h
