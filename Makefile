@@ -3,13 +3,14 @@
 INCLUDES=-I./Common -I./include
 LIBS=-lGLESv2 -lEGL -lm -Llib -ltga -lX11 -lfreeimage 
 
-CFLAGS=-g -Wall -std=c99 -D_DEBUG
+CFLAGS=-g -Wall -std=gnu99 -D_DEBUG
+#CFLAGS=-g -Wall -std=gnu99
 
 LFLAGS=
 
 NAME=texture
 
-SRCS=./main.c
+SRCS=./main.c getTime.c
 
 COMMONSRC=./Common/esShader.c    \
           ./Common/esTransform.c \
