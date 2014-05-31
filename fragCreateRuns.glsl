@@ -3,6 +3,8 @@ varying vec2 v_texCoord;        // texture coordinates
 uniform sampler2D s_texture;    // texture sampler
 uniform vec2 u_texDimensions;   // image/texture dimensions
 uniform int u_pass;
+uniform float u_factor;
+uniform int u_debug;
 uniform float u_threshold;      // threshold value for the threshold operation
 
 /*
@@ -100,23 +102,28 @@ void main()
 
         // Get neighbor pixel
         vec4 xValues, yValues;
-        vec4 tempCol   = texture2D(s_texture, img2texCoord(curCoord + vec2(1.0, 0.0)) );
+        vec4 tempCol   = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(1.0, 0.0)) );
         vec2 tempLabel = unpack2shorts(tempCol);
         xValues[0] = tempLabel.x;
         yValues[0] = tempLabel.y;
 
+        if(u_debug == 1)
+        {
+            gl_FragColor = pack2shorts(tempLabel);
+            return;
+        }
 
-        tempCol = texture2D(s_texture, img2texCoord(curCoord + vec2(-1.0, 1.0)) );
+        tempCol = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(-1.0, 1.0)) );
         tempLabel  = unpack2shorts(tempCol);
         xValues[1] = tempLabel.x;
         yValues[1] = tempLabel.y;
 
-        tempCol = texture2D(s_texture, img2texCoord(curCoord + vec2(0.0, 1.0)) );
+        tempCol = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(0.0, 1.0)) );
         tempLabel = unpack2shorts(tempCol);
         xValues[2] = tempLabel.x;
         yValues[2] = tempLabel.y;
 
-        tempCol = texture2D(s_texture, img2texCoord(curCoord + vec2(1.0, 1.0)) );
+        tempCol = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(1.0, 1.0)) );
         tempLabel = unpack2shorts(tempCol);
         xValues[3] = tempLabel.x;
         yValues[3] = tempLabel.y;
@@ -136,8 +143,8 @@ void main()
 
         // Complete mask and compute final x- and y-coordinate of most bottom-right pixel
         mask *= step(maxX, xValues);
-        maxX = dot(mask, xValues);
-        maxY = dot(mask, yValues);
+        maxX = dot(mask, xValues) / dot(mask, mask);
+        maxY = dot(mask, yValues) / dot(mask, mask);
 
         // Compare the maximum of the neighbor pixels with current coord and assign the maximum label to current pixel
         xValues.xy = vec2(maxX, curLabel.x);
@@ -149,8 +156,10 @@ void main()
         xValues.xy *= mask.xy;
         maxX = max(xValues[0], xValues[1]);
         mask.xy *= step(maxX, xValues.xy);
+        maxX = dot(mask.xy, xValues.xy) / dot(mask.xy, mask.xy);
+        maxY = dot(mask.xy, yValues.xy) / dot(mask.xy, mask.xy);
 
-        gl_FragColor = pack2shorts(vec2(dot(mask.xy, xValues.xy), dot(mask.xy, yValues.xy) )) * isZero ;
+        gl_FragColor = pack2shorts(vec2(maxX, maxY)) * isZero ;
     }
     else
     {
