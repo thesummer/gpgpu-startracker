@@ -16,7 +16,6 @@
 //
 #include <stdlib.h>
 #include <stdio.h>
-#include <FreeImage.h>
 #include "include/tga.h"
 #include "esUtil.h"
 #include "include/getTime.h"
