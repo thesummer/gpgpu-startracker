@@ -239,6 +239,7 @@ void ESUTIL_API esInitContext ( ESContext *esContext )
 //
 GLboolean ESUTIL_API esCreateWindow ( ESContext *esContext, const char* title, GLint width, GLint height, GLuint flags )
 {
+#ifdef _X11
    EGLint attribList[] =
    {
        EGL_RED_SIZE,       8,
@@ -273,7 +274,7 @@ GLboolean ESUTIL_API esCreateWindow ( ESContext *esContext, const char* title, G
    {
       return GL_FALSE;
    }
-   
+#endif
 
    return GL_TRUE;
 }
