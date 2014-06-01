@@ -184,9 +184,10 @@ EGLBoolean WinCreate(ESContext *esContext, const char *title)
 //
 GLboolean userInterrupt(ESContext *esContext)
 {
+    GLboolean userinterrupt = GL_FALSE;
+#ifdef _X11
     XEvent xev;
     KeySym key;
-    GLboolean userinterrupt = GL_FALSE;
     char text;
 
     // Pump all messages from X server. Keypresses are directed to keyfunc (if defined)
@@ -204,6 +205,7 @@ GLboolean userInterrupt(ESContext *esContext)
         if ( xev.type == DestroyNotify )
             userinterrupt = GL_TRUE;
     }
+#endif
     return userinterrupt;
 }
 
