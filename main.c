@@ -219,7 +219,11 @@ int main ( int argc, char *argv[] )
     userData.tgaData  = &tgaData;
     userData.u_threshold = 64 / 255.0;
 
-    esCreateWindow ( &esContext, "Simple Texture 2D", header->width, header->height, ES_WINDOW_RGB | ES_WINDOW_ALPHA);
+    if( !esCreateWindowlessContext( &esContext, header->width, header->height) )
+    {
+        printf("esCreateWindowlessContext failed\n");
+        return 1;
+    }
     if ( !Init ( &esContext, "vertShader.glsl", "fragCreateRuns.glsl" ) )
         return 0;
 
@@ -328,12 +332,12 @@ void createRuns(ESContext * esContext)
         GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices ) );
 
 #ifdef _DEBUG
-        GL_CHECK( glReadPixels(0, 0, esContext->width, esContext->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-        printf("Pixels after pass %d:\n", i);
-//        printLabels(&userData->tgaImage->hdr, pixels);
-        char filename[50];
-        sprintf(filename, "out%03d.tga", i);
-        writeTgaImage(esContext, filename, pixels);
+//        GL_CHECK( glReadPixels(0, 0, esContext->width, esContext->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+//        printf("Pixels after pass %d:\n", i);
+////        printLabels(&userData->tgaImage->hdr, pixels);
+//        char filename[50];
+//        sprintf(filename, "out%03d.tga", i);
+//        writeTgaImage(esContext, filename, pixels);
 #endif
 
         // Switch read and write texture
