@@ -27,12 +27,15 @@
 #include <EGL/egl.h>
 #include "esUtil.h"
 
+#ifdef _X11
+
 #include  <X11/Xlib.h>
 #include  <X11/Xatom.h>
 #include  <X11/Xutil.h>
 
 // X11 related local variables
 static Display *x_display = NULL;
+#endif
 
 ///
 // CreateEGLContext()
@@ -53,7 +56,9 @@ EGLBoolean CreateEGLContext ( EGLNativeWindowType hWnd, EGLDisplay* eglDisplay,
    EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE, EGL_NONE };
 
    // Get Display
+#ifdef _X11
    display = eglGetDisplay((EGLNativeDisplayType)x_display);
+#endif
    if ( display == EGL_NO_DISPLAY )
    {
       return EGL_FALSE;
