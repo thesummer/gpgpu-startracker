@@ -49,7 +49,7 @@ EGLBoolean CreateEGLContext ( EGLNativeWindowType hWnd, EGLDisplay* eglDisplay,
    EGLint numConfigs;
    EGLint majorVersion;
    EGLint minorVersion;
-   EGLDisplay display;
+   EGLDisplay display = 0;
    EGLContext context;
    EGLSurface surface;
    EGLConfig config;
