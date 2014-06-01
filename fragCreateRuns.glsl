@@ -19,8 +19,8 @@ return vec4: RGBA value which contains the packed shorts with LSB first.
 */
 vec4 pack2shorts(in vec2 shorts)
 {
-    shorts /= 256.0f;
-    return vec4(floor(shorts)/255.0f, fract(shorts)*256.0f/255.0f).zxwy;
+    shorts /= 256.0;
+    return vec4(floor(shorts)/255.0, fract(shorts)*256.0/255.0).zxwy;
 }
 
 /*
@@ -35,7 +35,7 @@ return vec2: vector which will contain the 2 shorts
 vec2 unpack2shorts(in vec4 rgba)
 {
     // LSB * 255 + MSB * 255*256
-    return vec2(rgba.xz * 255.0f + 255.0f*256.0f * rgba.yw);
+    return vec2(rgba.xz * 255.0 + 255.0*256.0 * rgba.yw);
 }
 
 /*
@@ -62,7 +62,7 @@ return vec2: vecture with image coordinates
 */
 vec2 tex2imgCoord(in vec2 texCoord)
 {
-    return (2.0f*texCoord*u_texDimensions-1.0f)/2.0f;
+    return (2.0*texCoord*u_texDimensions-1.0)/2.0;
 }
 
 
@@ -78,7 +78,7 @@ return vec2: texture coordinates in [0,1], [0,1]
 */
 vec2 img2texCoord(in vec2 imgCoord)
 {
-    return (2.0f*imgCoord + 1.0f)/(2.0f*u_texDimensions);
+    return (2.0*imgCoord + 1.0)/(2.0*u_texDimensions);
 }
 
 void main()
