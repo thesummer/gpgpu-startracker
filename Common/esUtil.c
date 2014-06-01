@@ -241,9 +241,9 @@ GLboolean ESUTIL_API esCreateWindow ( ESContext *esContext, const char* title, G
 {
    EGLint attribList[] =
    {
-       EGL_RED_SIZE,       5,
-       EGL_GREEN_SIZE,     6,
-       EGL_BLUE_SIZE,      5,
+       EGL_RED_SIZE,       8,
+       EGL_GREEN_SIZE,     8,
+       EGL_BLUE_SIZE,      8,
        EGL_ALPHA_SIZE,     (flags & ES_WINDOW_ALPHA) ? 8 : EGL_DONT_CARE,
        EGL_DEPTH_SIZE,     (flags & ES_WINDOW_DEPTH) ? 8 : EGL_DONT_CARE,
        EGL_STENCIL_SIZE,   (flags & ES_WINDOW_STENCIL) ? 8 : EGL_DONT_CARE,
@@ -276,6 +276,66 @@ GLboolean ESUTIL_API esCreateWindow ( ESContext *esContext, const char* title, G
    
 
    return GL_TRUE;
+}
+
+GLboolean ESUTIL_API esCreateWindowlessContext( ESContext *esContext, GLint width, GLint height)
+{
+    EGLDisplay eglDisplay;
+    EGLConfig eglConfig;
+
+    if ( esContext == NULL )
+    {
+       return GL_FALSE;
+    }
+
+    esContext->width = width;
+    esContext->height = height;
+
+// Step 1 - Get the default display.
+   eglDisplay = eglGetDisplay((EGLNativeDisplayType)0);
+   EGL_CHECK(eglDisplay != EGL_NO_DISPLAY);
+
+// Step 2 - Initialize EGL.
+   EGL_CHECK(eglInitialize(eglDisplay, NULL, NULL) );
+
+   EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2,
+                                                          EGL_NONE };
+
+// Step 3 - Make OpenGL ES the current API.
+   EGL_CHECK( eglBindAPI(EGL_OPENGL_ES_API) );
+
+// Step 4 - Specify the required configuration attributes.
+   EGLint attribList[] = { EGL_SURFACE_TYPE   , EGL_PBUFFER_BIT,
+                           EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+                           EGL_NONE
+                         };
+
+// Step 5 - Find a config that matches all requirements.
+   int iConfigs;
+   EGL_CHECK( eglChooseConfig(eglDisplay, attribList, &eglConfig, 1, &iConfigs) );
+
+   if (iConfigs != 1) {
+       printf("Error: eglChooseConfig(): config not found.\n");
+       return EGL_FALSE;
+   }
+
+// Step 6 - Create a surface to draw to.
+   EGLSurface eglSurface;
+   eglSurface = eglCreatePbufferSurface(eglDisplay, eglConfig, NULL);
+   EGL_CHECK(eglSurface != EGL_NO_SURFACE);
+
+// Step 7 - Create a context.
+   EGLContext eglContext = eglCreateContext(eglDisplay, eglConfig, NULL, contextAttribs);
+   EGL_CHECK(eglContext != EGL_NO_CONTEXT);
+
+// Step 8 - Bind the context to the current thread
+   EGL_CHECK( eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext) );
+
+   esContext->eglDisplay = eglDisplay;
+   esContext->eglSurface = eglSurface;
+   esContext->eglContext = eglContext;
+
+   return EGL_TRUE;
 }
 
 
@@ -422,6 +482,16 @@ void esCheckOpenGLError(const char* stmt, const char* fname, int line)
     if (err != GL_NO_ERROR)
     {
         printf("OpenGL error %08x, at %s:%i - for %s\n", err, fname, line, stmt);
+        abort();
+    }
+}
+
+void esCheckEGLError(const char* stmt, const char* fname, int line)
+{
+    GLenum err = eglGetError();
+    if (err != EGL_SUCCESS)
+    {
+        printf("EGL error %08x, at %s:%i - for %s\n", err, fname, line, stmt);
         abort();
     }
 }

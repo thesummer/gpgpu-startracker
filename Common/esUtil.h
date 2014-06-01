@@ -57,6 +57,16 @@ extern "C" {
     #define GL_CHECK(stmt) stmt
 #endif
 
+#ifdef _DEBUG
+    #define EGL_CHECK(stmt) do { \
+            if(!stmt) { \
+                esCheckEGLError(#stmt, __FILE__, __LINE__); \
+            }\
+        } while(0)
+#else
+#define EGL_CHECK(stmt) stmt
+#endif
+
 ///
 // Types
 //
@@ -128,6 +138,8 @@ void ESUTIL_API esInitContext ( ESContext *esContext );
 ///         ES_WINDOW_MULTISAMPLE - specifies that a multi-sample buffer should be created
 /// \return GL_TRUE if window creation is succesful, GL_FALSE otherwise
 GLboolean ESUTIL_API esCreateWindow ( ESContext *esContext, const char *title, GLint width, GLint height, GLuint flags );
+
+GLboolean ESUTIL_API esCreateWindowlessContext( ESContext *esContext, GLint width, GLint height);
 
 //
 /// \brief Start the main loop for the OpenGL ES application
@@ -230,6 +242,7 @@ char* ESUTIL_API esLoadTGA ( char *fileName, int *width, int *height );
 
 void esCheckOpenGLError(const char* stmt, const char* fname, int line);
 
+void esCheckEGLError(const char* stmt, const char* fname, int line);
 
 //
 /// \brief multiply matrix specified by result with a scaling matrix and return new matrix in result
