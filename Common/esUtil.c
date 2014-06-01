@@ -111,6 +111,7 @@ EGLBoolean CreateEGLContext ( EGLNativeWindowType hWnd, EGLDisplay* eglDisplay,
 //
 EGLBoolean WinCreate(ESContext *esContext, const char *title)
 {
+#ifdef _X11
     Window root;
     XSetWindowAttributes swa;
     XSetWindowAttributes  xattr;
@@ -169,6 +170,9 @@ EGLBoolean WinCreate(ESContext *esContext, const char *title)
 
     esContext->hWnd = (EGLNativeWindowType) win;
     return EGL_TRUE;
+#else
+    return EGL_FALSE;
+#endif
 }
 
 
@@ -239,7 +243,6 @@ void ESUTIL_API esInitContext ( ESContext *esContext )
 //
 GLboolean ESUTIL_API esCreateWindow ( ESContext *esContext, const char* title, GLint width, GLint height, GLuint flags )
 {
-#ifdef _X11
    EGLint attribList[] =
    {
        EGL_RED_SIZE,       8,
@@ -274,7 +277,6 @@ GLboolean ESUTIL_API esCreateWindow ( ESContext *esContext, const char* title, G
    {
       return GL_FALSE;
    }
-#endif
 
    return GL_TRUE;
 }
@@ -294,7 +296,7 @@ GLboolean ESUTIL_API esCreateWindowlessContext( ESContext *esContext, GLint widt
 
 // Step 1 - Get the default display.
    eglDisplay = eglGetDisplay((EGLNativeDisplayType)0);
-   EGL_CHECK(eglDisplay != EGL_NO_DISPLAY);
+   EGL_CHECK( (eglDisplay != EGL_NO_DISPLAY) );
 
 // Step 2 - Initialize EGL.
    EGL_CHECK(eglInitialize(eglDisplay, NULL, NULL) );
@@ -323,11 +325,11 @@ GLboolean ESUTIL_API esCreateWindowlessContext( ESContext *esContext, GLint widt
 // Step 6 - Create a surface to draw to.
    EGLSurface eglSurface;
    eglSurface = eglCreatePbufferSurface(eglDisplay, eglConfig, NULL);
-   EGL_CHECK(eglSurface != EGL_NO_SURFACE);
+   EGL_CHECK( (eglSurface != EGL_NO_SURFACE) );
 
 // Step 7 - Create a context.
    EGLContext eglContext = eglCreateContext(eglDisplay, eglConfig, NULL, contextAttribs);
-   EGL_CHECK(eglContext != EGL_NO_CONTEXT);
+   EGL_CHECK( (eglContext != EGL_NO_CONTEXT) );
 
 // Step 8 - Bind the context to the current thread
    EGL_CHECK( eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext) );
