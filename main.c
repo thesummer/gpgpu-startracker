@@ -137,7 +137,7 @@ int Init ( ESContext *esContext, const char* vertShaderFile, const char* fragSha
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE)
         {
-            printf("Framebuffer is not complete\n");
+            printf("Framebuffer is not complete with %08x\n", status);
         }
     }
 
@@ -170,10 +170,10 @@ void ShutDown ( ESContext *esContext )
     GL_CHECK( glDeleteProgram ( userData->programObject ) );
 
     // Free memory of the image data
-    if(userData->tgaData->img_data != NULL)
-        free(userData->tgaData->img_data);
-    if(userData->tgaData->cmap != NULL)
-        free(userData->tgaData->cmap);
+//    if(userData->tgaData->img_data != NULL)
+//        free(userData->tgaData->img_data);
+//    if(userData->tgaData->cmap != NULL)
+//        free(userData->tgaData->cmap);
 //    if(userData->tgaData->img_id != NULL)
 //        free(userData->tgaData->img_id);
 
@@ -331,12 +331,12 @@ void createRuns(ESContext * esContext)
         GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices ) );
 
 #ifdef _DEBUG
-//        GL_CHECK( glReadPixels(0, 0, esContext->width, esContext->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-//        printf("Pixels after pass %d:\n", i);
-////        printLabels(&userData->tgaImage->hdr, pixels);
-//        char filename[50];
-//        sprintf(filename, "out%03d.tga", i);
-//        writeTgaImage(esContext, filename, pixels);
+        GL_CHECK( glReadPixels(0, 0, esContext->width, esContext->height, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+        printf("Pixels after pass %d:\n", i);
+//        printLabels(&userData->tgaImage->hdr, pixels);
+        char filename[50];
+        sprintf(filename, "out%03d.tga", i);
+        writeTgaImage(esContext, filename, pixels);
 #endif
 
         // Switch read and write texture
@@ -386,6 +386,12 @@ int writeTgaImage(ESContext * esContext, char *filename, GLubyte *pixels)
     image->hdr.id_len = 0;
     image->hdr.vert   = 1;
     image->hdr.horz   = 1;
+    image->hdr.x      = 0;
+    image->hdr.y      = 0;
+    image->hdr.map_entry = 0;
+    image->hdr.map_first = 0;
+    image->hdr.map_len   = 0;
+    image->hdr.map_t     = 0;
 
     TGAData data = {0, 0, 0, TGA_IMAGE_DATA | TGA_RGB};
     data.img_data = malloc(4*sizeof(char) * esContext->width * esContext->height);
