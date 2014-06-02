@@ -7,6 +7,9 @@ uniform float u_factor;
 uniform int u_debug;
 uniform float u_threshold;      // threshold value for the threshold operation
 
+const float ONE = 1.0;
+const float TWO = 2.0;
+
 /*
 Assuming that the texture is 8-bit RGBA 32bits are available for packing.
 This function packs 2 16-bit short integer values into the 4 texture channels.
@@ -62,7 +65,7 @@ return vec2: vecture with image coordinates
 */
 vec2 tex2imgCoord(in vec2 texCoord)
 {
-    return (2.0*texCoord*u_texDimensions-1.0)/2.0;
+    return (TWO*texCoord*u_texDimensions-ONE)/TWO;
 }
 
 
@@ -78,7 +81,7 @@ return vec2: texture coordinates in [0,1], [0,1]
 */
 vec2 img2texCoord(in vec2 imgCoord)
 {
-    return (2.0*imgCoord + 1.0)/(2.0*u_texDimensions);
+    return (TWO*imgCoord + ONE)/(TWO*u_texDimensions);
 }
 
 void main()
@@ -90,7 +93,7 @@ void main()
         // Threshold operation
         curPixelCol = step(u_threshold, curPixelCol);
 
-        gl_FragColor = pack2shorts( (tex2imgCoord(v_texCoord) + 1.0 ) * curPixelCol.xy);
+        gl_FragColor = pack2shorts( (tex2imgCoord(v_texCoord) + ONE ) * curPixelCol.xy);
     }
     // Second pass find neighbor with higest label
     else if (u_pass == 1)
@@ -98,11 +101,11 @@ void main()
         vec4 curCol   = texture2D( s_texture, v_texCoord );
         vec2 curLabel = unpack2shorts(curCol);
         vec2 curCoord = tex2imgCoord(v_texCoord);
-        float isZero  = step(1.0/256.0, length(curCol) );
+        float isZero  = step(ONE/256.0, length(curCol) );
 
         // Get neighbor pixel
         vec4 xValues, yValues;
-        vec4 tempCol   = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(1.0, 0.0)) );
+        vec4 tempCol   = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(ONE, 0.0)) );
         vec2 tempLabel = unpack2shorts(tempCol);
         xValues[0] = tempLabel.x;
         yValues[0] = tempLabel.y;
@@ -113,17 +116,17 @@ void main()
             return;
         }
 
-        tempCol = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(-1.0, 1.0)) );
+        tempCol = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(-ONE, ONE)) );
         tempLabel  = unpack2shorts(tempCol);
         xValues[1] = tempLabel.x;
         yValues[1] = tempLabel.y;
 
-        tempCol = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(0.0, 1.0)) );
+        tempCol = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(0.0, ONE)) );
         tempLabel = unpack2shorts(tempCol);
         xValues[2] = tempLabel.x;
         yValues[2] = tempLabel.y;
 
-        tempCol = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(1.0, 1.0)) );
+        tempCol = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(ONE, ONE)) );
         tempLabel = unpack2shorts(tempCol);
         xValues[3] = tempLabel.x;
         yValues[3] = tempLabel.y;
@@ -164,6 +167,6 @@ void main()
     else
     {
         vec2 curLabel = unpack2shorts( texture2D(s_texture, v_texCoord) );
-        gl_FragColor  = texture2D(s_texture, img2texCoord(curLabel-1.0) );
+        gl_FragColor  = texture2D(s_texture, img2texCoord(curLabel-ONE) );
     }
 }
