@@ -1,0 +1,6 @@
+*.tga
+*.o
+lib*
+*.user
+*.log
+*.txt
