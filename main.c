@@ -350,6 +350,13 @@ void createRuns(ESContext * esContext)
     free(pixels);
 }
 
+void reduction(ESContext *esContext)
+{
+    UserData *userData = esContext->userData;
+
+
+}
+
 int loadTgaImage(TGA **image, TGAData *data, char *filename)
 {
     *image = TGAOpen(filename, "r");
