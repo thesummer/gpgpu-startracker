@@ -12,3 +12,5 @@ getTime.c
 include/tgaconfig.h
 include/tga.h
 include/getTime.h
+ogles.h
+ogles.cpp
