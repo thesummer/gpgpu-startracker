@@ -2,6 +2,7 @@
 #define OGLES_H
 
 #include<string>
+#include "include/tga.h"
 
 class ogles
 {
@@ -78,6 +79,12 @@ private:
     int initEGL(int width, int height);
     int initOGL();
 
+    GLuint loadProgramFromFile(const std::string vertShaderFile,
+                               const std::string fragShaderFile);
+
+    GLuint loadShader(GLenum type, const std::string &shaderSrc);
+
+    int loadTgaImage(TGA **image, TGAData *data, char *filename);
     void checkEGLError(const char* stmt, const char* fname, int line);
     void checkOpenGLError(const char* stmt, const char* fname, int line);
 

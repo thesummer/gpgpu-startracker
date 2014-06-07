@@ -34,6 +34,7 @@ ogles::ogles(int width, int height)
     esContext = {};
 
     // initialize EGL-context
+    initEGL(width, height);
 }
 
 ogles::ogles(std::string tgaFilename)
@@ -42,8 +43,12 @@ ogles::ogles(std::string tgaFilename)
     esContext = {};
 
     // Read TGA-file
+    TGA *tgaImage = 0;
+    TGAData tgaData;
+    loadTgaImage(&tgaImage, &tgaData, tgaFilename.c_str());
 
     // initialize EGL-context
+    initEGL(tgaImage->hdr.width, tgaImage->hdr.height);
 }
 
 
@@ -234,6 +239,25 @@ GLuint ogles::loadShader(GLenum type, const std::string &shaderSrc)
     }
 
     return shader;
+}
+
+int ogles::loadTgaImage(TGA **image, TGAData *data, char *filename)
+{
+    *image = TGAOpen(filename, "r");
+    data->flags = TGA_IMAGE_DATA | TGA_RGB;
+
+    if(!*image || (*image)->last != TGA_OK)
+    {
+        printf("Opening tga-file failed\n");
+        return (*image)->last;
+    }
+
+    if(TGAReadImage(*image, data) != TGA_OK)
+    {
+        printf("Failed to read tga-file\n");
+        return (*image)->last;
+    }
+    return TGA_OK;
 }
 
 void ogles::checkEGLError(const char *stmt, const char *fname, int line)
