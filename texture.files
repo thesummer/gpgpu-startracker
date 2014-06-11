@@ -1,9 +1,3 @@
-Common/esShader.c
-Common/esShapes.c
-Common/esTransform.c
-Common/esUtil.c
-Common/esUtil.h
-main.c
 vertShader.glsl
 fragInitShader.glsl
 fragLabelShader.glsl
@@ -13,3 +7,10 @@ include/tgaconfig.h
 include/tga.h
 include/getTime.h
 fragReductionShader.glsl
+ogles.h
+ogles.cpp
+labelPhase.h
+phase.h
+phase.cpp
+main.cpp
+labelPhase.cpp

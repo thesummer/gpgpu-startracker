@@ -92,7 +92,7 @@ enum {  TGA_OK = 0, 		/* success */
 #define TGA_ERRORS 8  /* total number of error codes */
 
 /* text strings corresponding to the error codes */
-static char*
+static const char*
 tga_error_strings[] = {
 	"Success",
 	"Error",
@@ -166,7 +166,7 @@ struct _TGA {
 __BEGIN_DECLS
 
 
-TGA* TGAOpen __P((char *name, char *mode));
+TGA* TGAOpen __P((const char *name, const char *mode));
 
 TGA* TGAOpenFd __P((FILE *fd));
 
