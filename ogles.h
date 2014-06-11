@@ -1,10 +1,15 @@
 #ifndef OGLES_H
 #define OGLES_H
 
+#include <GLES2/gl2.h>
+#include <EGL/egl.h>
+
 #include<string>
+#include "phase.h"
+#include "labelPhase.h"
 #include "include/tga.h"
 
-class ogles
+class Ogles
 {
 public:
     struct ESContext
@@ -28,68 +33,26 @@ public:
        EGLSurface  eglSurface;
     } esContext;
 
+// Phases:
+    //1. LabelPhase
+    LabelPhase mLabelPhase;
 
-    // Struct which hold the Opengl handles for every stage
-    // 1. Label stage:
-    struct labData
-    {
-        // Handle to a program object
-        GLuint programObject;
-
-        // Attribute locations
-        /// TODO: general shader?
-        GLint  positionLoc;
-        GLint  texCoordLoc;
-
-        // Uniform locations
-        GLint  u_texDimLoc;
-        GLint  u_thresholdLoc;
-        GLint  u_passLoc;
-        GLint  u_debugLoc;
-        GLint  u_factorLoc;
-
-        // Uniform values
-        float u_threshold;
-        GLint u_pass;
-        GLint u_debug;
-        GLint u_factor;
-
-        // Sampler location
-        GLint samplerLoc;
-
-        // Texture handle
-        GLuint textureId;
-        /// TODO: tga somewhere else?
-        TGA    *tgaImage;
-        TGAData *tgaData;
-
-        // Framebuffer
-        GLuint fboId[NUM_FBO] ;
-        GLuint write;
-        GLuint read;
-
-        // Texture to attach to the frambuffer
-        GLuint fboTexId[NUM_FBO];
-    };
-
-    ogles(int width, int height);
-    ogles(std::string tgaFilename);
+    Ogles(int width, int height);
+    Ogles(std::string tgaFilename);
+    void run();
 
 private:
     int initEGL(int width, int height);
-    int initOGL();
 
-    GLuint loadProgramFromFile(const std::string vertShaderFile,
-                               const std::string fragShaderFile);
-
-    GLuint loadShader(GLenum type, const std::string &shaderSrc);
-
-    int loadTgaImage(TGA **image, TGAData *data, char *filename);
+    int loadTgaImage(TGA **image, TGAData *data, const char *filename);
     void checkEGLError(const char* stmt, const char* fname, int line);
-    void checkOpenGLError(const char* stmt, const char* fname, int line);
 
     int mWidth;
     int mHeight;
+
+    // Framebuffers
+    TGAData mImgData;
+    GLuint mFboId[2] ;
 
 };
 

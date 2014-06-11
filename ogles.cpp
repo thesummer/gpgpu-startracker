@@ -8,15 +8,7 @@ using std::cerr;
 using std::endl;
 
 #include "ogles.h"
-
-#ifdef _DEBUG
-    #define GL_CHECK(stmt) do { \
-            stmt; \
-            checkOpenGLError(#stmt, __FILE__, __LINE__); \
-        } while (0)
-#else
-    #define GL_CHECK(stmt) stmt
-#endif
+#include "phase.h"
 
 #ifdef _DEBUG
     #define EGL_CHECK(stmt) do { \
@@ -28,43 +20,62 @@ using std::endl;
 #define EGL_CHECK(stmt) stmt
 #endif
 
-ogles::ogles(int width, int height)
+Ogles::Ogles(int width, int height)
+    :mLabelPhase(width, height), mWidth(width), mHeight(height)
 {
-    // Initialize esContext to 0
+    // Initialize structs to 0
     esContext = {};
 
     // initialize EGL-context
     initEGL(width, height);
+
+    // initialize the 2 frambuffers for ping-pong method
+    GL_CHECK( glGenFramebuffers(2, mFboId) );
+
+    mLabelPhase.init(mFboId);
 }
 
-ogles::ogles(std::string tgaFilename)
+Ogles::Ogles(std::string tgaFilename)
+    :mLabelPhase(0, 0)
 {
     // Initialize esContext to 0
     esContext = {};
 
     // Read TGA-file
     TGA *tgaImage = 0;
-    TGAData tgaData;
-    loadTgaImage(&tgaImage, &tgaData, tgaFilename.c_str());
+    loadTgaImage(&tgaImage, &mImgData, tgaFilename.c_str());
+
+    mWidth  = tgaImage->hdr.width;
+    mHeight = tgaImage->hdr.height;
+
+    mLabelPhase.mWidth  = mWidth;
+    mLabelPhase.mHeight = mHeight;
+    mLabelPhase.mTgaData = &mImgData;
 
     // initialize EGL-context
-    initEGL(tgaImage->hdr.width, tgaImage->hdr.height);
+    initEGL(mWidth, mHeight);
+
+    // initialize the 2 frambuffers for ping-pong method
+    GL_CHECK( glGenFramebuffers(2, mFboId) );
+
+    mLabelPhase.init(mFboId);
+}
+
+void Ogles::run()
+{
+    mLabelPhase.setupGeometry();
+    mLabelPhase.run();
 }
 
 
 
-int ogles::initEGL(int width, int height)
+int Ogles::initEGL(int width, int height)
 {
     EGLDisplay eglDisplay;
     EGLConfig eglConfig;
 
-    if ( esContext == NULL )
-    {
-       return GL_FALSE;
-    }
-
-    esContext->width  = width;
-    esContext->height = height;
+    esContext.width  = width;
+    esContext.height = height;
 
 // Step 1 - Get the default display.
    eglDisplay = eglGetDisplay((EGLNativeDisplayType)0);
@@ -106,142 +117,14 @@ int ogles::initEGL(int width, int height)
 // Step 8 - Bind the context to the current thread
    EGL_CHECK( eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext) );
 
-   esContext->eglDisplay = eglDisplay;
-   esContext->eglSurface = eglSurface;
-   esContext->eglContext = eglContext;
+   esContext.eglDisplay = eglDisplay;
+   esContext.eglSurface = eglSurface;
+   esContext.eglContext = eglContext;
 
    return EGL_TRUE;
 }
 
-int ogles::initOGL()
-{
-
-}
-
-GLuint ogles::loadProgramFromFile(const std::string vertShaderFile, const std::string fragShaderFile)
-{
-    GLuint vertexShader;
-    GLuint fragmentShader;
-    GLuint programObject;
-    GLint linked;
-
-
-    std::ifstream sourceFile(vertexShaderFile);
-    std::string sourceString((std::istreambuf_iterator<char>(sourceFile)),
-                              std::istreambuf_iterator<char>());
-
-    sourceFile.close();
-
-    // Load the vertex/fragment shaders
-    vertexShader = loadShader( GL_VERTEX_SHADER, sourceString );
-    if ( vertexShader == 0 )
-       goto error;
-
-    sourceFile.open(fragShaderFile);
-    std::string sourceString((std::istreambuf_iterator<char>(sourceFile)),
-                              std::istreambuf_iterator<char>());
-    sourceFile.close();
-
-    fragmentShader = loadShader(GL_FRAGMENT_SHADER, sourceString );
-    if ( fragmentShader == 0 )
-    {
-       glDeleteShader( vertexShader );
-       goto error;
-    }
-
-    // Create the program object
-    programObject = glCreateProgram ( );
-    if ( programObject == 0 )
-       goto error;
-
-    GL_CHECK( glAttachShader ( programObject, vertexShader ) );
-    GL_CHECK( glAttachShader ( programObject, fragmentShader ) );
-
-    // Link the program
-    GL_CHECK( glLinkProgram ( programObject ) );
-
-    // Check the link status
-    GL_CHECK( glGetProgramiv ( programObject, GL_LINK_STATUS, &linked ) );
-
-    if ( !linked )
-    {
-       GLint infoLen = 0;
-
-       GL_CHECK( glGetProgramiv ( programObject, GL_INFO_LOG_LENGTH, &infoLen ) );
-
-       if ( infoLen > 1 )
-       {
-          char* infoLog = malloc (sizeof(char) * infoLen );
-
-          GL_CHECK( glGetProgramInfoLog ( programObject, infoLen, NULL, infoLog ) );
-          cerr << "Error linking program:" << endl;
-          cerr << infoLog << endl;
-
-          free ( infoLog );
-       }
-
-       glDeleteProgram ( programObject );
-       goto error;
-    }
-
-    // Free up no longer needed shader resources
-    glDeleteShader ( vertexShader );
-    glDeleteShader ( fragmentShader );
-
-    return programObject;
-
- error:
-    glDeleteShader ( vertexShader );
-    glDeleteShader ( fragmentShader );
-    return 0;
-}
-
-GLuint ogles::loadShader(GLenum type, const std::string &shaderSrc)
-{
-    GLuint shader;
-    GLint compiled;
-
-    // Create the shader object
-    shader = glCreateShader ( type );
-
-    if ( shader == 0 )
-     return 0;
-
-    // Load the shader source
-    const GLchar * cstr = shaderSrc.c_str();
-    GL_CHECK( glShaderSource ( shader, 1, &cstr, NULL ) );
-
-    // Compile the shader
-    GL_CHECK( glCompileShader ( shader ) );
-
-    // Check the compile status
-    GL_CHECK(glGetShaderiv ( shader, GL_COMPILE_STATUS, &compiled ) );
-
-    if ( !compiled )
-    {
-       GLint infoLen = 0;
-
-       GL_CHECK( glGetShaderiv ( shader, GL_INFO_LOG_LENGTH, &infoLen ) );
-
-       if ( infoLen > 1 )
-       {
-          char* infoLog = malloc (sizeof(char) * infoLen );
-
-          GL_CHECK( glGetShaderInfoLog ( shader, infoLen, NULL, infoLog ) );
-          cerr << "Error compiling shader:" << endl;
-          cerr << infoLog << endl;
-
-          free ( infoLog );
-       }
-
-       GL_CHECK( glDeleteShader ( shader ) );
-       return 0;
-    }
-
-    return shader;
-}
-
-int ogles::loadTgaImage(TGA **image, TGAData *data, char *filename)
+int Ogles::loadTgaImage(TGA **image, TGAData *data, const char *filename)
 {
     *image = TGAOpen(filename, "r");
     data->flags = TGA_IMAGE_DATA | TGA_RGB;
@@ -260,7 +143,7 @@ int ogles::loadTgaImage(TGA **image, TGAData *data, char *filename)
     return TGA_OK;
 }
 
-void ogles::checkEGLError(const char *stmt, const char *fname, int line)
+void Ogles::checkEGLError(const char *stmt, const char *fname, int line)
 {
     GLenum err = eglGetError();
     if (err != EGL_SUCCESS)
@@ -270,12 +153,3 @@ void ogles::checkEGLError(const char *stmt, const char *fname, int line)
     }
 }
 
-void ogles::checkOpenGLError(const char *stmt, const char *fname, int line)
-{
-    GLenum err = glGetError();
-    if (err != GL_NO_ERROR)
-    {
-        printf("OpenGL error %08x, at %s:%i - for %s\n", err, fname, line, stmt);
-        abort();
-    }
-}

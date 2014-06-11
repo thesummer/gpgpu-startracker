@@ -3,24 +3,28 @@
 INCLUDES=-I./Common -I./include
 LIBS=-lGLESv2 -lEGL -lm -Llib -ltga
 
-CFLAGS=-g -Wall -std=gnu99 -D_DEBUG
-#CFLAGS=-g -Wall -std=gnu99
+CFLAGS=-g -Wall -D_DEBUG -std=gnu++11
+#CFLAGS=-g -Wall
 
 LFLAGS=
 
 NAME=texture
 
-SRCS=./main.c getTime.c
+SRCS=./main.cpp ogles.cpp phase.cpp labelPhase.cpp getTime.c
 
-COMMONSRC=./Common/esShader.c    \
-          ./Common/esTransform.c \
-          ./Common/esShapes.c    \
-          ./Common/esUtil.c
-HEADERS=./Common/esUtil.h
+OBJ=$(SRCS:.cpp=.o)
 
-SRCS+= ${COMMONSRC}
+# SRCS+=labelPhase.hpp
+# OBJ+=labelphase.o
 
-OBJ=$(SRCS:.c=.o)
+# COMMONSRC=./Common/esShader.c    \
+#           ./Common/esTransform.c \
+#           ./Common/esShapes.c    \
+#           ./Common/esUtil.c
+# HEADERS=./Common/esUtil.h
+# SRCS+= ${COMMONSRC}
+
+
 
 default: all
 
@@ -31,7 +35,7 @@ clean:
 	rm -fv *.o ./Common/*.o
 
 texture: ${HEADERS} ${OBJ}
-	gcc ${OBJ} -o ${NAME} ${LFLAGS} ${INCLUDES} ${LIBS}
+	g++ ${OBJ} -o ${NAME} ${LFLAGS} ${INCLUDES} ${LIBS}
 	
-.c.o:
-	gcc ${CFLAGS} ${INCLUDES} -c $<  -o $@
+.cpp.o:
+	g++ ${CFLAGS} ${INCLUDES} -c $<  -o $@

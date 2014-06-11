@@ -16,7 +16,7 @@ LabelPhase::LabelPhase(int width, int height)
                   1.0f, -1.0f, 0.0f,  // Position 3
                   1.0f,  0.0f         // TexCoord 3
                 },
-      mIndices { 0, 1, 2, 0, 2, 3 }
+      mIndices { 0, 1, 2, 0, 2, 3 }, u_threshold(64 / 255.0)
 {
 }
 
@@ -52,7 +52,6 @@ GLint LabelPhase::init(GLuint fbos[2])
      u_factorLoc     = glGetUniformLocation ( mProgramObject, "u_factor" );
      // Create a texture for the frambuffer
      mFboTexId[mRead]  = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
-     printLabels(mWidth, mHeight, mTgaData->img_data);
      mFboTexId[mWrite] = createSimpleTexture2D(mWidth, mHeight);
 
      // Bind the textures to the corresponding fbo
@@ -140,7 +139,7 @@ void LabelPhase::run()
 #ifdef _DEBUG
         GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
         printf("Pixels after pass %d:\n", i);
-        printLabels(mWidth, mHeight, pixels);
+//        printLabels(mWidth, mHeight, pixels);
         char filename[50];
         sprintf(filename, "out%03d.tga", i);
         writeTgaImage(mWidth, mHeight, filename, pixels);
