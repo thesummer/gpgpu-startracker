@@ -10,7 +10,7 @@ LFLAGS=
 
 NAME=texture
 
-SRCS=./main.cpp ogles.cpp phase.cpp labelPhase.cpp getTime.c
+SRCS=./main.cpp ogles.cpp phase.cpp labelPhase.cpp reductionPhase.cpp getTime.c
 
 OBJ=$(SRCS:.cpp=.o)
 
