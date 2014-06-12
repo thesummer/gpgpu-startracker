@@ -38,6 +38,7 @@ GLint ReductionPhase::init(GLuint fbos[], int numNewTextures, GLuint &bfUsedText
     if (mProgramObject == 0)
     {
         cerr << "Failed to generate Program object for reduction phase" << endl;
+        return GL_FALSE;
     }
 
      // Get the attribute locations
@@ -45,24 +46,26 @@ GLint ReductionPhase::init(GLuint fbos[], int numNewTextures, GLuint &bfUsedText
      mTexCoordLoc = glGetAttribLocation ( mProgramObject, "a_texCoord" );
 
      // Get the sampler locations
-     mSamplerLoc     = glGetUniformLocation( mProgramObject, "s_texture" );
+     mSamplerLoc     = glGetUniformLocation ( mProgramObject, "s_texture" );
      u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
      u_passLoc       = glGetUniformLocation ( mProgramObject, "u_pass" );
      u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
 
      // Create numNewTextures texture for the frambuffer and
      // bind the textures to the corresponding fbo
+
+
      if(numNewTextures > 1)
      {
-         mFboTexId[0]  = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
-         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[0]) );
          int i = 0;
          while( (1<<i) & bfUsedTextures) ++i;
-
          GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+         mFboTexId[0]  = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
          bfUsedTextures |= (1<<i);
          mTextureUnits[0] = i;
          GL_CHECK( glBindTexture(GL_TEXTURE_2D, mFboTexId[0]) );
+
+         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[0]) );
          GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mFboTexId[0], 0) );
          GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
          if (status != GL_FRAMEBUFFER_COMPLETE)
@@ -71,19 +74,20 @@ GLint ReductionPhase::init(GLuint fbos[], int numNewTextures, GLuint &bfUsedText
          }
      }
 
+
      if (numNewTextures > 0)
      {
-         mFboTexId[1]  = createSimpleTexture2D(mWidth, mHeight);
-         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[1]) );
          int i = 0;
          while( (1<<i) & bfUsedTextures) ++i;
-
          GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+         mFboTexId[1]  = createSimpleTexture2D(mWidth, mHeight);
          bfUsedTextures |= (1<<i);
          mTextureUnits[1] = i;
 
          GL_CHECK( glBindTexture(GL_TEXTURE_2D, mFboTexId[1]) );
+         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[1]) );
          GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mFboTexId[1], 0) );
+
          GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
          if (status != GL_FRAMEBUFFER_COMPLETE)
          {
