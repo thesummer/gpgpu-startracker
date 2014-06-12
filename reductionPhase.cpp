@@ -1,3 +1,7 @@
+#include <iostream>
+using std::cerr;
+using std::endl;
+
 #include "reductionPhase.h"
 
 ReductionPhase::ReductionPhase(int width, int height)
@@ -27,8 +31,8 @@ GLint ReductionPhase::init(GLuint fbos[], GLuint initTexture,
 
     // Initialize all OpenGL structures necessary for the
     // labeling phase here
-    mRead  = read;
-    mWrite = write;
+    mRead  = 0;
+    mWrite = 1;
 
     // Load the shaders and get a linked program object
     mProgramObject = loadProgramFromFile( mVertFilename, mFragFilename);

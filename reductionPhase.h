@@ -1,6 +1,7 @@
 #ifndef REDUCTIONPHASE_H
 #define REDUCTIONPHASE_H
 
+#include "include/tga.h"
 #include "phase.h"
 
 class ReductionPhase : public Phase
