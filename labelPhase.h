@@ -22,7 +22,6 @@ public:
     int mHeight;
 
     // Attribute locations
-    /// TODO: general shader?
     GLint  mPositionLoc;
     GLint  mTexCoordLoc;
 

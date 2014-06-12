@@ -55,7 +55,6 @@ GLint LabelPhase::init(GLuint fbos[2])
      mFboTexId[mWrite] = createSimpleTexture2D(mWidth, mHeight);
 
      // Bind the textures to the corresponding fbo
-     /// TODO: make this usable and somewhere else?
      for(int i=0; i<2; ++i)
      {
          GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[i]) );
