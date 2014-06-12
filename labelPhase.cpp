@@ -20,7 +20,7 @@ LabelPhase::LabelPhase(int width, int height)
 {
 }
 
-GLint LabelPhase::init(GLuint fbos[2])
+GLint LabelPhase::init(GLuint fbos[2], int numNewTextures, GLuint &bfUsedTextures)
 {
     // Save the handles to the 2 framebuffers
     mFboId[0] = fbos[0];
@@ -54,19 +54,45 @@ GLint LabelPhase::init(GLuint fbos[2])
      mFboTexId[mRead]  = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
      mFboTexId[mWrite] = createSimpleTexture2D(mWidth, mHeight);
 
-     // Bind the textures to the corresponding fbo
-     for(int i=0; i<2; ++i)
+     if(numNewTextures > 1)
      {
-         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[i]) );
+         int i = 0;
+         while( (1<<i) & bfUsedTextures) ++i;
          GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-         GL_CHECK( glBindTexture(GL_TEXTURE_2D, mFboTexId[i]) );
-         GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mFboTexId[i], 0) );
+         mFboTexId[0]  = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
+         bfUsedTextures |= (1<<i);
+         mTextureUnits[0] = i;
+         GL_CHECK( glBindTexture(GL_TEXTURE_2D, mFboTexId[0]) );
+
+         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[0]) );
+         GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mFboTexId[0], 0) );
          GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
          if (status != GL_FRAMEBUFFER_COMPLETE)
          {
              printf("Framebuffer is not complete with %08x\n", status);
          }
      }
+
+     if (numNewTextures > 0)
+     {
+         int i = 0;
+         while( (1<<i) & bfUsedTextures) ++i;
+         GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+         mFboTexId[1]  = createSimpleTexture2D(mWidth, mHeight);
+         bfUsedTextures |= (1<<i);
+         mTextureUnits[1] = i;
+
+         GL_CHECK( glBindTexture(GL_TEXTURE_2D, mFboTexId[1]) );
+         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[1]) );
+         GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mFboTexId[1], 0) );
+
+         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+         if (status != GL_FRAMEBUFFER_COMPLETE)
+         {
+             printf("Framebuffer is not complete with %08x\n", status);
+         }
+     }
+
      GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
 
      return GL_TRUE;
@@ -127,7 +153,7 @@ void LabelPhase::run()
         // Bind the FBO to write to
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
         // Set the sampler texture unit to 0
-        GL_CHECK( glUniform1i ( mSamplerLoc, mRead ) );
+        GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[mRead] ) );
         // Set the pass index
         GL_CHECK( glUniform1i ( u_passLoc,  u_pass) );
         GL_CHECK( glUniform1i ( u_debugLoc, u_debug) );

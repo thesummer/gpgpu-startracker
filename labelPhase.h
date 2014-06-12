@@ -54,12 +54,13 @@ public:
     // Texture to attach to the frambuffers
     GLuint mFboTexId[2];
     GLuint mFboId[2];
+    GLint  mTextureUnits[2];
 
     int mWrite;
     int mRead;
 
     LabelPhase(int width = 0, int height = 0);
-    GLint init(GLuint fbos[]);
+    GLint init(GLuint fbos[], int numNewTextures, GLuint &bfUsedTextures);
 
     void setupGeometry();
 
