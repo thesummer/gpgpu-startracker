@@ -21,7 +21,7 @@ using std::endl;
 #endif
 
 Ogles::Ogles(int width, int height)
-    :mLabelPhase(width, height), mWidth(width), mHeight(height)
+    :mLabelPhase(width, height), mWidth(width), mHeight(height), mUsedTexUnits(0)
 {
     // Initialize structs to 0
     esContext = {};
@@ -32,11 +32,12 @@ Ogles::Ogles(int width, int height)
     // initialize the 2 frambuffers for ping-pong method
     GL_CHECK( glGenFramebuffers(2, mFboId) );
 
-    mLabelPhase.init(mFboId);
+//    mLabelPhase.init(mFboId);
+    mReductionPhase.init(mFboId, 2, mUsedTexUnits);
 }
 
 Ogles::Ogles(std::string tgaFilename)
-    :mLabelPhase(0, 0)
+    :mLabelPhase(0, 0), mUsedTexUnits(0)
 {
     // Initialize esContext to 0
     esContext = {};
@@ -58,13 +59,21 @@ Ogles::Ogles(std::string tgaFilename)
     // initialize the 2 frambuffers for ping-pong method
     GL_CHECK( glGenFramebuffers(2, mFboId) );
 
-    mLabelPhase.init(mFboId);
+//    mLabelPhase.init(mFboId);
+
+    mReductionPhase.mWidth  = mWidth;
+    mReductionPhase.mHeight = mHeight;
+    mReductionPhase.mTgaData = &mImgData;
+    mReductionPhase.init(mFboId, 2, mUsedTexUnits);
 }
 
 void Ogles::run()
 {
-    mLabelPhase.setupGeometry();
-    mLabelPhase.run();
+//    mLabelPhase.setupGeometry();
+//    mLabelPhase.run();
+
+    mReductionPhase.setupGeometry();
+    mReductionPhase.run();
 }
 
 

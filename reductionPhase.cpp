@@ -3,9 +3,10 @@ using std::cerr;
 using std::endl;
 
 #include "reductionPhase.h"
+#include "include/getTime.h"
 
 ReductionPhase::ReductionPhase(int width, int height)
-    :mVertFilename("vertShader.glsl"), mFragFilename("fragReductionShater.glsl"),
+    :mVertFilename("vertShader.glsl"), mFragFilename("fragReductionShader.glsl"),
       mWidth(width), mHeight(height),
       mVertices {-1.0f, -1.0f, 0.0f,  // Position 0
                   0.0f,  0.0f,        // TexCoord 0
@@ -21,13 +22,11 @@ ReductionPhase::ReductionPhase(int width, int height)
 {
 }
 
-GLint ReductionPhase::init(GLuint fbos[], GLuint initTexture,
-                           int numNewTextures, GLuint &bfUsedTextures)
+GLint ReductionPhase::init(GLuint fbos[], int numNewTextures, GLuint &bfUsedTextures)
 {
     // Save the handles to the 2 framebuffers
     mFboId[0] = fbos[0];
     mFboId[1] = fbos[1];
-    mInitTexId = initTexture;
 
     // Initialize all OpenGL structures necessary for the
     // labeling phase here
@@ -62,6 +61,7 @@ GLint ReductionPhase::init(GLuint fbos[], GLuint initTexture,
 
          GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
          bfUsedTextures |= (1<<i);
+         mTextureUnits[0] = i;
          GL_CHECK( glBindTexture(GL_TEXTURE_2D, mFboTexId[0]) );
          GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mFboTexId[0], 0) );
          GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -74,11 +74,13 @@ GLint ReductionPhase::init(GLuint fbos[], GLuint initTexture,
      if (numNewTextures > 0)
      {
          mFboTexId[1]  = createSimpleTexture2D(mWidth, mHeight);
+         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[1]) );
          int i = 0;
          while( (1<<i) & bfUsedTextures) ++i;
 
          GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
          bfUsedTextures |= (1<<i);
+         mTextureUnits[1] = i;
 
          GL_CHECK( glBindTexture(GL_TEXTURE_2D, mFboTexId[1]) );
          GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mFboTexId[1], 0) );
@@ -112,5 +114,54 @@ void ReductionPhase::setupGeometry()
 
 void ReductionPhase::run()
 {
-    //
+    // Setup OpenGL
+
+    // Use the program object
+    GL_CHECK( glUseProgram ( mProgramObject ) );
+
+    // Set the uniforms
+    GL_CHECK( glUniform2f ( u_texDimLoc, mWidth, mHeight) );
+
+    // Do the runs
+
+    // Make the BYTE array, factor of 3 because it's RGBA.
+    GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
+
+    double startTime, endTime;
+
+    startTime = getRealTime();
+
+    for (int i = 0; i < logBase2(mWidth); ++i)
+    {
+        u_pass = i;
+        u_debug = 0;
+
+        // Bind the FBO to write to
+        GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
+        // Set the sampler texture unit to 0
+        GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[mRead] ) );
+        // Set the pass index
+        GL_CHECK( glUniform1i ( u_passLoc,  u_pass) );
+        GL_CHECK( glUniform1i ( u_debugLoc, u_debug) );
+        // Draw scene
+        GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
+
+#ifdef _DEBUG
+        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+        printf("Pixels after pass %d:\n", i);
+        printLabels(mWidth, mHeight, pixels);
+        char filename[50];
+        sprintf(filename, "out%03d.tga", i);
+        writeTgaImage(mWidth, mHeight, filename, pixels);
+#endif
+
+        // Switch read and write texture
+        mRead  = 1 - mRead;
+        mWrite = 1 - mWrite;
+    }
+    endTime = getRealTime();
+
+    printf("Time: %f ms\n", (endTime-startTime)*1000);
+
+    delete [] pixels;
 }

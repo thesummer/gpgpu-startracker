@@ -48,14 +48,14 @@ public:
 // End Check
     // Texture to attach to the frambuffers
     GLuint mFboTexId[2];
-    GLuint mInitTexId;
     GLuint mFboId[2];
+    GLint  mTextureUnits[2];
 
     int mWrite;
     int mRead;
 
     ReductionPhase(int width = 0, int height = 0);
-    GLint init(GLuint fbos[], GLuint initTexture, int numNewTextures, GLuint &bfUsedTextures);
+    GLint init(GLuint fbos[], int numNewTextures, GLuint &bfUsedTextures);
 
     void setupGeometry();
     virtual void run();

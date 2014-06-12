@@ -7,6 +7,7 @@
 #include<string>
 #include "phase.h"
 #include "labelPhase.h"
+#include "reductionPhase.h"
 #include "include/tga.h"
 
 class Ogles
@@ -36,6 +37,9 @@ public:
 // Phases:
     //1. LabelPhase
     LabelPhase mLabelPhase;
+    //2. ReductionPhase
+    ReductionPhase mReductionPhase;
+
 
     Ogles(int width, int height);
     Ogles(std::string tgaFilename);
@@ -49,6 +53,7 @@ private:
 
     int mWidth;
     int mHeight;
+    unsigned mUsedTexUnits;
 
     // Framebuffers
     TGAData mImgData;

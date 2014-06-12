@@ -37,13 +37,20 @@ GLuint Phase::loadProgramFromFile(const std::string vertShaderFile, const std::s
 {
     GLuint vertexShader;
     GLuint fragmentShader;
-    GLuint programObject;
+    GLuint programObject = 0;
     GLint linked;
-
+    std::string sourceString;
 
     std::ifstream sourceFile(vertShaderFile);
-    std::string sourceString((std::istreambuf_iterator<char>(sourceFile)),
-                              std::istreambuf_iterator<char>());
+
+    if(! sourceFile.good() )
+    {
+        cerr << "Failed to open vertex shader file: " << vertShaderFile << endl;
+        sourceFile.close();
+        goto error;
+    }
+    sourceString = std::string((std::istreambuf_iterator<char>(sourceFile)),
+                                           std::istreambuf_iterator<char>());
 
     sourceFile.close();
 
@@ -53,6 +60,12 @@ GLuint Phase::loadProgramFromFile(const std::string vertShaderFile, const std::s
        goto error;
 
     sourceFile.open(fragShaderFile);
+    if(! sourceFile.good() )
+    {
+        cerr << "Failed to open fragment shader file: " << fragShaderFile << endl;
+        sourceFile.close();
+        goto error;
+    }
     sourceString = std::string((std::istreambuf_iterator<char>(sourceFile)),
                               std::istreambuf_iterator<char>());
     sourceFile.close();
@@ -60,7 +73,6 @@ GLuint Phase::loadProgramFromFile(const std::string vertShaderFile, const std::s
     fragmentShader = loadShader(GL_FRAGMENT_SHADER, sourceString );
     if ( fragmentShader == 0 )
     {
-       glDeleteShader( vertexShader );
        goto error;
     }
 
