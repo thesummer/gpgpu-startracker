@@ -96,7 +96,18 @@ GLint ReductionPhase::init(GLuint fbos[], GLuint initTexture,
 
 void ReductionPhase::setupGeometry()
 {
-    //
+    // Set the viewport
+    GL_CHECK( glViewport ( 0, 0, mWidth, mHeight ) );
+    // Clear the color buffer
+    GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
+    // Load the vertex position
+    GL_CHECK( glVertexAttribPointer ( mPositionLoc, 3, GL_FLOAT,
+                                      GL_FALSE, 5 * sizeof(GLfloat), mVertices ) );
+    // Load the texture coordinates
+    GL_CHECK( glVertexAttribPointer ( mTexCoordLoc, 2, GL_FLOAT,
+                                      GL_FALSE, 5 * sizeof(GLfloat), &mVertices[3] ) );
+    GL_CHECK( glEnableVertexAttribArray ( mPositionLoc ) );
+    GL_CHECK( glEnableVertexAttribArray ( mTexCoordLoc ) );
 }
 
 void ReductionPhase::run()
