@@ -164,6 +164,11 @@ void main()
 
         gl_FragColor = pack2shorts(vec2(maxX, maxY)) * isZero ;
     }
+    else if (u_pass == -1)
+    {
+        // Copy mode
+        gl_FragColor = texture2D( s_texture, v_texCoord );
+    }
     else
     {
         vec2 curLabel = unpack2shorts( texture2D(s_texture, v_texCoord) );
