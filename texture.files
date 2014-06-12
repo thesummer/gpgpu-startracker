@@ -14,3 +14,5 @@ phase.h
 phase.cpp
 main.cpp
 labelPhase.cpp
+reductionPhase.h
+reductionPhase.cpp
