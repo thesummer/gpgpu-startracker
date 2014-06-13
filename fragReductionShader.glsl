@@ -88,24 +88,25 @@ void main()
     // initial scan
     if(u_pass == 0)
     {
-        // Check if current pixel is zero
         vec4 pixelCol = texture2D( s_texture, v_texCoord );
         vec2 curLabel = unpack2shorts(pixelCol);
 
         // Check if the current pixel is a root pixel of a certain spot
-        float isRoot = (float) all( isEqual(curLabel, tex2imgCoord(v_texCoord) + ONE ) );
+        bool isRoot = all( equal(curLabel, tex2imgCoord(v_texCoord) + ONE ) );
 
-        // count == 1.0 if curPixelCol is zero and 0.0 otherwise
-        float count = ONE - step(ONE/256.0, length(pixelCol * isRoot) );
+        gl_FragColor = vec4(ONE) * float(isRoot);
 
-        // Check if pixel to the left is zero
-        vec2 coord = tex2imgCoord(v_texCoord);
+//        // count == 1.0 if curPixelCol is zero and 0.0 otherwise
+//        float count = ONE - step(ONE/256.0, length(pixelCol * float(isRoot) ) );
 
-        coord = img2texCoord( coord + vec2(-ONE, ZERO) );
-        pixelCol = texture2D( s_texture, coord);
-        count += ( ONE - step(ONE/256.0, length(pixelCol) ) ) * step(ZERO, coord.x);
+//        // Check if pixel to the left is zero
+//        vec2 coord = tex2imgCoord(v_texCoord);
 
-        gl_FragColor = pack2shorts(vec2(count, ZERO));
+//        coord = img2texCoord( coord + vec2(-ONE, ZERO) );
+//        pixelCol = texture2D( s_texture, coord);
+//        count += ( ONE - step(ONE/256.0, length(pixelCol) ) ) * step(ZERO, coord.x);
+
+//        gl_FragColor = pack2shorts(vec2(count, ZERO));
     }
     else
     {
@@ -113,7 +114,7 @@ void main()
         float count = unpack2shorts(pixelCol).x;
 
         vec2 coord = tex2imgCoord(v_texCoord);
-        coord +=  vec2(exp2( (float)u_pass), ZERO)
+        coord +=  vec2(exp2( float(u_pass) ), ZERO);
         pixelCol = texture2D( s_texture, coord);
 
         // Add the value 2^u_pass to the left (filter out values outside of texture range)
