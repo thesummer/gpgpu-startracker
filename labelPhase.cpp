@@ -166,8 +166,8 @@ void LabelPhase::run()
         printf("Pixels after pass %d:\n", i);
 //        printLabels(mWidth, mHeight, pixels);
         char filename[50];
-        sprintf(filename, "out%03d.tga", i);
-        writeTgaImage(mWidth, mHeight, filename, pixels);
+        sprintf(filename, "raw%03d.tga", i);
+        writeRawTgaImage(mWidth, mHeight, filename, pixels);
 #endif
 
         // Switch read and write texture
