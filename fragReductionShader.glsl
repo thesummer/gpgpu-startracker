@@ -85,7 +85,7 @@ vec2 img2texCoord(in vec2 imgCoord)
 
 void main()
 {
-    // initial scan
+
     if(u_pass == 0)
     {
         vec4 pixelCol = texture2D( s_texture, v_texCoord );
@@ -111,7 +111,8 @@ void main()
         // Save the number of zero or non-root pixel from this and left neighbor pixel (0.0, 1.0 or 2.0)
         gl_FragColor = pack2shorts(vec2(count, ZERO));
     }
-    else
+    else if(u_pass > 0)
+    // Add up the zeroes for all pixels to the left
     {
         vec4 pixelCol = texture2D( s_texture, v_texCoord );
         float count = unpack2shorts(pixelCol).x;
@@ -123,6 +124,27 @@ void main()
         // Add the value 2^u_pass to the left (filter out values outside of texture range)
         count += unpack2shorts(pixelCol).x * step(ZERO, coord.x);
 
-        gl_FragColor = pack2shorts(vec2(count, ZERO));
+        gl_FragColor = pack2shorts(vec2(count, exp2( float(u_pass)-ONE )) );
+    }
+    else if(u_pass < 0)
+    // gather search after scan
+    {
+        /*
+           Find the texel which which running sum is equal its distance to the current texel
+           by using a binary search:
+        */
+
+        // 1. Get the last guess for the current texel
+        vec2 current = unpack2shorts(texture2D(s_texture, v_texCoord ) );
+
+        // 2. Get the value of the current guess
+        vec2  coord = tex2imgCoord(v_texCoord) + vec2(current.y, ZERO);
+        float value = unpack2shorts( texture2D(s_texture, img2texCoord(coord) ) ).x;
+
+        // 3. if value >= dist: dist += 2^-u_pass, if value < dist: dist -= 2^-u_pass
+        float factor = 2.0 * float( (value > current.y) ) - ONE;
+
+        gl_FragColor = pack2shorts( vec2( current.x, current.y+factor*exp2(-float(u_pass)-TWO) ) );
+
     }
 }
