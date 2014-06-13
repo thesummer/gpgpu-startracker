@@ -92,30 +92,33 @@ void main()
         vec2 curLabel = unpack2shorts(pixelCol);
 
         // Check if the current pixel is a root pixel of a certain spot
-        bool isRoot = all( equal(curLabel, tex2imgCoord(v_texCoord) + ONE ) );
+        float isRoot = float( all( equal(curLabel, tex2imgCoord(v_texCoord) + ONE ) ) );
 
-        gl_FragColor = vec4(ONE) * float(isRoot);
 
-//        // count == 1.0 if curPixelCol is zero and 0.0 otherwise
-//        float count = ONE - step(ONE/256.0, length(pixelCol * float(isRoot) ) );
+        // count == 1.0 if curPixelCol is not root pixel or zero and 0.0 otherwise
+        float count = ONE - step(ONE/256.0, length(pixelCol * isRoot ) );
 
-//        // Check if pixel to the left is zero
-//        vec2 coord = tex2imgCoord(v_texCoord);
+        // Check if pixel to the left is zero
+        vec2 coord = tex2imgCoord(v_texCoord);
+        coord = img2texCoord( coord + vec2(-ONE, ZERO) );
+        pixelCol = texture2D( s_texture, coord);
+        curLabel = unpack2shorts(pixelCol);
+        isRoot = float( all( equal(curLabel, tex2imgCoord(coord) + ONE ) ) );
 
-//        coord = img2texCoord( coord + vec2(-ONE, ZERO) );
-//        pixelCol = texture2D( s_texture, coord);
-//        count += ( ONE - step(ONE/256.0, length(pixelCol) ) ) * step(ZERO, coord.x);
+        // Add 1.0 to count if pixel to the left is 0.0 or not root, make sure not to read outside of texture
+        count += ( ONE - step(ONE/256.0, length(pixelCol * isRoot) ) ) * step(ZERO, coord.x);
 
-//        gl_FragColor = pack2shorts(vec2(count, ZERO));
+        // Save the number of zero or non-root pixel from this and left neighbor pixel (0.0, 1.0 or 2.0)
+        gl_FragColor = pack2shorts(vec2(count, ZERO));
     }
     else
     {
         vec4 pixelCol = texture2D( s_texture, v_texCoord );
         float count = unpack2shorts(pixelCol).x;
 
-        vec2 coord = tex2imgCoord(v_texCoord);
-        coord +=  vec2(exp2( float(u_pass) ), ZERO);
-        pixelCol = texture2D( s_texture, coord);
+        vec2 coord = tex2imgCoord(v_texCoord) - vec2(exp2( float(u_pass) ), ZERO);
+        coord =  img2texCoord( coord );
+        pixelCol = texture2D( s_texture, coord );
 
         // Add the value 2^u_pass to the left (filter out values outside of texture range)
         count += unpack2shorts(pixelCol).x * step(ZERO, coord.x);
