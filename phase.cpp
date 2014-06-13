@@ -238,6 +238,46 @@ int Phase::writeTgaImage(int width, int height, char *filename, GLubyte *pixels)
     return 0;
 }
 
+int Phase::writeRawTgaImage(int width, int height, char *filename, GLubyte *pixels)
+{
+    TGA *image = TGAOpen(filename, "w");
+    if(!image || image->last != TGA_OK)
+    {
+        printf("Opening tga-file failed\n");
+        return image->last;
+    }
+
+    image->hdr.height = height;
+    image->hdr.width  = width;
+    image->hdr.alpha  = 8;
+    image->hdr.depth  = 32;
+    image->hdr.img_t  = 2;
+    image->hdr.id_len = 0;
+    image->hdr.vert   = 1;
+    image->hdr.horz   = 1;
+    image->hdr.x      = 0;
+    image->hdr.y      = 0;
+    image->hdr.map_entry = 0;
+    image->hdr.map_first = 0;
+    image->hdr.map_len   = 0;
+    image->hdr.map_t     = 0;
+
+    TGAData data = {0, 0, 0, TGA_IMAGE_DATA | TGA_RGB};
+    data.img_data = pixels;
+
+    if (TGAWriteImage(image, &data) != TGA_OK)
+    {
+        printf("Writing tga-file failed\n");
+        return image->last;
+    }
+    // Add footer for tga 2.0 files
+    fseek(image->fd, 0, SEEK_END);
+    fwrite("\0\0\0\0\0\0\0\0TRUEVISION-XFILE.\0", 1, 26, image->fd);
+    TGAClose(image);
+
+    return 0;
+}
+
 void Phase::printLabels(int width, int height, GLubyte *pixels)
 {
     for(int i=0; i<height; i++)

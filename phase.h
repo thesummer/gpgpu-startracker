@@ -33,6 +33,7 @@ public:
     static void checkOpenGLError(const char* stmt, const char* fname, int line);
 
     static int writeTgaImage(int width, int height, char *filename, GLubyte *pixels);
+    static int writeRawTgaImage(int width, int height, char *filename, GLubyte *pixels);
 
     void printLabels(int width, int height, GLubyte *pixels);
 
