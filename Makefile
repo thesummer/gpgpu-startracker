@@ -4,7 +4,7 @@ INCLUDES=-I./Common -I./include
 LIBS=-lGLESv2 -lEGL -lm -Llib -ltga
 
 CFLAGS=-g -Wall -D_DEBUG -std=gnu++11
-#CFLAGS=-g -Wall
+#CFLAGS=-Wall -std=gnu++11
 
 LFLAGS=
 
