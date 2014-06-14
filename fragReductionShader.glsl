@@ -1,6 +1,7 @@
 precision highp float;
 varying vec2 v_texCoord;        // texture coordinates
 uniform sampler2D s_texture;    // texture sampler
+uniform sampler2D s_values;
 uniform vec2 u_texDimensions;   // image/texture dimensions
 uniform int u_pass;
 // uniform int u_debug;
@@ -83,30 +84,34 @@ vec2 img2texCoord(in vec2 imgCoord)
     return (TWO*imgCoord + ONE)/(TWO*u_texDimensions);
 }
 
+float isRoot(vec2 label, vec2 texCoord)
+{
+    return float( all( equal(label, tex2imgCoord(texCoord) + ONE ) ) );
+}
+
 void main()
 {
 
     if(u_pass == 0)
     {
-        vec4 pixelCol = texture2D( s_texture, v_texCoord );
+        vec4 pixelCol = texture2D( s_values, v_texCoord );
         vec2 curLabel = unpack2shorts(pixelCol);
 
         // Check if the current pixel is a root pixel of a certain spot
-        float isRoot = float( all( equal(curLabel, tex2imgCoord(v_texCoord) + ONE ) ) );
-
+        float root = isRoot(curLabel, v_texCoord);
 
         // count == 1.0 if curPixelCol is not root pixel or zero and 0.0 otherwise
-        float count = ONE - step(ONE/256.0, length(pixelCol * isRoot ) );
+        float count = ONE - step(ONE/256.0, length(pixelCol * root ) );
 
         // Check if pixel to the left is zero
         vec2 coord = tex2imgCoord(v_texCoord);
         coord = img2texCoord( coord + vec2(-ONE, ZERO) );
-        pixelCol = texture2D( s_texture, coord);
+        pixelCol = texture2D( s_values, coord);
         curLabel = unpack2shorts(pixelCol);
-        isRoot = float( all( equal(curLabel, tex2imgCoord(coord) + ONE ) ) );
+        root = isRoot(curLabel, coord);
 
         // Add 1.0 to count if pixel to the left is 0.0 or not root, make sure not to read outside of texture
-        count += ( ONE - step(ONE/256.0, length(pixelCol * isRoot) ) ) * step(ZERO, coord.x);
+        count += ( ONE - step(ONE/256.0, length(pixelCol * root) ) ) * step(ZERO, coord.x);
 
         // Save the number of zero or non-root pixel from this and left neighbor pixel (0.0, 1.0 or 2.0)
         gl_FragColor = pack2shorts(vec2(count, ZERO));
@@ -137,14 +142,37 @@ void main()
         // 1. Get the last guess for the current texel
         vec2 current = unpack2shorts(texture2D(s_texture, v_texCoord ) );
 
-        // 2. Get the value of the current guess
-        vec2  coord = tex2imgCoord(v_texCoord) + vec2(current.y, ZERO);
-        float value = unpack2shorts( texture2D(s_texture, img2texCoord(coord) ) ).x;
+        float lastGuess = current.y;
 
-        // 3. if value >= dist: dist += 2^-u_pass, if value < dist: dist -= 2^-u_pass
-        float factor = 2.0 * float( (value > current.y) ) - ONE;
 
-        gl_FragColor = pack2shorts( vec2( current.x, current.y+factor*exp2(-float(u_pass)-TWO) ) );
+        //   2. Get the value of the current guess
+        vec2  coord = img2texCoord(tex2imgCoord(v_texCoord) + vec2(lastGuess, ZERO) );
+        float guess = unpack2shorts( texture2D(s_texture, coord ) ).x;
+        vec2  value = unpack2shorts( texture2D(s_values,  coord ) );
+
+        // Version with if:
+        float outGuess;
+
+        if(guess > lastGuess)
+        {
+            outGuess = lastGuess + exp2(-float(u_pass)-TWO);
+        }
+        else if(guess == lastGuess && isRoot(value, coord) == ONE)
+        {
+            outGuess = lastGuess;
+        }
+        else
+        {
+            outGuess = lastGuess - exp2(-float(u_pass)-TWO);
+        }
+
+        gl_FragColor = pack2shorts( vec2(current.x, outGuess) );
+
+        // Version without if:
+//        float factor = TWO * float(guess > lastGuess) - ONE + float(guess==lastGuess) * isRoot(value, coord);
+//        gl_FragColor = pack2shorts( vec2( current.x, lastGuess+factor*exp2(-float(u_pass)-TWO) ) );
+
+
 
     }
 }
