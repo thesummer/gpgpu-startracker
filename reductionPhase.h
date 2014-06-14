@@ -23,7 +23,7 @@ public:
     GLint  mTexCoordLoc;
 
     // Vertices
-    GLfloat mVertices[20];
+    GLfloat  mVertices[20];
     GLushort mIndices[6];
 
     // Uniform locations
@@ -36,8 +36,9 @@ public:
     GLint u_debug;
 
 //  Check is all members necessary
-    // Sampler location
-    GLint mSamplerLoc;
+    // Sampler locations
+    GLint s_reductionLoc;
+    GLint s_valuesLoc;
 
     // Texture handle
     GLuint mTextureId;
@@ -48,14 +49,16 @@ public:
 // End Check
     // Texture to attach to the frambuffers
     GLuint mFboTexId[2];
+    GLuint mReadOnlyTex;
     GLuint mFboId[2];
-    GLint  mTextureUnits[2];
+    GLint  mTextureUnits[3];
 
     int mWrite;
     int mRead;
+    int mReadOnly;
 
     ReductionPhase(int width = 0, int height = 0);
-    GLint init(GLuint fbos[], int numNewTextures, GLuint &bfUsedTextures);
+    GLint init(GLuint fbos[], bool independent, GLuint &bfUsedTextures);
 
     void setupGeometry();
     virtual void run();

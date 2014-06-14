@@ -22,7 +22,7 @@ ReductionPhase::ReductionPhase(int width, int height)
 {
 }
 
-GLint ReductionPhase::init(GLuint fbos[], int numNewTextures, GLuint &bfUsedTextures)
+GLint ReductionPhase::init(GLuint fbos[], bool independent, GLuint &bfUsedTextures)
 {
     // Save the handles to the 2 framebuffers
     mFboId[0] = fbos[0];
@@ -46,7 +46,8 @@ GLint ReductionPhase::init(GLuint fbos[], int numNewTextures, GLuint &bfUsedText
      mTexCoordLoc = glGetAttribLocation ( mProgramObject, "a_texCoord" );
 
      // Get the sampler locations
-     mSamplerLoc     = glGetUniformLocation ( mProgramObject, "s_texture" );
+     s_reductionLoc  = glGetUniformLocation ( mProgramObject, "s_texture" );
+     s_valuesLoc     = glGetUniformLocation ( mProgramObject, "s_values" );
      u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
      u_passLoc       = glGetUniformLocation ( mProgramObject, "u_pass" );
      u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
@@ -55,29 +56,27 @@ GLint ReductionPhase::init(GLuint fbos[], int numNewTextures, GLuint &bfUsedText
      // bind the textures to the corresponding fbo
 
 
-     if(numNewTextures > 1)
-     {
-         int i = 0;
-         while( (1<<i) & bfUsedTextures) ++i;
-         GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-         mFboTexId[0]  = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
-         bfUsedTextures |= (1<<i);
-         mTextureUnits[0] = i;
-         GL_CHECK( glBindTexture(GL_TEXTURE_2D, mFboTexId[0]) );
+     // Create one additional texture
+     int i = 0;
+     while( (1<<i) & bfUsedTextures) ++i;
+     GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+     mFboTexId[0]  = createSimpleTexture2D(mWidth, mHeight);
+     bfUsedTextures |= (1<<i);
+     mTextureUnits[0] = i;
+     GL_CHECK( glBindTexture(GL_TEXTURE_2D, mFboTexId[0]) );
 
-         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[0]) );
-         GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mFboTexId[0], 0) );
-         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-         if (status != GL_FRAMEBUFFER_COMPLETE)
-         {
-             printf("Framebuffer is not complete with %08x\n", status);
-         }
+     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[0]) );
+     GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mFboTexId[0], 0) );
+     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+     if (status != GL_FRAMEBUFFER_COMPLETE)
+     {
+         printf("Framebuffer is not complete with %08x\n", status);
      }
 
-
-     if (numNewTextures > 0)
+     if(independent)
+     // Create 2 more textures (3 in total)
      {
-         int i = 0;
+         i = 0;
          while( (1<<i) & bfUsedTextures) ++i;
          GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
          mFboTexId[1]  = createSimpleTexture2D(mWidth, mHeight);
@@ -93,6 +92,14 @@ GLint ReductionPhase::init(GLuint fbos[], int numNewTextures, GLuint &bfUsedText
          {
              printf("Framebuffer is not complete with %08x\n", status);
          }
+
+         i = 0;
+         while( (1<<i) & bfUsedTextures) ++i;
+         GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+         mReadOnlyTex  = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
+         bfUsedTextures |= (1<<i);
+         mTextureUnits[2] = i;
+         GL_CHECK( glBindTexture(GL_TEXTURE_2D, mReadOnlyTex) );
      }
 
      GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
@@ -126,6 +133,9 @@ void ReductionPhase::run()
     // Set the uniforms
     GL_CHECK( glUniform2f ( u_texDimLoc, mWidth, mHeight) );
 
+    // Set the read only texture
+    GL_CHECK( glUniform1i ( s_valuesLoc, mTextureUnits[2] ) );
+
     // Do the runs
 
     // Make the BYTE array, factor of 3 because it's RGBA.
@@ -143,7 +153,7 @@ void ReductionPhase::run()
         // Bind the FBO to write to
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
         // Set the sampler texture unit to 0
-        GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[mRead] ) );
+        GL_CHECK( glUniform1i ( s_reductionLoc, mTextureUnits[mRead] ) );
         // Set the pass index
         GL_CHECK( glUniform1i ( u_passLoc,  u_pass) );
         GL_CHECK( glUniform1i ( u_debugLoc, u_debug) );
@@ -156,7 +166,36 @@ void ReductionPhase::run()
         printLabels(mWidth, mHeight, pixels);
         char filename[50];
         sprintf(filename, "out%03d.tga", i);
-        writeTgaImage(mWidth, mHeight, filename, pixels);
+        writeRawTgaImage(mWidth, mHeight, filename, pixels);
+#endif
+
+        // Switch read and write texture
+        mRead  = 1 - mRead;
+        mWrite = 1 - mWrite;
+    }
+
+    for (int i = -logBase2(mWidth)+1; i < 0; ++i)
+    {
+        u_pass = i;
+        u_debug = 0;
+
+        // Bind the FBO to write to
+        GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
+        // Set the sampler texture unit to 0
+        GL_CHECK( glUniform1i ( s_reductionLoc, mTextureUnits[mRead] ) );
+        // Set the pass index
+        GL_CHECK( glUniform1i ( u_passLoc,  u_pass) );
+        GL_CHECK( glUniform1i ( u_debugLoc, u_debug) );
+        // Draw scene
+        GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
+
+#ifdef _DEBUG
+        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+        printf("Pixels after pass %d:\n", i);
+        printLabels(mWidth, mHeight, pixels);
+        char filename[50];
+        sprintf(filename, "out%03d.tga", i);
+        writeRawTgaImage(mWidth, mHeight, filename, pixels);
 #endif
 
         // Switch read and write texture
