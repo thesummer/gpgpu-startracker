@@ -3,8 +3,17 @@ varying vec2 v_texCoord;        // texture coordinates
 uniform sampler2D s_texture;    // texture sampler
 uniform sampler2D s_values;
 uniform vec2 u_texDimensions;   // image/texture dimensions
+uniform int u_stage;            // different stages
 uniform int u_pass;
+uniform int u_direction;
 // uniform int u_debug;
+
+#define RUNNING_SUM     0
+#define BINARY_SEARCH   1
+#define FINALIZATION    2
+
+#define HORIZONTAL      0
+#define VERTICAL        1
 
 const float ZERO = 0.0;
 const float ONE  = 1.0;
@@ -89,8 +98,22 @@ float isRoot(vec2 label, vec2 texCoord)
     return float( all( equal(label, tex2imgCoord(texCoord) + ONE ) ) );
 }
 
-void main()
+void runningSum()
 {
+    vec2 coord ;
+    float withinBounds;
+    if(u_direction == HORIZONTAL)
+    {
+        coord = tex2imgCoord(v_texCoord) - vec2(exp2( float(u_pass) ), ZERO);
+        withinBounds = step(ZERO, coord.x);
+    }
+    else // VERTICAL
+    {
+        coord = tex2imgCoord(v_texCoord) - vec2( ZERO, exp2( float(u_pass) ) );
+        withinBounds = step(ZERO, coord.y);
+    }
+
+    coord = img2texCoord( coord );
 
     if(u_pass == 0)
     {
@@ -104,14 +127,12 @@ void main()
         float count = ONE - step(ONE/256.0, length(pixelCol * root ) );
 
         // Check if pixel to the left is zero
-        vec2 coord = tex2imgCoord(v_texCoord);
-        coord = img2texCoord( coord + vec2(-ONE, ZERO) );
         pixelCol = texture2D( s_values, coord);
         curLabel = unpack2shorts(pixelCol);
         root = isRoot(curLabel, coord);
 
         // Add 1.0 to count if pixel to the left is 0.0 or not root, make sure not to read outside of texture
-        count += ( ONE - step(ONE/256.0, length(pixelCol * root) ) ) * step(ZERO, coord.x);
+        count += ( ONE - step(ONE/256.0, length(pixelCol * root) ) ) * withinBounds;
 
         // Save the number of zero or non-root pixel from this and left neighbor pixel (0.0, 1.0 or 2.0)
         gl_FragColor = pack2shorts(vec2(count, ZERO));
@@ -122,31 +143,35 @@ void main()
         vec4 pixelCol = texture2D( s_texture, v_texCoord );
         float count = unpack2shorts(pixelCol).x;
 
-        vec2 coord = tex2imgCoord(v_texCoord) - vec2(exp2( float(u_pass) ), ZERO);
-        coord =  img2texCoord( coord );
         pixelCol = texture2D( s_texture, coord );
 
         // Add the value 2^u_pass to the left (filter out values outside of texture range)
-        count += unpack2shorts(pixelCol).x * step(ZERO, coord.x);
-
+        count += unpack2shorts(pixelCol).x * withinBounds;
         gl_FragColor = pack2shorts(vec2(count, exp2( float(u_pass)-ONE )) );
+
     }
-    else if(u_pass < 0)
+}
+
+void binarySearch()
+{
+    // 1. Get the last guess for the current texel
+    vec2 current = unpack2shorts(texture2D(s_texture, v_texCoord ) );
+    float lastGuess = current.y;
+    vec2  coord;
+    if(u_direction == HORIZONTAL)
+        coord = tex2imgCoord(v_texCoord) + vec2(lastGuess, ZERO);
+    else // VERTICAL
+        coord = tex2imgCoord(v_texCoord) + vec2(ZERO, lastGuess);
+
+    if(u_pass > 0)
     // gather search after scan
     {
         /*
            Find the texel which which running sum is equal its distance to the current texel
            by using a binary search:
         */
-
-        // 1. Get the last guess for the current texel
-        vec2 current = unpack2shorts(texture2D(s_texture, v_texCoord ) );
-
-        float lastGuess = current.y;
-
-
         //   2. Get the value of the current guess
-        vec2  coord = img2texCoord(tex2imgCoord(v_texCoord) + vec2(lastGuess, ZERO) );
+        coord = img2texCoord(coord);
         float guess = unpack2shorts( texture2D(s_texture, coord ) ).x;
         vec2  value = unpack2shorts( texture2D(s_values,  coord ) );
 
@@ -155,7 +180,7 @@ void main()
 
         if(guess > lastGuess)
         {
-            outGuess = lastGuess + exp2(-float(u_pass)-TWO);
+            outGuess = lastGuess + exp2(float(u_pass)-ONE);
         }
         else if(guess == lastGuess && isRoot(value, coord) == ONE)
         {
@@ -163,7 +188,7 @@ void main()
         }
         else
         {
-            outGuess = lastGuess - exp2(-float(u_pass)-TWO);
+            outGuess = lastGuess - exp2(float(u_pass)-ONE);
         }
 
         gl_FragColor = pack2shorts( vec2(current.x, outGuess) );
@@ -174,5 +199,50 @@ void main()
 
 
 
+    }
+    else if(u_pass == 0)
+    {
+        float withinBounds = float( (u_texDimensions[u_direction]-coord[u_direction]) > ZERO );
+        coord = img2texCoord(coord);
+
+        float guess = unpack2shorts( texture2D(s_texture, coord ) ).x;
+        vec2  value = unpack2shorts( texture2D(s_values,  coord ) );
+
+        // Version with if:
+        float outGuess;
+
+        if(guess > lastGuess)
+        {
+            outGuess = lastGuess + ONE;
+        }
+        else if(guess == lastGuess && isRoot(value, coord) == ONE)
+        {
+            outGuess = lastGuess;
+        }
+        else
+        {
+            outGuess = lastGuess - ONE;
+        }
+
+        // Final assignment
+        if(u_direction == HORIZONTAL)
+            coord = img2texCoord( tex2imgCoord(v_texCoord) + vec2(outGuess, ZERO) );
+        else // VERTICAL
+            coord = img2texCoord( tex2imgCoord(v_texCoord) + vec2(ZERO, outGuess) );
+
+        gl_FragColor = texture2D(s_values, coord) * withinBounds;
+    }
+}
+
+void main()
+{
+    if(u_stage == RUNNING_SUM)
+    {
+        runningSum();
+    }
+
+    else if(u_stage == BINARY_SEARCH)
+    {
+        binarySearch();
     }
 }
