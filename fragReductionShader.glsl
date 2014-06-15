@@ -10,7 +10,7 @@ uniform int u_direction;
 
 #define RUNNING_SUM     0
 #define BINARY_SEARCH   1
-#define FINALIZATION    2
+#define ROOT_INIT       2
 
 #define HORIZONTAL      0
 #define VERTICAL        1
@@ -93,11 +93,6 @@ vec2 img2texCoord(in vec2 imgCoord)
     return (TWO*imgCoord + ONE)/(TWO*u_texDimensions);
 }
 
-float isRoot(vec2 label, vec2 texCoord)
-{
-    return float( all( equal(label, tex2imgCoord(texCoord) + ONE ) ) );
-}
-
 void runningSum()
 {
     vec2 coord ;
@@ -120,19 +115,15 @@ void runningSum()
         vec4 pixelCol = texture2D( s_values, v_texCoord );
         vec2 curLabel = unpack2shorts(pixelCol);
 
-        // Check if the current pixel is a root pixel of a certain spot
-        float root = isRoot(curLabel, v_texCoord);
-
         // count == 1.0 if curPixelCol is not root pixel or zero and 0.0 otherwise
-        float count = ONE - step(ONE/256.0, length(pixelCol * root ) );
+        float count = ONE - step(ONE/256.0, length(pixelCol) );
 
         // Check if pixel to the left is zero
         pixelCol = texture2D( s_values, coord);
         curLabel = unpack2shorts(pixelCol);
-        root = isRoot(curLabel, coord);
 
         // Add 1.0 to count if pixel to the left is 0.0 or not root, make sure not to read outside of texture
-        count += ( ONE - step(ONE/256.0, length(pixelCol * root) ) ) * withinBounds;
+        count += ( ONE - step(ONE/256.0, length(pixelCol) ) ) * withinBounds;
 
         // Save the number of zero or non-root pixel from this and left neighbor pixel (0.0, 1.0 or 2.0)
         gl_FragColor = pack2shorts(vec2(count, ZERO));
@@ -182,7 +173,7 @@ void binarySearch()
         {
             outGuess = lastGuess + exp2(float(u_pass)-ONE);
         }
-        else if(guess == lastGuess && isRoot(value, coord) == ONE)
+        else if(guess == lastGuess && length(value) == ZERO)
         {
             outGuess = lastGuess;
         }
@@ -194,7 +185,7 @@ void binarySearch()
         gl_FragColor = pack2shorts( vec2(current.x, outGuess) );
 
         // Version without if:
-//        float factor = TWO * float(guess > lastGuess) - ONE + float(guess==lastGuess) * isRoot(value, coord);
+//        float factor = TWO * float(guess > lastGuess) - ONE + float(guess==lastGuess) * step(ONE/256.0, length(value) ) ;
 //        gl_FragColor = pack2shorts( vec2( current.x, lastGuess+factor*exp2(-float(u_pass)-TWO) ) );
 
 
@@ -215,7 +206,7 @@ void binarySearch()
         {
             outGuess = lastGuess + ONE;
         }
-        else if(guess == lastGuess && isRoot(value, coord) == ONE)
+        else if(guess == lastGuess && length(value) == ZERO)
         {
             outGuess = lastGuess;
         }
@@ -244,5 +235,11 @@ void main()
     else if(u_stage == BINARY_SEARCH)
     {
         binarySearch();
+    }
+    else if(u_stage == ROOT_INIT)
+    {
+        vec4 curColor = texture2D(s_values, v_texCoord );
+        bool isRoot = all( equal( unpack2shorts(curColor), tex2imgCoord(v_texCoord) + ONE ) );
+        gl_FragColor = curColor * float(isRoot);
     }
 }

@@ -4,6 +4,17 @@
 #include "include/tga.h"
 #include "phase.h"
 
+#define HORIZONTAL 0
+#define VERTICAL   1
+
+#define TEX_LABEL  0
+#define TEX_ROOT   1
+#define TEX_PIPO   2
+
+#define MODE_RUNNING_SUM     0
+#define MODE_BINARY_SEARCH   1
+#define MODE_ROOT_INIT       2
+
 class ReductionPhase : public Phase
 {
 public:
@@ -30,6 +41,8 @@ public:
     GLint  u_texDimLoc;
     GLint  u_passLoc;
     GLint  u_debugLoc;
+    GLint  u_stageLoc;
+    GLint  u_directionLoc;
 
     // Uniform values
     GLint u_pass;
@@ -48,10 +61,12 @@ public:
 
 // End Check
     // Texture to attach to the frambuffers
-    GLuint mFboTexId[2];
-    GLuint mReadOnlyTex;
+    GLuint mTexPiPoId[2];
+    GLuint mTexLabelId;
+    GLuint mTexRootId;
+
     GLuint mFboId[2];
-    GLint  mTextureUnits[3];
+    GLint  mTextureUnits[4];
 
     int mWrite;
     int mRead;
@@ -62,6 +77,9 @@ public:
 
     void setupGeometry();
     virtual void run();
+
+private:
+    void reduce(int length);
 };
 
 #endif // REDUCTIONPHASE_H
