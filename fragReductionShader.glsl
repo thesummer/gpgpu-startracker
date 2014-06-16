@@ -173,7 +173,7 @@ void binarySearch()
         {
             outGuess = lastGuess + exp2(float(u_pass)-ONE);
         }
-        else if(guess == lastGuess && length(value) == ZERO)
+        else if(guess == lastGuess && length(value) > ZERO)
         {
             outGuess = lastGuess;
         }
@@ -206,7 +206,7 @@ void binarySearch()
         {
             outGuess = lastGuess + ONE;
         }
-        else if(guess == lastGuess && length(value) == ZERO)
+        else if(guess == lastGuess && length(value) > ZERO)
         {
             outGuess = lastGuess;
         }

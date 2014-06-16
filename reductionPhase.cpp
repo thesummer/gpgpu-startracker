@@ -191,6 +191,8 @@ void ReductionPhase::run()
         }
     }
 
+    // Bind the correct framebuffer
+    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
     // Bind the mTexRoot to the s_values sampler for the complete run
     GL_CHECK( glUniform1i ( s_valuesLoc, mTextureUnits[TEX_ROOT] ) );
 
@@ -221,7 +223,7 @@ void ReductionPhase::run()
 
     GL_CHECK( glUniform1i ( u_directionLoc, VERTICAL) );
 
-    reduce(mHeight);
+//    reduce(mHeight);
 
     ///TODO: ---------- 5. RENDER RESULT INTO SMALL TEXTURE --------------------
 
@@ -282,7 +284,7 @@ void ReductionPhase::reduce(int length)
         // Bind the FBO to write to
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
         // Set the sampler texture unit to 0
-        GL_CHECK( glUniform1i ( s_reductionLoc, mTextureUnits[mRead] ) );
+        GL_CHECK( glUniform1i ( s_reductionLoc, mTextureUnits[TEX_PIPO+mRead] ) );
         // Set the pass index
         GL_CHECK( glUniform1i ( u_passLoc,  u_pass) );
         GL_CHECK( glUniform1i ( u_debugLoc, u_debug) );
