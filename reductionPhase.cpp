@@ -17,7 +17,7 @@ ReductionPhase::ReductionPhase(int width, int height)
                   1.0f, -1.0f, 0.0f,  // Position 3
                   1.0f,  0.0f         // TexCoord 3
                 },
-      mIndices { 0, 1, 2, 0, 2, 3 }
+      mIndices { 0, 1, 2, 0, 2, 3 }, u_debug(0)
 
 {
 }
@@ -208,6 +208,8 @@ void ReductionPhase::run()
     // Swap texture Ids and corresponding Texture Units
     std::swap(mTexRootId, mTexPiPoId[mRead]);
     std::swap(mTextureUnits[TEX_ROOT], mTextureUnits[TEX_PIPO+mRead]);
+    // Update s_values Sampler with changed texture unit
+    GL_CHECK( glUniform1i ( s_valuesLoc, mTextureUnits[TEX_ROOT] ) );
 
     // Attach the old mTexRoot to framebuffer
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mRead]) );
@@ -222,8 +224,8 @@ void ReductionPhase::run()
 
 
     GL_CHECK( glUniform1i ( u_directionLoc, VERTICAL) );
-
-//    reduce(mHeight);
+//    u_debug = 1;
+    reduce(mHeight);
 
     ///TODO: ---------- 5. RENDER RESULT INTO SMALL TEXTURE --------------------
 
@@ -246,7 +248,6 @@ void ReductionPhase::reduce(int length)
     for (int i = 0; i < logBase2(length); ++i)
     {
         u_pass = i;
-        u_debug = 0;
 
         // Bind the FBO to write to
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
@@ -269,8 +270,7 @@ void ReductionPhase::reduce(int length)
 #endif
 
         // Switch read and write texture
-        mRead  = 1 - mRead;
-        mWrite = 1 - mWrite;
+        std::swap(mRead, mWrite);
     }
 
     // Second part is BINARY_SEARCH
@@ -279,7 +279,6 @@ void ReductionPhase::reduce(int length)
     for (int i = logBase2(length)-2; i >= 0; --i)
     {
         u_pass = i;
-        u_debug = 0;
 
         // Bind the FBO to write to
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
@@ -301,8 +300,7 @@ void ReductionPhase::reduce(int length)
 #endif
 
         // Switch read and write texture
-        mRead  = 1 - mRead;
-        mWrite = 1 - mWrite;
+        std::swap(mRead, mWrite);
     }
 
 #ifdef _DEBUG

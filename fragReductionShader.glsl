@@ -6,7 +6,7 @@ uniform vec2 u_texDimensions;   // image/texture dimensions
 uniform int u_stage;            // different stages
 uniform int u_pass;
 uniform int u_direction;
-// uniform int u_debug;
+uniform int u_debug;
 
 #define RUNNING_SUM     0
 #define BINARY_SEARCH   1
@@ -193,7 +193,6 @@ void binarySearch()
     }
     else if(u_pass == 0)
     {
-        float withinBounds = float( (u_texDimensions[u_direction]-coord[u_direction]) > ZERO );
         coord = img2texCoord(coord);
 
         float guess = unpack2shorts( texture2D(s_texture, coord ) ).x;
@@ -217,11 +216,18 @@ void binarySearch()
 
         // Final assignment
         if(u_direction == HORIZONTAL)
-            coord = img2texCoord( tex2imgCoord(v_texCoord) + vec2(outGuess, ZERO) );
+        {
+            coord = tex2imgCoord(v_texCoord) + vec2(outGuess, ZERO);
+        }
         else // VERTICAL
-            coord = img2texCoord( tex2imgCoord(v_texCoord) + vec2(ZERO, outGuess) );
+        {
+            coord = tex2imgCoord(v_texCoord) + vec2(ZERO, outGuess);
+        }
+        float withinBounds = float( (u_texDimensions[u_direction]-coord[u_direction]) > ZERO );
+        coord = img2texCoord(coord);
 
         gl_FragColor = texture2D(s_values, coord) * withinBounds;
+//        gl_FragColor = vec4(withinBounds);
     }
 }
 
