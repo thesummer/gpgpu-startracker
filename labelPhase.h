@@ -45,7 +45,6 @@ public:
     GLint mSamplerLoc;
 
     // Texture handle
-    GLuint mTextureId;
     /// TODO: tga somewhere else?
     TGA    *mTgaImage;
     TGAData *mTgaData;
@@ -62,6 +61,11 @@ public:
     LabelPhase(int width = 0, int height = 0);
     GLint init(GLuint fbos[], GLuint &bfUsedTextures);
     GLint initIndependent(GLuint fbos[], GLuint &bfUsedTextures);
+
+    GLint getLastTexture();
+    GLint getLastTexUnit();
+    GLint getFreeTexture();
+    GLint getFreeTexUnit();
 
     void setupGeometry();
 

@@ -92,6 +92,26 @@ GLint LabelPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
     return init(fbos, bfUsedTextures);
 }
 
+GLint LabelPhase::getLastTexture()
+{
+    return mTexPiPoId[mRead];
+}
+
+GLint LabelPhase::getLastTexUnit()
+{
+    return mTextureUnits[TEX_PIPO+mRead];
+}
+
+GLint LabelPhase::getFreeTexture()
+{
+    return mTexPiPoId[mWrite];
+}
+
+GLint LabelPhase::getFreeTexUnit()
+{
+    return mTextureUnits[TEX_PIPO+mWrite];
+}
+
 void LabelPhase::setupGeometry()
 {
     // Set the viewport
@@ -187,8 +207,8 @@ void LabelPhase::run()
         printf("Pixels after pass %d:\n", i);
 //        printLabels(mWidth, mHeight, pixels);
         char filename[50];
-        sprintf(filename, "out%03d.tga", i);
-        writeTgaImage(mWidth, mHeight, filename, pixels);
+        sprintf(filename, "raw%03d.tga", i);
+        writeRawTgaImage(mWidth, mHeight, filename, pixels);
         delete [] pixels;
 #endif
 
