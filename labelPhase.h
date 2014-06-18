@@ -7,7 +7,6 @@
 #include "include/tga.h"
 #include "include/getTime.h"
 
-
 class LabelPhase: public Phase
 {
 public:
@@ -52,15 +51,17 @@ public:
     TGAData *mTgaData;
 
     // Texture to attach to the frambuffers
-    GLuint mFboTexId[2];
+    GLuint mTexOrigId;
+    GLuint mTexPiPoId[2];
     GLuint mFboId[2];
-    GLint  mTextureUnits[2];
+    GLint  mTextureUnits[3];
 
     int mWrite;
     int mRead;
 
     LabelPhase(int width = 0, int height = 0);
-    GLint init(GLuint fbos[], int numNewTextures, GLuint &bfUsedTextures);
+    GLint init(GLuint fbos[], GLuint &bfUsedTextures);
+    GLint initIndependent(GLuint fbos[], GLuint &bfUsedTextures);
 
     void setupGeometry();
 
