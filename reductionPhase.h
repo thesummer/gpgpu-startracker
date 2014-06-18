@@ -4,17 +4,6 @@
 #include "include/tga.h"
 #include "phase.h"
 
-#define HORIZONTAL 0
-#define VERTICAL   1
-
-#define TEX_LABEL  0
-#define TEX_ROOT   1
-#define TEX_PIPO   2
-
-#define MODE_RUNNING_SUM     0
-#define MODE_BINARY_SEARCH   1
-#define MODE_ROOT_INIT       2
-
 class ReductionPhase : public Phase
 {
 public:
@@ -73,7 +62,7 @@ public:
     int mReadOnly;
 
     ReductionPhase(int width = 0, int height = 0);
-    void init(GLuint fbos[], GLuint &bfUsedTextures);
+    GLint init(GLuint fbos[], GLuint &bfUsedTextures);
     GLint initIndependent(GLuint fbos[], GLuint &bfUsedTextures);
 
     void setupGeometry();

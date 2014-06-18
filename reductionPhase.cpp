@@ -2,6 +2,18 @@
 using std::cerr;
 using std::endl;
 
+#define HORIZONTAL 0
+#define VERTICAL   1
+
+#define TEX_LABEL  0
+#define TEX_ROOT   1
+#define TEX_PIPO   2
+
+#define MODE_RUNNING_SUM     0
+#define MODE_BINARY_SEARCH   1
+#define MODE_ROOT_INIT       2
+
+
 #include "reductionPhase.h"
 #include "include/getTime.h"
 
@@ -22,7 +34,7 @@ ReductionPhase::ReductionPhase(int width, int height)
 {
 }
 
-void ReductionPhase::init(GLuint fbos[], GLuint &bfUsedTextures)
+GLint ReductionPhase::init(GLuint fbos[], GLuint &bfUsedTextures)
 {
     // Save the handles to the 2 framebuffers
     mFboId[0] = fbos[0];
@@ -57,7 +69,7 @@ void ReductionPhase::init(GLuint fbos[], GLuint &bfUsedTextures)
      // 3. and 4. texture for ping-pong
      for(int j=0; j<2; ++j)
      {
-         i = 0;
+         int i = 0;
          while( (1<<i) & bfUsedTextures) ++i;
 
          GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
@@ -68,6 +80,8 @@ void ReductionPhase::init(GLuint fbos[], GLuint &bfUsedTextures)
      }
 
      GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
+
+     return GL_TRUE;
 }
 
 
@@ -105,10 +119,7 @@ GLint ReductionPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
 
     // 3. and 4. texture for ping-pong
     // and setup of the program object
-    init(fbos);
-
-    GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
-    return GL_TRUE;
+    return init(fbos, bfUsedTextures);
 }
 
 void ReductionPhase::setupGeometry()
