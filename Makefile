@@ -14,9 +14,6 @@ SRCS=./main.cpp ogles.cpp phase.cpp labelPhase.cpp reductionPhase.cpp getTime.c
 
 OBJ=$(SRCS:.cpp=.o)
 
-# SRCS+=labelPhase.hpp
-# OBJ+=labelphase.o
-
 # COMMONSRC=./Common/esShader.c    \
 #           ./Common/esTransform.c \
 #           ./Common/esShapes.c    \
