@@ -43,6 +43,7 @@ public:
 
     Ogles(int width, int height);
     Ogles(std::string tgaFilename);
+
     void run();
 
 private:

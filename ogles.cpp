@@ -33,7 +33,7 @@ Ogles::Ogles(int width, int height)
     GL_CHECK( glGenFramebuffers(2, mFboId) );
 
 //    mLabelPhase.init(mFboId);
-    mReductionPhase.init(mFboId, 2, mUsedTexUnits);
+    mReductionPhase.initIndependent(mFboId, mUsedTexUnits);
 }
 
 Ogles::Ogles(std::string tgaFilename)
@@ -59,20 +59,22 @@ Ogles::Ogles(std::string tgaFilename)
     // initialize the 2 frambuffers for ping-pong method
     GL_CHECK( glGenFramebuffers(2, mFboId) );
 
-//    mLabelPhase.init(mFboId);
+    mLabelPhase.initIndependent(mFboId, mUsedTexUnits);
 
     mReductionPhase.mWidth  = mWidth;
     mReductionPhase.mHeight = mHeight;
     mReductionPhase.mTgaData = &mImgData;
-    mReductionPhase.init(mFboId, 2, mUsedTexUnits);
+    mReductionPhase.init(mFboId, mUsedTexUnits);
+//    mReductionPhase.initIndependent(mFboId, mUsedTexUnits);
 }
 
 void Ogles::run()
 {
-//    mLabelPhase.setupGeometry();
-//    mLabelPhase.run();
-
-    mReductionPhase.setupGeometry();
+    mLabelPhase.setupGeometry();
+    mLabelPhase.run();
+    mReductionPhase.updateTextures(mLabelPhase.getLastTexture(), mLabelPhase.getLastTexUnit(),
+                                   mLabelPhase.getFreeTexture(), mLabelPhase.getFreeTexUnit() );
+//    mReductionPhase.setupGeometry();
     mReductionPhase.run();
 }
 
