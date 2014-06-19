@@ -1,5 +1,5 @@
 Makefile
-Makefile-pi
+Makefile.pi
 vertShader.glsl
 fragInitShader.glsl
 fragLabelShader.glsl
