@@ -9,6 +9,9 @@ using std::endl;
 
 #include "ogles.h"
 #include "phase.h"
+#include "include/getTime.h"
+
+
 
 #ifdef _DEBUG
     #define EGL_CHECK(stmt) do { \
@@ -33,7 +36,18 @@ Ogles::Ogles(int width, int height)
     GL_CHECK( glGenFramebuffers(2, mFboId) );
 
 //    mLabelPhase.init(mFboId);
-    mReductionPhase.initIndependent(mFboId, mUsedTexUnits);
+//    mReductionPhase.initIndependent(mFboId, mUsedTexUnits);
+}
+
+Ogles::~Ogles()
+{
+    // Clean up OpenGL objects
+    GL_CHECK( glDeleteFramebuffers(2, mFboId) );
+    // Clean up EGL-context
+    EGL_CHECK ( eglMakeCurrent(esContext.eglDisplay , EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) );
+    EGL_CHECK ( eglDestroyContext(esContext.eglDisplay, esContext.eglContext) );
+    EGL_CHECK ( eglDestroySurface(esContext.eglDisplay, esContext.eglSurface) );
+    EGL_CHECK ( eglTerminate(esContext.eglDisplay) );
 }
 
 Ogles::Ogles(std::string tgaFilename)
@@ -59,23 +73,35 @@ Ogles::Ogles(std::string tgaFilename)
     // initialize the 2 frambuffers for ping-pong method
     GL_CHECK( glGenFramebuffers(2, mFboId) );
 
-    mLabelPhase.initIndependent(mFboId, mUsedTexUnits);
+    if(!mLabelPhase.initIndependent(mFboId, mUsedTexUnits) )
+        exit(1);
 
     mReductionPhase.mWidth  = mWidth;
     mReductionPhase.mHeight = mHeight;
     mReductionPhase.mTgaData = &mImgData;
-    mReductionPhase.init(mFboId, mUsedTexUnits);
+    if (!mReductionPhase.init(mFboId, mUsedTexUnits) )
+        exit(1);
 //    mReductionPhase.initIndependent(mFboId, mUsedTexUnits);
 }
 
 void Ogles::run()
 {
+    double startTime, endTime;
+
+    startTime = getRealTime();
+
     mLabelPhase.setupGeometry();
     mLabelPhase.run();
+
+
     mReductionPhase.updateTextures(mLabelPhase.getLastTexture(), mLabelPhase.getLastTexUnit(),
                                    mLabelPhase.getFreeTexture(), mLabelPhase.getFreeTexUnit() );
-//    mReductionPhase.setupGeometry();
+    mReductionPhase.setupGeometry();
     mReductionPhase.run();
+
+    endTime = getRealTime();
+
+    cout << "Total time: " << (endTime-startTime)*1000 << endl;
 }
 
 
@@ -117,8 +143,17 @@ int Ogles::initEGL(int width, int height)
    }
 
 // Step 6 - Create a surface to draw to.
+
+   // Necessary to set EGL_WIDTH and EGL_HEIGHT to at least 1
+   // if left default (0) the rpi gets into troubles
+   const EGLint srfPbufferAttr[] =
+   {
+       EGL_WIDTH, 1,
+       EGL_HEIGHT, 1,
+       EGL_NONE
+   };
    EGLSurface eglSurface;
-   eglSurface = eglCreatePbufferSurface(eglDisplay, eglConfig, NULL);
+   eglSurface = eglCreatePbufferSurface(eglDisplay, eglConfig, srfPbufferAttr);
    EGL_CHECK( (eglSurface != EGL_NO_SURFACE) );
 
 // Step 7 - Create a context.
