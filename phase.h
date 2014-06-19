@@ -14,6 +14,19 @@
     #define GL_CHECK(stmt) stmt
 #endif
 
+#ifdef _DEBUG
+    #define CHECK_FBO() do {                                                                    \
+            GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);                           \
+            if (status != GL_FRAMEBUFFER_COMPLETE)                                              \
+            {                                                                                   \
+               printf("OpenGL error %08x, at %s:%i - Framebuffer is not complete\n", status, __FILE__, __LINE__);    \
+               abort();                                                                         \
+            }                                                                                   \
+        } while (0)
+#else
+    #define CHECK_FBO() ;
+#endif
+
 
 class Phase
 {
@@ -38,6 +51,7 @@ public:
     void printLabels(int width, int height, GLubyte *pixels);
 
     static int logBase2(int n);
+
 };
 
 #endif // PHASE_H
