@@ -14,14 +14,6 @@ SRCS=./main.cpp ogles.cpp phase.cpp labelPhase.cpp reductionPhase.cpp getTime.c
 
 OBJ=$(SRCS:.cpp=.o)
 
-# COMMONSRC=./Common/esShader.c    \
-#           ./Common/esTransform.c \
-#           ./Common/esShapes.c    \
-#           ./Common/esUtil.c
-# HEADERS=./Common/esUtil.h
-# SRCS+= ${COMMONSRC}
-
-
 
 default: all
 
