@@ -10,11 +10,7 @@
             stmt; \
             Phase::checkOpenGLError(#stmt, __FILE__, __LINE__); \
         } while (0)
-#else
-    #define GL_CHECK(stmt) stmt
-#endif
 
-#ifdef _DEBUG
     #define CHECK_FBO() do {                                                                    \
             GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);                           \
             if (status != GL_FRAMEBUFFER_COMPLETE)                                              \
@@ -24,6 +20,7 @@
             }                                                                                   \
         } while (0)
 #else
+    #define GL_CHECK(stmt) stmt
     #define CHECK_FBO() ;
 #endif
 
@@ -32,7 +29,7 @@ class Phase
 {
 public:
 
-    virtual void run () = 0;
+    virtual double run () = 0;
 
     static GLuint createSimpleTexture2D(GLsizei width, GLsizei height,
                                         GLubyte *data = NULL,
