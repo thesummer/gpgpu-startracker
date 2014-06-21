@@ -19,8 +19,15 @@ LabelPhase::LabelPhase(int width, int height)
                   1.0f, -1.0f, 0.0f,  // Position 3
                   1.0f,  0.0f         // TexCoord 3
                 },
-      mIndices { 0, 1, 2, 0, 2, 3 }, u_threshold(64 / 255.0)
+      mIndices { 0, 1, 2, 0, 2, 3 }, u_threshold(64.3 / 255.0)
 {
+}
+
+LabelPhase::~LabelPhase()
+{
+    GL_CHECK( glDeleteProgram(mProgramObject) );
+    GL_CHECK( glDeleteTextures(1, &mTexOrigId) );
+    GL_CHECK( glDeleteTextures(2, mTexPiPoId) );
 }
 
 GLint LabelPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
@@ -53,10 +60,6 @@ GLint LabelPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
      u_passLoc       = glGetUniformLocation ( mProgramObject, "u_pass" );
      u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
      u_factorLoc     = glGetUniformLocation ( mProgramObject, "u_factor" );
-     // Create a texture for the frambuffer
-//     mTexPiPoId[mRead]  = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
-//     mTexPiPoId[mWrite] = createSimpleTexture2D(mWidth, mHeight);
-
 
      // 2. and 3. texture for ping-pong
      for(int j=0; j<2; ++j)
@@ -128,19 +131,19 @@ void LabelPhase::setupGeometry()
     GL_CHECK( glEnableVertexAttribArray ( mTexCoordLoc ) );
 }
 
-void LabelPhase::run()
+double LabelPhase::run()
 {
+    double startTime, endTime;
+
+    startTime = getRealTime();
+
     // Setup OpenGL
     // Attach the two PiPo-textures to the 2 fbos
     for(int i=0; i<2; i++)
     {
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[i]) );
         GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexPiPoId[i], 0) );
-        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        if (status != GL_FRAMEBUFFER_COMPLETE)
-        {
-            printf("Framebuffer is not complete with %08x\n", status);
-        }
+        CHECK_FBO();
     }
 
     // Use the program object
@@ -153,9 +156,6 @@ void LabelPhase::run()
     // Do the runs
     u_factor = -1.0;
 
-    double startTime, endTime;
-
-    startTime = getRealTime();
 
 
     ///---------- 1. THRESHOLD AND INITIAL LABELING --------------------
@@ -201,21 +201,22 @@ void LabelPhase::run()
         std::swap(mRead, mWrite);
 
 #ifdef _DEBUG
-        // Make the BYTE array, factor of 3 because it's RGBA.
-        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-        printf("Pixels after pass %d:\n", i);
-//        printLabels(mWidth, mHeight, pixels);
-        char filename[50];
-        sprintf(filename, "raw%03d.tga", i);
-        writeRawTgaImage(mWidth, mHeight, filename, pixels);
-        delete [] pixels;
+//        // Make the BYTE array, factor of 3 because it's RGBA.
+//        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
+//        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+//        printf("Pixels after pass %d:\n", i);
+////        printLabels(mWidth, mHeight, pixels);
+//        char filename[50];
+//        sprintf(filename, "outl%03d.tga", i);
+//        writeTgaImage(mWidth, mHeight, filename, pixels);
+//        delete [] pixels;
 #endif
 
         // Switch read and write texture
     }
+
     endTime = getRealTime();
 
-    printf("Time: %f ms\n", (endTime-startTime)*1000);
+    return (endTime-startTime)*1000;
 }
 

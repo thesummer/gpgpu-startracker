@@ -59,6 +59,7 @@ public:
     int mRead;
 
     LabelPhase(int width = 0, int height = 0);
+    virtual ~LabelPhase();
     GLint init(GLuint fbos[], GLuint &bfUsedTextures);
     GLint initIndependent(GLuint fbos[], GLuint &bfUsedTextures);
 
@@ -69,7 +70,7 @@ public:
 
     void setupGeometry();
 
-    virtual void run();
+    virtual double run();
 };
 
 #endif // LABELPHASE_H
