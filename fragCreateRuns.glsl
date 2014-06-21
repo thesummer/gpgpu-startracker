@@ -22,7 +22,9 @@ return vec4: RGBA value which contains the packed shorts with LSB first.
 */
 vec4 pack2shorts(in vec2 shorts)
 {
-    shorts /= 256.0;
+    // Correct for rounding errors due to the raspberry's limited precision (works at least between 0..2700)
+    const float bias = ONE/1024.0;
+    shorts = shorts/256.0 + bias;
     return vec4(floor(shorts)/255.0, fract(shorts)*256.0/255.0).zxwy;
 }
 
@@ -38,7 +40,7 @@ return vec2: vector which will contain the 2 shorts
 vec2 unpack2shorts(in vec4 rgba)
 {
     // LSB * 255 + MSB * 255*256
-    return vec2(rgba.xz * 255.0 + 255.0*256.0 * rgba.yw);
+    return floor(vec2(rgba.xz * 255.0 + 255.0*256.0 * rgba.yw)+0.5);
 }
 
 /*
@@ -65,7 +67,7 @@ return vec2: vecture with image coordinates
 */
 vec2 tex2imgCoord(in vec2 texCoord)
 {
-    return (TWO*texCoord*u_texDimensions-ONE)/TWO;
+    return floor( (TWO*texCoord*u_texDimensions-ONE)/TWO+0.5 );
 }
 
 
@@ -90,7 +92,7 @@ void main()
     if (u_pass == 0)
     {
         vec4 curPixelCol = texture2D( s_texture, v_texCoord ).rrrr;
-        // Threshold operation
+        // Threshold operation)
         curPixelCol = step(u_threshold, curPixelCol);
 
         gl_FragColor = pack2shorts( (tex2imgCoord(v_texCoord) + ONE ) * curPixelCol.xy);

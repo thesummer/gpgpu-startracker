@@ -18,8 +18,10 @@ return vec4: RGBA value which contains the packed shorts.
 */
 vec4 pack2shorts(in vec2 shorts)
 {
-    shorts /= 256.0f;
-    return vec4(floor(shorts)/255.0f, fract(shorts)*256.0f/255.0f).zxwy;
+    // Correct for rounding errors due to the raspberry's limited precision works at least between 0..2700
+    const float bias = 1.0/1024.0;
+    shorts = shorts/256.0 + bias;
+    return vec4(floor(shorts)/255.0, fract(shorts)*256.0/255.0).zxwy;
 }
 
 /*
@@ -46,7 +48,7 @@ return vec2: vecture with image coordinates
 */
 vec2 tex2imgCoord(in vec2 texCoord)
 {
-    return (2.0f*texCoord*u_texDimensions-1.0f)/2.0f;
+    return floor((2.0*texCoord*u_texDimensions-1.0)/2.0+0.5);
 }
 
 
@@ -67,7 +69,7 @@ void main()
 
     // Threshold operation
     gl_FragColor.a = gl_FragColor.r;
-    gl_FragColor = step(vec4(u_threshold), gl_FragColor);
+    gl_FragColor = step(u_threshold, gl_FragColor);
 
     // pack image coordinates for the non-zero pixels
     gl_FragColor = pack2shorts(imgCoord) * gl_FragColor;
