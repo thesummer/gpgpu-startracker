@@ -1,4 +1,5 @@
 precision highp float;
+precision highp sampler2D;
 varying vec2 v_texCoord;        // texture coordinates
 uniform sampler2D s_texture;    // texture sampler
 uniform sampler2D s_values;
@@ -31,7 +32,9 @@ return vec4: RGBA value which contains the packed shorts with LSB first.
 */
 vec4 pack2shorts(in vec2 shorts)
 {
-    shorts /= 256.0;
+    // Correct for rounding errors due to the raspberry's limited precision works at least between 0..2700
+    const float bias = ONE/1024.0;
+    shorts = shorts/256.0 + bias;
     return vec4(floor(shorts)/255.0, fract(shorts)*256.0/255.0).zxwy;
 }
 
@@ -47,7 +50,7 @@ return vec2: vector which will contain the 2 shorts
 vec2 unpack2shorts(in vec4 rgba)
 {
     // LSB * 255 + MSB * 255*256
-    return vec2(rgba.xz * 255.0 + 255.0*256.0 * rgba.yw);
+    return floor(vec2(rgba.xz * 255.0 + 255.0*256.0 * rgba.yw)+0.5);
 }
 
 /*
@@ -74,7 +77,7 @@ return vec2: vecture with image coordinates
 */
 vec2 tex2imgCoord(in vec2 texCoord)
 {
-    return (TWO*texCoord*u_texDimensions-ONE)/TWO;
+    return floor( (TWO*texCoord*u_texDimensions-ONE)/TWO+0.5 );
 }
 
 
@@ -100,12 +103,12 @@ void runningSum()
     if(u_direction == HORIZONTAL)
     {
         coord = tex2imgCoord(v_texCoord) - vec2(exp2( float(u_pass) ), ZERO);
-        withinBounds = step(ZERO, coord.x);
+        withinBounds = step(ZERO, coord.x+0.5 );
     }
     else // VERTICAL
     {
         coord = tex2imgCoord(v_texCoord) - vec2( ZERO, exp2( float(u_pass) ) );
-        withinBounds = step(ZERO, coord.y);
+        withinBounds = step(ZERO, coord.y+0.5 );
     }
 
     coord = img2texCoord( coord );
@@ -115,17 +118,17 @@ void runningSum()
         vec4 pixelCol = texture2D( s_values, v_texCoord );
         vec2 curLabel = unpack2shorts(pixelCol);
 
-        // count == 1.0 if curPixelCol is not root pixel or zero and 0.0 otherwise
+        // count == 1.0 if curPixelCol is zero and 0.0 otherwise
         float count = ONE - step(ONE/256.0, length(pixelCol) );
 
         // Check if pixel to the left is zero
         pixelCol = texture2D( s_values, coord);
         curLabel = unpack2shorts(pixelCol);
 
-        // Add 1.0 to count if pixel to the left is 0.0 or not root, make sure not to read outside of texture
+        // Add 1.0 to count if pixel to the left is zero, make sure not to read outside of texture
         count += ( ONE - step(ONE/256.0, length(pixelCol) ) ) * withinBounds;
 
-        // Save the number of zero or non-root pixel from this and left neighbor pixel (0.0, 1.0 or 2.0)
+        // Save the number of zero pixels from this and left neighbor pixel (0.0, 1.0 or 2.0)
         gl_FragColor = pack2shorts(vec2(count, ZERO));
     }
     else if(u_pass > 0)
@@ -138,7 +141,7 @@ void runningSum()
 
         // Add the value 2^u_pass to the left (filter out values outside of texture range)
         count += unpack2shorts(pixelCol).x * withinBounds;
-        gl_FragColor = pack2shorts(vec2(count, exp2( float(u_pass)-ONE )) );
+        gl_FragColor = pack2shorts(vec2(count, exp2( float(u_pass) )) );
 
     }
 }
@@ -201,6 +204,7 @@ void binarySearch()
         // Version with if:
         float outGuess;
 
+
         if(guess > lastGuess)
         {
             outGuess = lastGuess + ONE;
@@ -214,20 +218,23 @@ void binarySearch()
             outGuess = lastGuess - ONE;
         }
 
+        outGuess = floor(outGuess+0.5);
+
         // Final assignment
+        float withinBounds;
         if(u_direction == HORIZONTAL)
         {
             coord = tex2imgCoord(v_texCoord) + vec2(outGuess, ZERO);
+            withinBounds = float( floor((u_texDimensions.x-coord.x)) > ZERO );
         }
         else // VERTICAL
         {
             coord = tex2imgCoord(v_texCoord) + vec2(ZERO, outGuess);
+            withinBounds = float( floor((u_texDimensions.y-coord.y)) > ZERO );
         }
-        float withinBounds = float( (u_texDimensions[u_direction]-coord[u_direction]) > ZERO );
         coord = img2texCoord(coord);
 
         gl_FragColor = texture2D(s_values, coord) * withinBounds;
-//        gl_FragColor = vec4(withinBounds);
     }
 }
 
@@ -245,7 +252,7 @@ void main()
     else if(u_stage == ROOT_INIT)
     {
         vec4 curColor = texture2D(s_values, v_texCoord );
-        bool isRoot = all( equal( unpack2shorts(curColor), tex2imgCoord(v_texCoord) + ONE ) );
+        bool isRoot = all( equal( floor(unpack2shorts(curColor)), floor(tex2imgCoord(v_texCoord)+0.5) + ONE ) );
         gl_FragColor = curColor * float(isRoot);
     }
 }
