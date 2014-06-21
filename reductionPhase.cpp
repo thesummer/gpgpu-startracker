@@ -34,6 +34,14 @@ ReductionPhase::ReductionPhase(int width, int height)
 {
 }
 
+ReductionPhase::~ReductionPhase()
+{
+    GL_CHECK( glDeleteProgram(mProgramObject) );
+    GL_CHECK( glDeleteTextures(1, &mTexLabelId) );
+    GL_CHECK( glDeleteTextures(1, &mTexRootId) );
+    GL_CHECK( glDeleteTextures(2, mTexPiPoId) );
+}
+
 GLint ReductionPhase::init(GLuint fbos[], GLuint &bfUsedTextures)
 {
     // Save the handles to the 2 framebuffers
@@ -149,7 +157,7 @@ void ReductionPhase::updateTextures(GLuint labelTex, GLint labelTexUnit, GLuint 
     mTextureUnits[TEX_ROOT] = freeTexUnit;
 }
 
-void ReductionPhase::run()
+double ReductionPhase::run()
 {
     /*
      *  5 stages:
@@ -162,13 +170,8 @@ void ReductionPhase::run()
      *      Result: A texture containing a compact list of all available labels
      */
 
-//    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[0]) );
-//    GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexPiPoId[0], 0) );
-//    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-//    if (status != GL_FRAMEBUFFER_COMPLETE)
-//    {
-//        printf("Framebuffer is not complete with %08x\n", status);
-//    }
+    double startTime, endTime;
+    startTime = getRealTime();
 
     // Use the program object
     GL_CHECK( glUseProgram ( mProgramObject ) );
@@ -187,13 +190,24 @@ void ReductionPhase::run()
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[0]) );
     // Attach mTexRoot to framebuffer
     GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexRootId, 0) );
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE)
-    {
-        printf("Framebuffer is not complete with %08x\n", status);
-    }
+    CHECK_FBO();
+
     // Draw scene
     GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
+
+#ifdef _DEBUG
+    // Make the BYTE array, factor of 3 because it's RGBA.
+    GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
+
+    GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+    printf("Pixels after root pass\n");
+////    printLabels(mWidth, mHeight, pixels);
+    char filename[50];
+    sprintf(filename, "outRoot.tga");
+    writeTgaImage(mWidth, mHeight, filename, pixels);
+    delete [] pixels;
+#endif
+
 
 
     ///---------- 2. REDUCE HORIZONTALLY --------------------
@@ -204,11 +218,7 @@ void ReductionPhase::run()
     {
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[i]) );
         GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexPiPoId[i], 0) );
-        status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        if (status != GL_FRAMEBUFFER_COMPLETE)
-        {
-            printf("Framebuffer is not complete with %08x\n", status);
-        }
+        CHECK_FBO();
     }
 
     // Bind the correct framebuffer
@@ -218,10 +228,21 @@ void ReductionPhase::run()
 
     GL_CHECK( glUniform1i ( u_directionLoc, HORIZONTAL) );
 
-    double startTime, endTime;
-    startTime = getRealTime();
 
     reduce(mWidth);
+
+//#ifdef _DEBUG
+//    // Make the BYTE array, factor of 3 because it's RGBA.
+//    // GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
+    pixels = new GLubyte[4*mWidth*mHeight];
+    GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+    printf("Pixels after horizontal pass\n");
+////    printLabels(mWidth, mHeight, pixels);
+//    char filename[50];
+    sprintf(filename, "outHori.tga");
+    writeTgaImage(mWidth, mHeight, filename, pixels);
+    delete [] pixels;
+//#endif
 
     ///---------- 3. SWITCH RESULT WITH TEX_ROOT --------------------
 
@@ -234,11 +255,7 @@ void ReductionPhase::run()
     // Attach the old mTexRoot to framebuffer
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mRead]) );
     GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexPiPoId[mRead], 0) );
-    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE)
-    {
-        printf("Framebuffer is not complete with %08x\n", status);
-    }
+    CHECK_FBO();
 
     ///---------- 4. REDUCE VERTICALLY --------------------
 
@@ -249,21 +266,21 @@ void ReductionPhase::run()
 
 #ifdef _DEBUG
     // Make the BYTE array, factor of 3 because it's RGBA.
-    GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-
+    // GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
+    pixels = new GLubyte[4*mWidth*mHeight];
     GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-    printf("Pixels after initial pass\n");
-    printLabels(mWidth, mHeight, pixels);
-    char filename[50];
+    printf("Pixels after vertical pass\n");
+//    printLabels(mWidth, mHeight, pixels);
+//    char filename[50];
     sprintf(filename, "out.tga");
     writeTgaImage(mWidth, mHeight, filename, pixels);
     delete [] pixels;
 #endif
 
     ///TODO: ---------- 5. RENDER RESULT INTO SMALL TEXTURE --------------------
-
     endTime = getRealTime();
-    printf("Time: %f ms\n", (endTime-startTime)*1000);
+
+    return (endTime-startTime)*1000;
 }
 
 void ReductionPhase::reduce(int length)
@@ -293,14 +310,14 @@ void ReductionPhase::reduce(int length)
         // Draw scene
         GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
 
-//#ifdef _DEBUG
-//        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-//        printf("Pixels after pass %d:\n", i);
+#ifdef _DEBUG
+        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+        printf("Pixels after pass %d:\n", i);
 //        printLabels(mWidth, mHeight, pixels);
 //        char filename[50];
 //        sprintf(filename, "out%03d.tga", i);
 //        writeRawTgaImage(mWidth, mHeight, filename, pixels);
-//#endif
+#endif
 
         // Switch read and write texture
         std::swap(mRead, mWrite);
@@ -309,7 +326,7 @@ void ReductionPhase::reduce(int length)
     // Second part is BINARY_SEARCH
     GL_CHECK( glUniform1i ( u_stageLoc, MODE_BINARY_SEARCH) );
 
-    for (int i = logBase2(length)-2; i >= 0; --i)
+    for (int i = logBase2(length)-1; i >= 0; --i)
     {
         u_pass = i;
 
@@ -323,14 +340,14 @@ void ReductionPhase::reduce(int length)
         // Draw scene
         GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
 
-//#ifdef _DEBUG
-//        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-//        printf("Pixels after pass %d:\n", i);
+#ifdef _DEBUG
+        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+        printf("Pixels after pass %d:\n", i);
 //        printLabels(mWidth, mHeight, pixels);
 //        char filename[50];
 //        sprintf(filename, "out%03d.tga", i);
 //        writeRawTgaImage(mWidth, mHeight, filename, pixels);
-//#endif
+#endif
 
         // Switch read and write texture
         std::swap(mRead, mWrite);

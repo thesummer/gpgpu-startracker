@@ -62,12 +62,13 @@ public:
     int mReadOnly;
 
     ReductionPhase(int width = 0, int height = 0);
+    virtual ~ReductionPhase();
     GLint init(GLuint fbos[], GLuint &bfUsedTextures);
     GLint initIndependent(GLuint fbos[], GLuint &bfUsedTextures);
 
     void setupGeometry();
     void updateTextures(GLuint labelTex, GLint labelTexUnit, GLuint freeTex, GLint freeTexUnit);
-    virtual void run();
+    virtual double run();
 
 private:
     void reduce(int length);
