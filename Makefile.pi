@@ -1,6 +1,6 @@
 # Straight forward Makefile to compile all examples in a row
 
-INCLUDES=-I./Common -I./include -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host/linux
+INCLUDES=-I./include -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host/linux
 
 LIBS=-L/opt/vc/lib -lGLESv2 -lEGL -lm -Llib-pi -ltga 
 
@@ -22,7 +22,7 @@ all: texture
 
 clean:
 	rm -fv ${NAME}
-	rm -fv *.o ./Common/*.o
+	rm -fv *.o
 
 texture: ${HEADERS} ${OBJ}
 	g++ ${OBJ} -o ${NAME} ${LFLAGS} ${INCLUDES} ${LIBS}
