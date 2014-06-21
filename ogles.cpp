@@ -26,6 +26,7 @@ using std::endl;
 Ogles::Ogles(int width, int height)
     :mLabelPhase(width, height), mWidth(width), mHeight(height), mUsedTexUnits(0)
 {
+ /// TODO: update constructor
     // Initialize structs to 0
     esContext = {};
 
@@ -87,20 +88,23 @@ Ogles::Ogles(std::string tgaFilename)
 void Ogles::run()
 {
     double startTime, endTime;
+    double labelTime, reductionTime;
 
     startTime = getRealTime();
 
     mLabelPhase.setupGeometry();
-    mLabelPhase.run();
+    labelTime = mLabelPhase.run();
 
 
     mReductionPhase.updateTextures(mLabelPhase.getLastTexture(), mLabelPhase.getLastTexUnit(),
                                    mLabelPhase.getFreeTexture(), mLabelPhase.getFreeTexUnit() );
-    mReductionPhase.setupGeometry();
-    mReductionPhase.run();
+//    mReductionPhase.setupGeometry();
+    reductionTime = mReductionPhase.run();
 
     endTime = getRealTime();
 
+    cout << "Label time: " << labelTime << endl;
+    cout << "Reduction time: " << reductionTime << endl;
     cout << "Total time: " << (endTime-startTime)*1000 << endl;
 }
 
