@@ -231,7 +231,7 @@ double ReductionPhase::run()
 
     reduce(mWidth);
 
-//#ifdef _DEBUG
+#ifdef _DEBUG
 //    // Make the BYTE array, factor of 3 because it's RGBA.
 //    // GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
     pixels = new GLubyte[4*mWidth*mHeight];
@@ -242,7 +242,7 @@ double ReductionPhase::run()
     sprintf(filename, "outHori.tga");
     writeTgaImage(mWidth, mHeight, filename, pixels);
     delete [] pixels;
-//#endif
+#endif
 
     ///---------- 3. SWITCH RESULT WITH TEX_ROOT --------------------
 
