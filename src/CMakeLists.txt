@@ -4,7 +4,7 @@ FILE(GLOB gpulabeling_SRC *.cpp)
 #set(gpulabeling_SRC "${gpulabeling_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/getTime.c")
 
 # Build ususat
-add_executable(gpulabeling ${gpulabeling_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/getTime.cpp ${gpulabeling_HEADER})
+add_executable(gpulabeling ${gpulabeling_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/getTime.cpp ${gpulabeling_HEADER} ${RES_FILES})
 
 if (TARGET_PI)
     target_link_libraries(gpulabeling ${CMAKE_SOURCE_DIR}/lib-pi/libtga.so /opt/vc/lib/libGLESv2.so /opt/vc/lib/libEGL.so /opt/vc/lib/libbcm_host.so)

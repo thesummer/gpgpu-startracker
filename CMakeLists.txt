@@ -28,6 +28,7 @@ endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 message("BUILD_POSTFIX is ${BUILD_POSTFIX}")
 
 include_directories(include)
+file(GLOB RES_FILES glsl/*.frag glsl/*.vert glsl/*.glsl)
 
 # collect header files
 FILE(GLOB gpulabeling_HEADER include/*.h)
