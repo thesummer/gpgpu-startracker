@@ -10,7 +10,7 @@ int main()
     bcm_host_init();
 #endif
 
-    Ogles ogles("test.tga");
+    Ogles ogles("../test.tga");
 
     ogles.run();
 
