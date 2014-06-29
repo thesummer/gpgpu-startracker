@@ -6,8 +6,7 @@ option (TARGET_PI
 
 if (TARGET_PI)
     set(CMAKE_CXX_FLAGS "-Wall -std=gnu++0x -D_RPI")    
-    include_directories(-I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
-                        -I/opt/vc/include/interface/vmcs_host/linux)
+    include_directories(/opt/vc/include /opt/vc/include/interface/vcos/pthreads /opt/vc/include/interface/vmcs_host/linux    )
     set(BUILD_POSTFIX "_pi")
 else (TARGET_PI)
     set(CMAKE_CXX_FLAGS "-Wall -std=gnu++11")  
