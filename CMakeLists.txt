@@ -26,6 +26,8 @@ if (CMAKE_BUILD_TYPE STREQUAL Debug)
     set(BUILD_POSTFIX "${BUILD_POSTFIX}_d")
 endif (CMAKE_BUILD_TYPE STREQUAL Debug)
 
+message("BUILD_POSTFIX is ${BUILD_POSTFIX}")
+
 include_directories(include)
 
 # collect header files
