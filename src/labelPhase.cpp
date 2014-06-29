@@ -8,7 +8,7 @@ using std::endl;
 #include "labelPhase.h"
 
 LabelPhase::LabelPhase(int width, int height)
-    : mVertFilename("vertShader.glsl"), mFragFilename("fragCreateRuns.glsl"),
+    : mVertFilename("../glsl/vertShader.glsl"), mFragFilename("../glsl/fragCreateRuns.glsl"),
       mWidth(width), mHeight(height),
       mVertices {-1.0f, -1.0f, 0.0f,  // Position 0
                   0.0f,  0.0f,        // TexCoord 0
