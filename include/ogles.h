@@ -8,7 +8,7 @@
 #include "phase.h"
 #include "labelPhase.h"
 #include "reductionPhase.h"
-#include "include/tga.h"
+#include "tga.h"
 
 class Ogles
 {

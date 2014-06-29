@@ -4,8 +4,8 @@
 #include <stdio.h>
 
 #include "phase.h"
-#include "include/tga.h"
-#include "include/getTime.h"
+#include "tga.h"
+#include "getTime.h"
 
 class LabelPhase: public Phase
 {

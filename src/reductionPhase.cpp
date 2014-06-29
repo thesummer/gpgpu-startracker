@@ -15,7 +15,7 @@ using std::endl;
 
 
 #include "reductionPhase.h"
-#include "include/getTime.h"
+#include "getTime.h"
 
 ReductionPhase::ReductionPhase(int width, int height)
     :mVertFilename("vertShader.glsl"), mFragFilename("fragReductionShader.glsl"),

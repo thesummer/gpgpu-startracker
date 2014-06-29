@@ -6,7 +6,7 @@ using std::cerr;
 using std::endl;
 
 #include "phase.h"
-#include "include/tga.h"
+#include "tga.h"
 
 GLuint Phase::createSimpleTexture2D(GLsizei width, GLsizei height, GLubyte *data, GLint type)
 {

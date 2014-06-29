@@ -9,7 +9,7 @@ using std::endl;
 
 #include "ogles.h"
 #include "phase.h"
-#include "include/getTime.h"
+#include "getTime.h"
 
 
 
