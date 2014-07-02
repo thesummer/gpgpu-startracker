@@ -15,3 +15,6 @@ endif (TARGET_PI)
 
 set_target_properties(gpulabeling PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set_target_properties(gpulabeling PROPERTIES OUTPUT_NAME gpulabeling${BUILD_POSTFIX})
+
+
+add_subdirectory(examples)
