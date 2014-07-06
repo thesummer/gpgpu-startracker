@@ -15,6 +15,8 @@ endif (TARGET_PI)
 add_custom_command(TARGET example_reductionPhase POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/test1.tga .
                    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/test2.tga .
+                   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/glsl/quad.vert .
+                   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/glsl/labelPhase.frag .
                    COMMAND ${CMAKE_COMMAND} -E create_symlink test1.tga test.tga
                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/examples/reductionPhase
 )

@@ -133,6 +133,8 @@ int main()
 
     GLuint fboId[2] ;
     LabelPhase labelPhase;
+    labelPhase.mVertFilename = "quad.vert";
+    labelPhase.mFragFilename = "labelPhase.frag";
 
     // Read TGA-file
     TGA *tgaImage = 0;

@@ -133,6 +133,8 @@ int main()
 
     GLuint fboId[2] ;
     ReductionPhase reductionPhase;
+    reductionPhase.mVertFilename = "quad.vert";
+    reductionPhase.mFragFilename = "reductionPhase.frag";
 
     // Read TGA-file
     TGA *tgaImage = 0;
