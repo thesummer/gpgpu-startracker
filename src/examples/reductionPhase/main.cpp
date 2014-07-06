@@ -9,7 +9,7 @@ using std::endl;
 
 #include "getTime.h"
 #include "phase.h"
-#include"labelPhase.h"
+#include"reductionPhase.h"
 #include "tga.h"
 
 #ifdef _RPI
@@ -132,19 +132,19 @@ int main()
     esContext = {};
 
     GLuint fboId[2] ;
-    LabelPhase labelPhase;
+    ReductionPhase reductionPhase;
 
     // Read TGA-file
     TGA *tgaImage = 0;
     TGAData imgData;
-    loadTgaImage(&tgaImage, &imgData, "../test.tga");
+    loadTgaImage(&tgaImage, &imgData, "test.tga");
 
     int width  = tgaImage->hdr.width;
     int height = tgaImage->hdr.height;
 
-    labelPhase.mWidth  = width;
-    labelPhase.mHeight = height;
-    labelPhase.mTgaData = &imgData;
+    reductionPhase.mWidth  = width;
+    reductionPhase.mHeight = height;
+    reductionPhase.mTgaData = &imgData;
 
     // initialize EGL-context
     initEGL(width, height);
@@ -153,15 +153,15 @@ int main()
     GL_CHECK( glGenFramebuffers(2, fboId) );
 
     unsigned usedTexUnits = 0;
-    if(!labelPhase.initIndependent(fboId, usedTexUnits) )
+    if(!reductionPhase.initIndependent(fboId, usedTexUnits) )
         exit(1);
 
-    double labelTime;
+    double reductionTime;
 
-    labelPhase.setupGeometry();
-    labelTime = labelPhase.run();
+    reductionPhase.setupGeometry();
+    reductionTime = reductionPhase.run();
 
-    cout << "Label time: " << labelTime << endl;
+    cout << "Reduction time: " << reductionTime << endl;
 
 
 #ifdef _RPI
