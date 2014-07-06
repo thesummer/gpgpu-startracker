@@ -12,5 +12,12 @@ else (TARGET_PI)
     target_link_libraries(example_labelPhase ${CMAKE_SOURCE_DIR}/lib/libtga.so GLESv2 EGL)
 endif (TARGET_PI)
 
-set_target_properties(example_labelPhase PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-set_target_properties(example_labelPhase PROPERTIES OUTPUT_NAME gpulabeling${BUILD_POSTFIX})
+add_custom_command(TARGET example_labelPhase POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/test1.tga .
+                   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/test2.tga .
+                   COMMAND ${CMAKE_COMMAND} -E create_symlink test1.tga test.tga
+                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/examples/labelPhase
+)
+
+set_target_properties(example_labelPhase PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/examples/labelPhase)
+set_target_properties(example_labelPhase PROPERTIES OUTPUT_NAME example_labelPhase${BUILD_POSTFIX})

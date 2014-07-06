@@ -137,7 +137,7 @@ int main()
     // Read TGA-file
     TGA *tgaImage = 0;
     TGAData imgData;
-    loadTgaImage(&tgaImage, &imgData, "../test.tga");
+    loadTgaImage(&tgaImage, &imgData, "test.tga");
 
     int width  = tgaImage->hdr.width;
     int height = tgaImage->hdr.height;
