@@ -57,8 +57,10 @@ GLuint Phase::loadProgramFromFile(const std::string vertShaderFile, const std::s
     // Load the vertex/fragment shaders
     vertexShader = loadShader( GL_VERTEX_SHADER, sourceString );
     if ( vertexShader == 0 )
-       goto error;
-
+    {
+        cerr << "Failed to compile vertex shader!" << endl;
+        goto error;
+    }
     sourceFile.open(fragShaderFile);
     if(! sourceFile.good() )
     {
@@ -73,7 +75,8 @@ GLuint Phase::loadProgramFromFile(const std::string vertShaderFile, const std::s
     fragmentShader = loadShader(GL_FRAGMENT_SHADER, sourceString );
     if ( fragmentShader == 0 )
     {
-       goto error;
+        cerr << "Failed to compile fragment shader" << endl;
+        goto error;
     }
 
     // Create the program object
