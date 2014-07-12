@@ -89,9 +89,7 @@ vec2 img2texCoord(in vec2 imgCoord)
 
 void main()
 {
-
-
-    gl_Position = img2texCoord(a_position.xy)*TWO-ONE;
+    gl_Position = vec4(img2texCoord(a_position.xy)*TWO-ONE, 0.0, ONE);
     on = ONE;
 //   v_texCoord = a_texCoord;
 }

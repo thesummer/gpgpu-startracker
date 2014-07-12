@@ -133,16 +133,16 @@ int main()
 
     GLuint fboId[2] ;
     LookupPhase lookupPhase;
-    lookupPhase.mVertFilename = "lookUp.vert";
-    lookupPhase.mFragFilename = "lookUp.frag";
+    lookupPhase.mVertFilename = "lookup.vert";
+    lookupPhase.mFragFilename = "lookup.frag";
 
 //    // Read TGA-file
 //    TGA *tgaImage = 0;
 //    TGAData imgData;
 //    loadTgaImage(&tgaImage, &imgData, "test.tga");
 
-    int width  = 16; //tgaImage->hdr.width;
-    int height = 16; //tgaImage->hdr.height;
+    int width  = 4; //tgaImage->hdr.width;
+    int height = 4; //tgaImage->hdr.height;
 
     lookupPhase.mWidth  = width;
     lookupPhase.mHeight = height;

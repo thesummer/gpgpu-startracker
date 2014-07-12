@@ -1,4 +1,4 @@
-
+precision highp float;
 uniform vec2 u_texDimensions;   // image/texture dimensions
 varying float on;
 
@@ -83,6 +83,6 @@ vec2 img2texCoord(in vec2 imgCoord)
 
 void main()
 {
-    gl_FragColor = vec4(on);
+    gl_FragColor = vec4(ONE);
 }
 
