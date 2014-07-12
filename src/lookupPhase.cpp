@@ -9,18 +9,8 @@ using std::endl;
 #include "lookupPhase.h"
 
 LookupPhase::LookupPhase(int width, int height)
-    : mVertFilename("../glsl/quad.vert"), mFragFilename("../glsl/labelPhase.frag"),
-      mWidth(width), mHeight(height),
-      mVertices {-1.0f, -1.0f, 0.0f,  // Position 0
-                  0.0f,  0.0f,        // TexCoord 0
-                 -1.0f,  1.0f, 0.0f,  // Position 1
-                  0.0f,  1.0f,        // TexCoord 1
-                  1.0f,  1.0f, 0.0f,  // Position 2
-                  1.0f,  1.0f,        // TexCoord 2
-                  1.0f, -1.0f, 0.0f,  // Position 3
-                  1.0f,  0.0f         // TexCoord 3
-                },
-      mIndices { 0, 1, 2, 0, 2, 3 }, u_threshold(64.3 / 255.0)
+    : mVertFilename("../glsl/lookUp.vert"), mFragFilename("../glsl/lookUp.frag"),
+      mWidth(width), mHeight(height), mVertices{1.0, 1.0}
 {
 }
 
@@ -42,6 +32,12 @@ GLint LookupPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
     mRead  = 0;
     mWrite = 1;
 
+    //Initialize VBO
+    glGenBuffers(1, &mVboId);
+    //Upload vertex data
+    GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, mVboId) );
+    GL_CHECK( glBufferData(GL_ARRAY_BUFFER, 1 * 2 * sizeof(float), mVertices, GL_STATIC_DRAW) );
+
     // Load the shaders and get a linked program object
     mProgramObject = loadProgramFromFile( mVertFilename, mFragFilename);
     if (mProgramObject == 0)
@@ -52,15 +48,14 @@ GLint LookupPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
 
      // Get the attribute locations
      mPositionLoc = glGetAttribLocation ( mProgramObject, "a_position" );
-     mTexCoordLoc = glGetAttribLocation ( mProgramObject, "a_texCoord" );
+//     mTexCoordLoc = glGetAttribLocation ( mProgramObject, "a_texCoord" );
 
      // Get the sampler locations
-     mSamplerLoc     = glGetUniformLocation( mProgramObject, "s_texture" );
-     u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
-     u_thresholdLoc  = glGetUniformLocation ( mProgramObject, "u_threshold" );
-     u_passLoc       = glGetUniformLocation ( mProgramObject, "u_pass" );
-     u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
-     u_factorLoc     = glGetUniformLocation ( mProgramObject, "u_factor" );
+//     mSamplerLoc     = glGetUniformLocation( mProgramObject, "s_texture" );
+//     u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
+//     u_passLoc       = glGetUniformLocation ( mProgramObject, "u_pass" );
+//     u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
+//     u_factorLoc     = glGetUniformLocation ( mProgramObject, "u_factor" );
 
      // 2. and 3. texture for ping-pong
      for(int j=0; j<2; ++j)
@@ -82,14 +77,14 @@ GLint LookupPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
 
 GLint LookupPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
 {
-    int i = 0;
-    while( (1<<i) & bfUsedTextures) ++i;
+//    int i = 0;
+//    while( (1<<i) & bfUsedTextures) ++i;
 
-    GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-    mTexOrigId = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
-    bfUsedTextures |= (1<<i);
-    mTextureUnits[TEX_ORIG] = i;
-    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexOrigId) );
+//    GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+//    mTexOrigId = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
+//    bfUsedTextures |= (1<<i);
+//    mTextureUnits[TEX_ORIG] = i;
+//    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexOrigId) );
 
     // Setup 2 Textures for Ping-Pong and
     // the program object
@@ -122,14 +117,16 @@ void LookupPhase::setupGeometry()
     GL_CHECK( glViewport ( 0, 0, mWidth, mHeight ) );
     // Clear the color buffer
     GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
+
+    GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, mVboId) );
     // Load the vertex position
-    GL_CHECK( glVertexAttribPointer ( mPositionLoc, 3, GL_FLOAT,
-                                      GL_FALSE, 5 * sizeof(GLfloat), mVertices ) );
-    // Load the texture coordinates
-    GL_CHECK( glVertexAttribPointer ( mTexCoordLoc, 2, GL_FLOAT,
-                                      GL_FALSE, 5 * sizeof(GLfloat), &mVertices[3] ) );
     GL_CHECK( glEnableVertexAttribArray ( mPositionLoc ) );
-    GL_CHECK( glEnableVertexAttribArray ( mTexCoordLoc ) );
+    GL_CHECK( glVertexAttribPointer ( mPositionLoc, 2, GL_FLOAT,
+                                      GL_FALSE, 0 * sizeof(GLfloat), 0) );
+    // Load the texture coordinates
+//    GL_CHECK( glVertexAttribPointer ( mTexCoordLoc, 2, GL_FLOAT,
+//                                      GL_FALSE, 5 * sizeof(GLfloat), &mVertices[3] ) );
+//    GL_CHECK( glEnableVertexAttribArray ( mTexCoordLoc ) );
 }
 
 double LookupPhase::run()
@@ -152,69 +149,28 @@ double LookupPhase::run()
 
     // Set the uniforms
     GL_CHECK( glUniform2f ( u_texDimLoc, mWidth, mHeight) );
-    GL_CHECK( glUniform1f ( u_thresholdLoc, u_threshold) );
-
-    // Do the runs
-    u_factor = -1.0;
-
-
-
-    ///---------- 1. THRESHOLD AND INITIAL LABELING --------------------
 
     // Bind the FBO to write to
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
     // Set the sampler texture to use the original image
-    GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_ORIG] ) );
-    // Set the pass index
-    GL_CHECK( glUniform1i ( u_passLoc,  0) );
-    GL_CHECK( glUniform1f ( u_factorLoc, u_factor) );
+//    GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_ORIG] ) );
+
     // Draw scene
-    GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
-    std::swap(mRead, mWrite);
-
-    ///---------- 2. CONNECTED COMPONENT LABELING  --------------------
-
-    for (int i = 1; i < logBase2(mHeight)+10; i++)
-    {
-        if( i%2 == 1)
-        {
-            u_pass = 1;
-            u_factor *= -1.0;
-            u_debug = 0;
-        }
-        else
-        {
-            u_pass = i;
-            u_debug = 0;
-        }
-
-
-        // Bind the FBO to write to
-        GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
-        // Set the sampler texture unit to 0
-        GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_PIPO+mRead] ) );
-        // Set the pass index
-        GL_CHECK( glUniform1i ( u_passLoc,  u_pass) );
-        GL_CHECK( glUniform1i ( u_debugLoc, u_debug) );
-        GL_CHECK( glUniform1f ( u_factorLoc, u_factor) );
-        // Draw scene
-        GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
-        std::swap(mRead, mWrite);
+    GL_CHECK( glDrawArrays( GL_POINTS, 0, 1) );
 
 #ifdef _DEBUG
-//        // Make the BYTE array, factor of 3 because it's RGBA.
-//        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-//        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-//        printf("Pixels after pass %d:\n", i);
-////        printLabels(mWidth, mHeight, pixels);
+        // Make the BYTE array, factor of 3 because it's RGBA.
+        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
+        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+        printf("Pixels after pass %d:\n", i);
+        printLabels(mWidth, mHeight, pixels);
 //        char filename[50];
 //        sprintf(filename, "outl%03d.tga", i);
 //        writeTgaImage(mWidth, mHeight, filename, pixels);
-//        delete [] pixels;
+        delete [] pixels;
 #endif
 
         // Switch read and write texture
-    }
 
     endTime = getRealTime();
 

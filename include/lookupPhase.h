@@ -28,6 +28,7 @@ public:
     // Vertices
     GLfloat mVertices[20];
     GLushort mIndices[6];
+    GLuint  mVboId;
 
     // Uniform locations
     GLint  u_texDimLoc;
