@@ -162,7 +162,7 @@ double LookupPhase::run()
         // Make the BYTE array, factor of 3 because it's RGBA.
         GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
         GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-        printf("Pixels after pass %d:\n", i);
+        printf("Pixels after pass:\n");
         printLabels(mWidth, mHeight, pixels);
 //        char filename[50];
 //        sprintf(filename, "outl%03d.tga", i);
