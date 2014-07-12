@@ -132,7 +132,7 @@ int main()
     esContext = {};
 
     GLuint fboId[2] ;
-    LookupPhase lookupPhase;
+    LookupPhase lookupPhase(4, 4, 2, 2);
     lookupPhase.mVertFilename = "lookup.vert";
     lookupPhase.mFragFilename = "lookup.frag";
 
@@ -144,8 +144,6 @@ int main()
     int width  = 4; //tgaImage->hdr.width;
     int height = 4; //tgaImage->hdr.height;
 
-    lookupPhase.mWidth  = width;
-    lookupPhase.mHeight = height;
 //    lookupPhase.mTgaData = &imgData;
 
     // initialize EGL-context

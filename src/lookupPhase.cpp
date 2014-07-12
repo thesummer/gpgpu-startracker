@@ -8,17 +8,31 @@ using std::endl;
 
 #include "lookupPhase.h"
 
-LookupPhase::LookupPhase(int width, int height)
+LookupPhase::LookupPhase(int texWidth, int texHeight, int vertexWidth, int vertexHeight)
     : mVertFilename("../glsl/lookUp.vert"), mFragFilename("../glsl/lookUp.frag"),
-      mWidth(width), mHeight(height), mVertices{1.0, 1.0}
+      mTexWidth(texWidth), mTexHeight(texHeight),
+      mVertexWidth(vertexWidth), mVertexHeight(vertexHeight)
 {
+    // Setup the Vertex positions
+    mVertices = new GLfloat[2*mVertexWidth*mVertexWidth];
+    for(int i=0; i<mVertexWidth; ++i)
+    {
+        for(int j=0; j<mVertexHeight; ++j)
+        {
+            int index = 2*(mVertexWidth*i + j);
+            mVertices[index + 0] = (GLfloat) i;
+            mVertices[index + 1] = (GLfloat) j;
+        }
+
+    }
+    mNumVertices = mVertexHeight * mVertexWidth;
 }
 
 LookupPhase::~LookupPhase()
 {
     GL_CHECK( glDeleteProgram(mProgramObject) );
-    GL_CHECK( glDeleteTextures(1, &mTexOrigId) );
     GL_CHECK( glDeleteTextures(2, mTexPiPoId) );
+    GL_CHECK( glDeleteBuffers(1, &mVboId) );
 }
 
 GLint LookupPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
@@ -36,7 +50,8 @@ GLint LookupPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
     glGenBuffers(1, &mVboId);
     //Upload vertex data
     GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, mVboId) );
-    GL_CHECK( glBufferData(GL_ARRAY_BUFFER, 1 * 2 * sizeof(float), mVertices, GL_STATIC_DRAW) );
+    GLfloat vertices[8] = {0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0};
+    GL_CHECK( glBufferData(GL_ARRAY_BUFFER, mNumVertices * 2 * sizeof(float), vertices, GL_STATIC_DRAW) );
 
     // Load the shaders and get a linked program object
     mProgramObject = loadProgramFromFile( mVertFilename, mFragFilename);
@@ -52,10 +67,8 @@ GLint LookupPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
 
      // Get the sampler locations
 //     mSamplerLoc     = glGetUniformLocation( mProgramObject, "s_texture" );
-//     u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
-//     u_passLoc       = glGetUniformLocation ( mProgramObject, "u_pass" );
+     u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
 //     u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
-//     u_factorLoc     = glGetUniformLocation ( mProgramObject, "u_factor" );
 
      // 2. and 3. texture for ping-pong
      for(int j=0; j<2; ++j)
@@ -64,7 +77,7 @@ GLint LookupPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
          while( (1<<i) & bfUsedTextures) ++i;
 
          GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-         mTexPiPoId[j]  = createSimpleTexture2D(mWidth, mHeight);
+         mTexPiPoId[j]  = createSimpleTexture2D(mTexWidth, mTexHeight);
          bfUsedTextures |= (1<<i);
          mTextureUnits[TEX_PIPO+j] = i;
          GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexPiPoId[j]) );
@@ -91,30 +104,10 @@ GLint LookupPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
     return init(fbos, bfUsedTextures);
 }
 
-GLint LookupPhase::getLastTexture()
-{
-    return mTexPiPoId[mRead];
-}
-
-GLint LookupPhase::getLastTexUnit()
-{
-    return mTextureUnits[TEX_PIPO+mRead];
-}
-
-GLint LookupPhase::getFreeTexture()
-{
-    return mTexPiPoId[mWrite];
-}
-
-GLint LookupPhase::getFreeTexUnit()
-{
-    return mTextureUnits[TEX_PIPO+mWrite];
-}
-
 void LookupPhase::setupGeometry()
 {
     // Set the viewport
-    GL_CHECK( glViewport ( 0, 0, mWidth, mHeight ) );
+    GL_CHECK( glViewport ( 0, 0, mTexWidth, mTexHeight ) );
     // Clear the color buffer
     GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
 
@@ -148,7 +141,7 @@ double LookupPhase::run()
     GL_CHECK( glUseProgram ( mProgramObject ) );
 
     // Set the uniforms
-    GL_CHECK( glUniform2f ( u_texDimLoc, mWidth, mHeight) );
+    GL_CHECK( glUniform2f ( u_texDimLoc, mTexWidth, mTexHeight) );
 
     // Bind the FBO to write to
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
@@ -156,14 +149,14 @@ double LookupPhase::run()
 //    GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_ORIG] ) );
 
     // Draw scene
-    GL_CHECK( glDrawArrays( GL_POINTS, 0, 1) );
+    GL_CHECK( glDrawArrays( GL_POINTS, 0, mNumVertices) );
 
 #ifdef _DEBUG
         // Make the BYTE array, factor of 3 because it's RGBA.
-        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+        GLubyte* pixels = new GLubyte[4*mTexWidth*mTexHeight];
+        GL_CHECK( glReadPixels(0, 0, mTexWidth, mTexHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
         printf("Pixels after pass:\n");
-        printLabels(mWidth, mHeight, pixels);
+        printLabels(mTexWidth, mTexHeight, pixels);
 //        char filename[50];
 //        sprintf(filename, "outl%03d.tga", i);
 //        writeTgaImage(mWidth, mHeight, filename, pixels);

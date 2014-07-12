@@ -18,30 +18,27 @@ public:
     // Handle to a program object
     GLuint mProgramObject;
 
-    int mWidth;
-    int mHeight;
+    int mTexWidth;
+    int mTexHeight;
+    int mVertexWidth;
+    int mVertexHeight;
 
     // Attribute locations
     GLint  mPositionLoc;
     GLint  mTexCoordLoc;
 
     // Vertices
-    GLfloat mVertices[20];
-    GLushort mIndices[6];
-    GLuint  mVboId;
+    GLfloat*  mVertices;
+    GLuint    mVboId;
+    GLuint    mNumVertices;
 
     // Uniform locations
     GLint  u_texDimLoc;
-    GLint  u_thresholdLoc;
-    GLint  u_passLoc;
     GLint  u_debugLoc;
-    GLint  u_factorLoc;
 
     // Uniform values
     float u_threshold;
-    GLint u_pass;
     GLint u_debug;
-    GLint u_factor;
 
     // Sampler location
     GLint mSamplerLoc;
@@ -52,7 +49,6 @@ public:
     TGAData *mTgaData;
 
     // Texture to attach to the frambuffers
-    GLuint mTexOrigId;
     GLuint mTexPiPoId[2];
     GLuint mFboId[2];
     GLint  mTextureUnits[3];
@@ -60,15 +56,10 @@ public:
     int mWrite;
     int mRead;
 
-    LookupPhase(int width = 0, int height = 0);
+    LookupPhase(int texWidth = 0, int texHeight = 0, int vertexWidth = 1, int vertexHeight = 1);
     virtual ~LookupPhase();
     GLint init(GLuint fbos[], GLuint &bfUsedTextures);
     GLint initIndependent(GLuint fbos[], GLuint &bfUsedTextures);
-
-    GLint getLastTexture();
-    GLint getLastTexUnit();
-    GLint getFreeTexture();
-    GLint getFreeTexUnit();
 
     void setupGeometry();
 
