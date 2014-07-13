@@ -39,7 +39,6 @@ GLint LookupPhase::init(GLuint &bfUsedTextures)
 {
     // Initialize all OpenGL structures necessary for the
     // labeling phase here
-    mWrite = 1;
 
     //Initialize VBO
     glGenBuffers(1, &mVboId);
@@ -57,7 +56,6 @@ GLint LookupPhase::init(GLuint &bfUsedTextures)
 
      // Get the attribute locations
      mPositionLoc = glGetAttribLocation ( mProgramObject, "a_position" );
-//     mTexCoordLoc = glGetAttribLocation ( mProgramObject, "a_texCoord" );
 
      // Get the sampler locations
      mSamplerLoc     = glGetUniformLocation( mProgramObject, "s_texture" );
@@ -96,10 +94,6 @@ void LookupPhase::setupGeometry()
     GL_CHECK( glEnableVertexAttribArray ( mPositionLoc ) );
     GL_CHECK( glVertexAttribPointer ( mPositionLoc, 2, GL_FLOAT,
                                       GL_FALSE, 0 * sizeof(GLfloat), 0) );
-    // Load the texture coordinates
-//    GL_CHECK( glVertexAttribPointer ( mTexCoordLoc, 2, GL_FLOAT,
-//                                      GL_FALSE, 5 * sizeof(GLfloat), &mVertices[3] ) );
-//    GL_CHECK( glEnableVertexAttribArray ( mTexCoordLoc ) );
 }
 
 double LookupPhase::run()
@@ -135,7 +129,7 @@ double LookupPhase::run()
         GL_CHECK( glReadPixels(0, 0, mTexWidth, mTexHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
         printf("Pixels after pass:\n");
         printLabels(mTexWidth, mTexHeight, pixels);
-        char filename[50];
+//        char filename[50];
 //        sprintf(filename, "outl.tga");
 //        writeTgaImage(mTexWidth, mTexHeight, filename, pixels);
         delete [] pixels;

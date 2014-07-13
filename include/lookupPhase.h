@@ -25,7 +25,6 @@ public:
 
     // Attribute locations
     GLint  mPositionLoc;
-    GLint  mTexCoordLoc;
 
     // Vertices
     GLfloat*  mVertices;
@@ -37,7 +36,6 @@ public:
     GLint  u_debugLoc;
 
     // Uniform values
-    float u_threshold;
     GLint u_debug;
 
     // Sampler location
@@ -53,9 +51,6 @@ public:
     GLuint mTexLookUpId;
     GLuint mFboId;
     GLint  mTextureUnits[1];
-
-    int mWrite;
-    int mRead;
 
     LookupPhase(int texWidth = 0, int texHeight = 0, int vertexWidth = 1, int vertexHeight = 1);
     virtual ~LookupPhase();
