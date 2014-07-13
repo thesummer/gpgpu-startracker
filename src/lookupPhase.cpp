@@ -135,9 +135,9 @@ double LookupPhase::run()
         GL_CHECK( glReadPixels(0, 0, mTexWidth, mTexHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
         printf("Pixels after pass:\n");
         printLabels(mTexWidth, mTexHeight, pixels);
-//        char filename[50];
-//        sprintf(filename, "outl%03d.tga", i);
-//        writeTgaImage(mWidth, mHeight, filename, pixels);
+        char filename[50];
+//        sprintf(filename, "outl.tga");
+//        writeTgaImage(mTexWidth, mTexHeight, filename, pixels);
         delete [] pixels;
 #endif
 
