@@ -3,8 +3,7 @@
 using std::cerr;
 using std::endl;
 
-#define TEX_ORIG   0
-#define TEX_PIPO   1
+#define TEX_REDUCED 1
 
 #include "lookupPhase.h"
 
@@ -31,19 +30,15 @@ LookupPhase::LookupPhase(int texWidth, int texHeight, int vertexWidth, int verte
 LookupPhase::~LookupPhase()
 {
     GL_CHECK( glDeleteProgram(mProgramObject) );
-    GL_CHECK( glDeleteTextures(2, mTexPiPoId) );
+    GL_CHECK( glDeleteTextures(1, &mTexReducedId) );
+    GL_CHECK( glDeleteTextures(1, &mTexLookUpId) );
     GL_CHECK( glDeleteBuffers(1, &mVboId) );
 }
 
-GLint LookupPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
+GLint LookupPhase::init(GLuint &bfUsedTextures)
 {
-    // Save the handles to the 2 framebuffers
-    mFboId[0] = fbos[0];
-    mFboId[1] = fbos[1];
-
     // Initialize all OpenGL structures necessary for the
     // labeling phase here
-    mRead  = 0;
     mWrite = 1;
 
     //Initialize VBO
@@ -70,38 +65,24 @@ GLint LookupPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
      u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
 //     u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
 
-     // 2. and 3. texture for ping-pong
-     for(int j=0; j<2; ++j)
-     {
-         int i = 0;
-         while( (1<<i) & bfUsedTextures) ++i;
-
-         GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-         mTexPiPoId[j]  = createSimpleTexture2D(mTexWidth, mTexHeight);
-         bfUsedTextures |= (1<<i);
-         mTextureUnits[TEX_PIPO+j] = i;
-         GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexPiPoId[j]) );
-     }
-
      GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
 
      return GL_TRUE;
 }
 
-GLint LookupPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
+GLint LookupPhase::initIndependent(GLuint fbo, GLuint &bfUsedTextures)
 {
-//    int i = 0;
-//    while( (1<<i) & bfUsedTextures) ++i;
+    mFboId = fbo;
+    int i = 0;
+    while( (1<<i) & bfUsedTextures) ++i;
+    GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+    mTexLookUpId = createSimpleTexture2D(mTexWidth, mTexHeight, NULL);
+    mTexReducedId = createSimpleTexture2D(mTexWidth, mTexHeight, mTgaData->img_data);
+    bfUsedTextures |= (1<<i);
+    mTextureUnits[TEX_REDUCED] = i;
+    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexReducedId) );
 
-//    GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-//    mTexOrigId = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
-//    bfUsedTextures |= (1<<i);
-//    mTextureUnits[TEX_ORIG] = i;
-//    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexOrigId) );
-
-    // Setup 2 Textures for Ping-Pong and
-    // the program object
-    return init(fbos, bfUsedTextures);
+    return init(bfUsedTextures);
 }
 
 void LookupPhase::setupGeometry()
@@ -129,13 +110,11 @@ double LookupPhase::run()
     startTime = getRealTime();
 
     // Setup OpenGL
-    // Attach the two PiPo-textures to the 2 fbos
-    for(int i=0; i<2; i++)
-    {
-        GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[i]) );
-        GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexPiPoId[i], 0) );
-        CHECK_FBO();
-    }
+    // Attach the texture to the fbo
+    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId) );
+    GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexLookUpId, 0) );
+    CHECK_FBO();
+
 
     // Use the program object
     GL_CHECK( glUseProgram ( mProgramObject ) );
@@ -144,8 +123,8 @@ double LookupPhase::run()
     GL_CHECK( glUniform2f ( u_texDimLoc, mTexWidth, mTexHeight) );
 
     // Bind the FBO to write to
-    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
-    // Set the sampler texture to use the original image
+    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId) );
+    // Set the sampler texture to use the image with the reduced labels
 //    GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_ORIG] ) );
 
     // Draw scene

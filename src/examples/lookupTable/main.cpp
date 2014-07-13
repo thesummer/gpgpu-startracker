@@ -131,26 +131,26 @@ int main()
     // Initialize esContext to 0
     esContext = {};
 
-    GLuint fboId[2] ;
-    LookupPhase lookupPhase(4, 4, 2, 2);
-    lookupPhase.mVertFilename = "lookup.vert";
-    lookupPhase.mFragFilename = "lookup.frag";
+    GLuint fboId;
+    // Read TGA-file
+    TGA *tgaImage = 0;
+    TGAData imgData;
+    loadTgaImage(&tgaImage, &imgData, "test.tga");
 
-//    // Read TGA-file
-//    TGA *tgaImage = 0;
-//    TGAData imgData;
-//    loadTgaImage(&tgaImage, &imgData, "test.tga");
-
-    int width  = 4; //tgaImage->hdr.width;
-    int height = 4; //tgaImage->hdr.height;
-
-//    lookupPhase.mTgaData = &imgData;
+    int width  = tgaImage->hdr.width;
+    int height = tgaImage->hdr.height;
 
     // initialize EGL-context
     initEGL(width, height);
 
+    LookupPhase lookupPhase(width, height, 2, 5);
+    lookupPhase.mVertFilename = "lookup.vert";
+    lookupPhase.mFragFilename = "lookup.frag";
+    lookupPhase.mTgaData = &imgData;
+
+
     // initialize the 2 frambuffers for ping-pong method
-    GL_CHECK( glGenFramebuffers(2, fboId) );
+    GL_CHECK( glGenFramebuffers(1, &fboId) );
 
     unsigned usedTexUnits = 0;
     if(!lookupPhase.initIndependent(fboId, usedTexUnits) )

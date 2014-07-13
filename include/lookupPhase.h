@@ -49,17 +49,18 @@ public:
     TGAData *mTgaData;
 
     // Texture to attach to the frambuffers
-    GLuint mTexPiPoId[2];
-    GLuint mFboId[2];
-    GLint  mTextureUnits[3];
+    GLuint mTexReducedId;
+    GLuint mTexLookUpId;
+    GLuint mFboId;
+    GLint  mTextureUnits[1];
 
     int mWrite;
     int mRead;
 
     LookupPhase(int texWidth = 0, int texHeight = 0, int vertexWidth = 1, int vertexHeight = 1);
     virtual ~LookupPhase();
-    GLint init(GLuint fbos[], GLuint &bfUsedTextures);
-    GLint initIndependent(GLuint fbos[], GLuint &bfUsedTextures);
+    GLint init(GLuint &bfUsedTextures);
+    GLint initIndependent(GLuint fbo, GLuint &bfUsedTextures);
 
     void setupGeometry();
 
