@@ -8,9 +8,11 @@ attribute vec4 a_position;
 //varying vec2 v_texCoord;
 varying float on;
 
+const float ZERO = 0.0;
+const float ONE  = 1.0;
+const float TWO  = 2.0;
 
-const float ONE = 1.0;
-const float TWO = 2.0;
+const vec4  OUT  = vec4(-1000.0, -1000.0, ZERO, ZERO);
 
 /*
 Assuming that the texture is 8-bit RGBA 32bits are available for packing.
@@ -91,8 +93,8 @@ vec2 img2texCoord(in vec2 imgCoord)
 void main()
 {
     vec2 uv = img2texCoord(a_position.xy);
-    gl_Position = vec4(uv*TWO-ONE, 0.0, ONE);
     on = step(1.0/256.0, length(texture2D(s_texture, uv) ) );
+    gl_Position = vec4(uv*TWO-ONE, 0.0, ONE) + (ONE-on) * OUT;
 //   v_texCoord = a_texCoord;
 }
 
