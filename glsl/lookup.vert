@@ -1,6 +1,7 @@
 precision highp float;
 
 uniform vec2 u_texDimensions;   // image/texture dimensions
+uniform sampler2D s_texture;
 
 attribute vec4 a_position;
 // attribute vec2 a_texCoord;
@@ -89,8 +90,9 @@ vec2 img2texCoord(in vec2 imgCoord)
 
 void main()
 {
-    gl_Position = vec4(img2texCoord(a_position.xy)*TWO-ONE, 0.0, ONE);
-    on = ONE;
+    vec2 uv = img2texCoord(a_position.xy);
+    gl_Position = vec4(uv*TWO-ONE, 0.0, ONE);
+    on = step(1.0/256.0, length(texture2D(s_texture, uv) ) );
 //   v_texCoord = a_texCoord;
 }
 

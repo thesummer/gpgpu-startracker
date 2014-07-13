@@ -3,7 +3,7 @@
 using std::cerr;
 using std::endl;
 
-#define TEX_REDUCED 1
+#define TEX_REDUCED 0
 
 #include "lookupPhase.h"
 
@@ -13,12 +13,12 @@ LookupPhase::LookupPhase(int texWidth, int texHeight, int vertexWidth, int verte
       mVertexWidth(vertexWidth), mVertexHeight(vertexHeight)
 {
     // Setup the Vertex positions
-    mVertices = new GLfloat[2*mVertexWidth*mVertexWidth];
+    mVertices = new GLfloat[2*mVertexWidth*mVertexHeight];
     for(int i=0; i<mVertexWidth; ++i)
     {
         for(int j=0; j<mVertexHeight; ++j)
         {
-            int index = 2*(mVertexWidth*i + j);
+            int index = 2*(mVertexHeight*i + j);
             mVertices[index + 0] = (GLfloat) i;
             mVertices[index + 1] = (GLfloat) j;
         }
@@ -45,8 +45,7 @@ GLint LookupPhase::init(GLuint &bfUsedTextures)
     glGenBuffers(1, &mVboId);
     //Upload vertex data
     GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, mVboId) );
-    GLfloat vertices[8] = {0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0};
-    GL_CHECK( glBufferData(GL_ARRAY_BUFFER, mNumVertices * 2 * sizeof(float), vertices, GL_STATIC_DRAW) );
+    GL_CHECK( glBufferData(GL_ARRAY_BUFFER, mNumVertices * 2 * sizeof(float), mVertices, GL_STATIC_DRAW) );
 
     // Load the shaders and get a linked program object
     mProgramObject = loadProgramFromFile( mVertFilename, mFragFilename);
@@ -61,7 +60,7 @@ GLint LookupPhase::init(GLuint &bfUsedTextures)
 //     mTexCoordLoc = glGetAttribLocation ( mProgramObject, "a_texCoord" );
 
      // Get the sampler locations
-//     mSamplerLoc     = glGetUniformLocation( mProgramObject, "s_texture" );
+     mSamplerLoc     = glGetUniformLocation( mProgramObject, "s_texture" );
      u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
 //     u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
 
@@ -125,7 +124,7 @@ double LookupPhase::run()
     // Bind the FBO to write to
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId) );
     // Set the sampler texture to use the image with the reduced labels
-//    GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_ORIG] ) );
+    GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_REDUCED] ) );
 
     // Draw scene
     GL_CHECK( glDrawArrays( GL_POINTS, 0, mNumVertices) );

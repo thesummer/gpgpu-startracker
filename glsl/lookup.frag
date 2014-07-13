@@ -83,6 +83,6 @@ vec2 img2texCoord(in vec2 imgCoord)
 
 void main()
 {
-    gl_FragColor = vec4(ONE);
+    gl_FragColor = vec4(on);
 }
 
