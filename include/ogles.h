@@ -8,6 +8,7 @@
 #include "phase.h"
 #include "labelPhase.h"
 #include "reductionPhase.h"
+#include "lookupPhase.h"
 #include "tga.h"
 
 class Ogles
@@ -39,6 +40,8 @@ public:
     LabelPhase mLabelPhase;
     //2. ReductionPhase
     ReductionPhase mReductionPhase;
+    //3. Create a lookup table
+    LookupPhase mLookupPhase;
 
 
     Ogles(int width, int height);

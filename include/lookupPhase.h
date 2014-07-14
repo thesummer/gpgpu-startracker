@@ -50,7 +50,7 @@ public:
     GLuint mTexReducedId;
     GLuint mTexLookUpId;
     GLuint mFboId;
-    GLint  mTextureUnits[1];
+    GLint  mTextureUnits[2];
 
     LookupPhase(int texWidth = 0, int texHeight = 0, int vertexWidth = 1, int vertexHeight = 1);
     virtual ~LookupPhase();
@@ -58,8 +58,10 @@ public:
     GLint initIndependent(GLuint fbo, GLuint &bfUsedTextures);
 
     void setupGeometry();
-
+    void updateTextures(GLuint reducedTex, GLint reducedTexUnit, GLuint freeTex, GLint freeTexUnit);
+    void setFbo(GLuint newFbo);
     virtual double run();
+
 };
 
 #endif // LOOKUPPHASE_H

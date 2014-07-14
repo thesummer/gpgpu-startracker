@@ -132,6 +132,8 @@ GLint ReductionPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
 
 void ReductionPhase::setupGeometry()
 {
+    GL_CHECK( glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
+    GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, 0) );
     // Set the viewport
     GL_CHECK( glViewport ( 0, 0, mWidth, mHeight ) );
     // Clear the color buffer
@@ -172,6 +174,9 @@ double ReductionPhase::run()
 
     double startTime, endTime;
     startTime = getRealTime();
+
+    GL_CHECK( glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
+    GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, 0) );
 
     // Use the program object
     GL_CHECK( glUseProgram ( mProgramObject ) );
@@ -281,6 +286,31 @@ double ReductionPhase::run()
     endTime = getRealTime();
 
     return (endTime-startTime)*1000;
+}
+
+GLuint ReductionPhase::getFreeFbo()
+{
+    return mFboId[mWrite];
+}
+
+GLint ReductionPhase::getLastTexture()
+{
+    return mTexPiPoId[mRead];
+}
+
+GLint ReductionPhase::getLastTexUnit()
+{
+    return mTextureUnits[TEX_PIPO+mRead];
+}
+
+GLint ReductionPhase::getFreeTexture()
+{
+    return mTexPiPoId[mWrite];
+}
+
+GLint ReductionPhase::getFreeTexUnit()
+{
+    return mTextureUnits[TEX_PIPO+mWrite];
 }
 
 void ReductionPhase::reduce(int length)

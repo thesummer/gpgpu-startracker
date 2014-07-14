@@ -4,15 +4,31 @@ using std::cerr;
 using std::endl;
 
 #define TEX_REDUCED 0
+#define TEX_LOOKUP  1
 
 #include "lookupPhase.h"
 
 LookupPhase::LookupPhase(int texWidth, int texHeight, int vertexWidth, int vertexHeight)
-    : mVertFilename("../glsl/lookUp.vert"), mFragFilename("../glsl/lookUp.frag"),
+    : mVertFilename("../glsl/lookup.vert"), mFragFilename("../glsl/lookup.frag"),
       mTexWidth(texWidth), mTexHeight(texHeight),
-      mVertexWidth(vertexWidth), mVertexHeight(vertexHeight)
+      mVertexWidth(vertexWidth), mVertexHeight(vertexHeight),
+      mVertices(NULL)
 {
-    // Setup the Vertex positions
+}
+
+LookupPhase::~LookupPhase()
+{
+    GL_CHECK( glDeleteProgram(mProgramObject) );
+    GL_CHECK( glDeleteTextures(1, &mTexReducedId) );
+    GL_CHECK( glDeleteTextures(1, &mTexLookUpId) );
+    GL_CHECK( glDeleteBuffers(1, &mVboId) );
+    delete [] mVertices;
+}
+
+GLint LookupPhase::init(GLuint &bfUsedTextures)
+{
+
+    // Setup the vertices
     mVertices = new GLfloat[2*mVertexWidth*mVertexHeight];
     for(int i=0; i<mVertexWidth; ++i)
     {
@@ -25,18 +41,7 @@ LookupPhase::LookupPhase(int texWidth, int texHeight, int vertexWidth, int verte
 
     }
     mNumVertices = mVertexHeight * mVertexWidth;
-}
 
-LookupPhase::~LookupPhase()
-{
-    GL_CHECK( glDeleteProgram(mProgramObject) );
-    GL_CHECK( glDeleteTextures(1, &mTexReducedId) );
-    GL_CHECK( glDeleteTextures(1, &mTexLookUpId) );
-    GL_CHECK( glDeleteBuffers(1, &mVboId) );
-}
-
-GLint LookupPhase::init(GLuint &bfUsedTextures)
-{
     // Initialize all OpenGL structures necessary for the
     // labeling phase here
 
@@ -64,6 +69,8 @@ GLint LookupPhase::init(GLuint &bfUsedTextures)
 
      GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
 
+    GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, 0) );
+
      return GL_TRUE;
 }
 
@@ -86,8 +93,6 @@ void LookupPhase::setupGeometry()
 {
     // Set the viewport
     GL_CHECK( glViewport ( 0, 0, mTexWidth, mTexHeight ) );
-    // Clear the color buffer
-    GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
 
     GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, mVboId) );
     // Load the vertex position
@@ -96,27 +101,37 @@ void LookupPhase::setupGeometry()
                                       GL_FALSE, 0 * sizeof(GLfloat), 0) );
 }
 
+void LookupPhase::updateTextures(GLuint reducedTex, GLint reducedTexUnit, GLuint freeTex, GLint freeTexUnit)
+{
+    mTexReducedId = reducedTex;
+    mTextureUnits[TEX_REDUCED] = reducedTexUnit;
+    mTexLookUpId =  freeTex;
+    mTextureUnits[TEX_LOOKUP]  = freeTexUnit;
+}
+
+void LookupPhase::setFbo(GLuint newFbo)
+{
+    mFboId = newFbo;
+}
+
 double LookupPhase::run()
 {
     double startTime, endTime;
 
     startTime = getRealTime();
 
-    // Setup OpenGL
-    // Attach the texture to the fbo
+    // Bind the FBO to write to
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId) );
-    GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexLookUpId, 0) );
-    CHECK_FBO();
+    // Clear the color buffer
+    GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
+    // Setup OpenGL
+    GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, mVboId) );
 
-
-    // Use the program object
     GL_CHECK( glUseProgram ( mProgramObject ) );
 
     // Set the uniforms
     GL_CHECK( glUniform2f ( u_texDimLoc, mTexWidth, mTexHeight) );
 
-    // Bind the FBO to write to
-    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId) );
     // Set the sampler texture to use the image with the reduced labels
     GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_REDUCED] ) );
 
@@ -128,10 +143,10 @@ double LookupPhase::run()
         GLubyte* pixels = new GLubyte[4*mTexWidth*mTexHeight];
         GL_CHECK( glReadPixels(0, 0, mTexWidth, mTexHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
         printf("Pixels after pass:\n");
-        printLabels(mTexWidth, mTexHeight, pixels);
-//        char filename[50];
-//        sprintf(filename, "outl.tga");
-//        writeTgaImage(mTexWidth, mTexHeight, filename, pixels);
+//        printLabels(mTexWidth, mTexHeight, pixels);
+        char filename[50];
+        sprintf(filename, "outlookup.tga");
+        writeTgaImage(mTexWidth, mTexHeight, filename, pixels);
         delete [] pixels;
 #endif
 

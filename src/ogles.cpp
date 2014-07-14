@@ -77,18 +77,28 @@ Ogles::Ogles(std::string tgaFilename)
     if(!mLabelPhase.initIndependent(mFboId, mUsedTexUnits) )
         exit(1);
 
-    mReductionPhase.mWidth  = mWidth;
-    mReductionPhase.mHeight = mHeight;
+    mReductionPhase.mWidth   = mWidth;
+    mReductionPhase.mHeight  = mHeight;
     mReductionPhase.mTgaData = &mImgData;
     if (!mReductionPhase.init(mFboId, mUsedTexUnits) )
         exit(1);
 //    mReductionPhase.initIndependent(mFboId, mUsedTexUnits);
+
+   mLookupPhase.mTexWidth  = mWidth;
+   mLookupPhase.mTexHeight = mHeight;
+   mLookupPhase.mTgaData   = &mImgData;
+   mLookupPhase.mVertexWidth  = 15;
+   mLookupPhase.mVertexHeight = mHeight;
+   if (!mLookupPhase.init(mUsedTexUnits) )
+       exit(1);
+
 }
 
 void Ogles::run()
 {
     double startTime, endTime;
     double labelTime, reductionTime;
+    double lookupTime;
 
     startTime = getRealTime();
 
@@ -101,10 +111,18 @@ void Ogles::run()
 //    mReductionPhase.setupGeometry();
     reductionTime = mReductionPhase.run();
 
+    mLookupPhase.setFbo(mReductionPhase.getFreeFbo() );
+    mLookupPhase.updateTextures(mReductionPhase.getLastTexture(), mReductionPhase.getLastTexUnit(),
+                                mReductionPhase.getFreeTexture(), mReductionPhase.getFreeTexUnit() );
+
+    mLookupPhase.setupGeometry();
+    lookupTime = mLookupPhase.run();
+
     endTime = getRealTime();
 
     cout << "Label time: " << labelTime << endl;
     cout << "Reduction time: " << reductionTime << endl;
+    cout << "Lookup time: " << lookupTime << endl;
     cout << "Total time: " << (endTime-startTime)*1000 << endl;
 }
 

@@ -70,6 +70,12 @@ public:
     void updateTextures(GLuint labelTex, GLint labelTexUnit, GLuint freeTex, GLint freeTexUnit);
     virtual double run();
 
+    GLuint getFreeFbo();
+    GLint getLastTexture();
+    GLint getLastTexUnit();
+    GLint getFreeTexture();
+    GLint getFreeTexUnit();
+
 private:
     void reduce(int length);
 };

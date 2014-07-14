@@ -117,6 +117,8 @@ GLint LabelPhase::getFreeTexUnit()
 
 void LabelPhase::setupGeometry()
 {
+    GL_CHECK( glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
+    GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, 0) );
     // Set the viewport
     GL_CHECK( glViewport ( 0, 0, mWidth, mHeight ) );
     // Clear the color buffer
@@ -137,6 +139,9 @@ double LabelPhase::run()
 
     startTime = getRealTime();
 
+    GL_CHECK( glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
+    GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, 0) );
+
     // Setup OpenGL
     // Attach the two PiPo-textures to the 2 fbos
     for(int i=0; i<2; i++)
@@ -145,6 +150,8 @@ double LabelPhase::run()
         GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexPiPoId[i], 0) );
         CHECK_FBO();
     }
+
+//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Use the program object
     GL_CHECK( glUseProgram ( mProgramObject ) );
@@ -187,7 +194,6 @@ double LabelPhase::run()
             u_debug = 0;
         }
 
-
         // Bind the FBO to write to
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
         // Set the sampler texture unit to 0
@@ -205,7 +211,7 @@ double LabelPhase::run()
 //        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
 //        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
 //        printf("Pixels after pass %d:\n", i);
-////        printLabels(mWidth, mHeight, pixels);
+//        printLabels(mWidth, mHeight, pixels);
 //        char filename[50];
 //        sprintf(filename, "outl%03d.tga", i);
 //        writeTgaImage(mWidth, mHeight, filename, pixels);
