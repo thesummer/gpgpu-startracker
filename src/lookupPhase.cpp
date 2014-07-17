@@ -84,7 +84,11 @@ GLint LookupPhase::initIndependent(GLuint fbo, GLuint &bfUsedTextures)
     mTexReducedId = createSimpleTexture2D(mTexWidth, mTexHeight, mTgaData->img_data);
     bfUsedTextures |= (1<<i);
     mTextureUnits[TEX_REDUCED] = i;
-    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexReducedId) );
+
+    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId) );
+    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexLookUpId) );
+    GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexLookUpId, 0) );
+    CHECK_FBO();
 
     return init(bfUsedTextures);
 }
@@ -122,6 +126,8 @@ double LookupPhase::run()
 
     // Bind the FBO to write to
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId) );
+    GL_CHECK( glActiveTexture( GL_TEXTURE0 + mTextureUnits[TEX_REDUCED]) );
+    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexReducedId) );
     // Clear the color buffer
     GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
     // Setup OpenGL
