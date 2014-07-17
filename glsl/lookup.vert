@@ -92,6 +92,9 @@ vec2 img2texCoord(in vec2 imgCoord)
 
 void main()
 {
+    // PointSize needs to be set
+    gl_PointSize = ONE;
+
     vec2 uv = img2texCoord(a_position);
     // Get coordinates to scatter the vertex to (compensate for the added 1.0)
     vec2 scatterCoord = unpack2shorts( texture2D(s_texture, uv) ) - ONE;
