@@ -111,6 +111,5 @@ void main()
     // Hand the original coordinates of this vertex to the fragment shader
     // add one in order to distinguish from a zero-pixel
     v_sourceCoord = pack2shorts(a_position + ONE);
-//   v_texCoord = a_texCoord;
 }
 
