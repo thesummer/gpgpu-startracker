@@ -84,11 +84,12 @@ Ogles::Ogles(std::string tgaFilename)
         exit(1);
 //    mReductionPhase.initIndependent(mFboId, mUsedTexUnits);
 
-   mLookupPhase.mTexWidth  = mWidth;
-   mLookupPhase.mTexHeight = mHeight;
-   mLookupPhase.mTgaData   = &mImgData;
-   mLookupPhase.mVertexWidth  = 15;
-   mLookupPhase.mVertexHeight = mHeight;
+    mLookupPhase.mTexWidth  = mWidth;
+    mLookupPhase.mTexHeight = mHeight;
+    mLookupPhase.mTgaData   = &mImgData;
+    mLookupPhase.mVertexWidth  = 16;
+    mLookupPhase.mVertexHeight = mHeight;
+
    if (!mLookupPhase.init(mUsedTexUnits) )
        exit(1);
 
@@ -111,9 +112,9 @@ void Ogles::run()
 //    mReductionPhase.setupGeometry();
     reductionTime = mReductionPhase.run();
 
-    mLookupPhase.setFbo(mReductionPhase.getFreeFbo() );
     mLookupPhase.updateTextures(mReductionPhase.getLastTexture(), mReductionPhase.getLastTexUnit(),
                                 mReductionPhase.getFreeTexture(), mReductionPhase.getFreeTexUnit() );
+    mLookupPhase.setFbo(mReductionPhase.getFreeFbo());
 
     mLookupPhase.setupGeometry();
     lookupTime = mLookupPhase.run();

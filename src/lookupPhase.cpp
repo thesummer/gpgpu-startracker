@@ -44,12 +44,13 @@ GLint LookupPhase::init(GLuint &bfUsedTextures)
 
     // Initialize all OpenGL structures necessary for the
     // labeling phase here
-
     //Initialize VBO
     glGenBuffers(1, &mVboId);
+
     //Upload vertex data
     GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, mVboId) );
     GL_CHECK( glBufferData(GL_ARRAY_BUFFER, mNumVertices * 2 * sizeof(float), mVertices, GL_STATIC_DRAW) );
+
 
     // Load the shaders and get a linked program object
     mProgramObject = loadProgramFromFile( mVertFilename, mFragFilename);
@@ -57,21 +58,17 @@ GLint LookupPhase::init(GLuint &bfUsedTextures)
     {
         cerr << "Failed to generate Program object for label phase" << endl;
     }
-
-
      // Get the attribute locations
-     mPositionLoc = glGetAttribLocation ( mProgramObject, "a_position" );
-
+    mPositionLoc = glGetAttribLocation ( mProgramObject, "a_position" );
      // Get the sampler locations
-     mSamplerLoc     = glGetUniformLocation( mProgramObject, "s_texture" );
-     u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
+    mSamplerLoc  = glGetUniformLocation( mProgramObject, "s_texture" );
+    u_texDimLoc  = glGetUniformLocation( mProgramObject, "u_texDimensions" );
 //     u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
-
-     GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
+    GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
 
     GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, 0) );
 
-     return GL_TRUE;
+    return GL_TRUE;
 }
 
 GLint LookupPhase::initIndependent(GLuint fbo, GLuint &bfUsedTextures)
@@ -100,7 +97,6 @@ void LookupPhase::setupGeometry()
 
     GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, mVboId) );
     // Load the vertex position
-    GL_CHECK( glEnableVertexAttribArray ( mPositionLoc ) );
     GL_CHECK( glVertexAttribPointer ( mPositionLoc, 2, GL_FLOAT,
                                       GL_FALSE, 0 * sizeof(GLfloat), 0) );
 }
@@ -124,14 +120,17 @@ double LookupPhase::run()
 
     startTime = getRealTime();
 
+    GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, mVboId) );
+    GL_CHECK( glEnableVertexAttribArray ( mPositionLoc ) );
+
     // Bind the FBO to write to
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId) );
+
     GL_CHECK( glActiveTexture( GL_TEXTURE0 + mTextureUnits[TEX_REDUCED]) );
     GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexReducedId) );
     // Clear the color buffer
     GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
     // Setup OpenGL
-    GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, mVboId) );
 
     GL_CHECK( glUseProgram ( mProgramObject ) );
 
