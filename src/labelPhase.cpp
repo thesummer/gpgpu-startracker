@@ -123,14 +123,6 @@ void LabelPhase::setupGeometry()
     GL_CHECK( glViewport ( 0, 0, mWidth, mHeight ) );
     // Clear the color buffer
     GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
-    // Load the vertex position
-    GL_CHECK( glVertexAttribPointer ( mPositionLoc, 3, GL_FLOAT,
-                                      GL_FALSE, 5 * sizeof(GLfloat), mVertices ) );
-    // Load the texture coordinates
-    GL_CHECK( glVertexAttribPointer ( mTexCoordLoc, 2, GL_FLOAT,
-                                      GL_FALSE, 5 * sizeof(GLfloat), &mVertices[3] ) );
-    GL_CHECK( glEnableVertexAttribArray ( mPositionLoc ) );
-    GL_CHECK( glEnableVertexAttribArray ( mTexCoordLoc ) );
 }
 
 double LabelPhase::run()
@@ -141,6 +133,15 @@ double LabelPhase::run()
 
     GL_CHECK( glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
     GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, 0) );
+    // Load the texture coordinates
+    GL_CHECK( glVertexAttribPointer ( mPositionLoc, 3, GL_FLOAT,
+                                      GL_FALSE, 5 * sizeof(GLfloat), mVertices ) );
+    GL_CHECK( glVertexAttribPointer ( mTexCoordLoc, 2, GL_FLOAT,
+                                      GL_FALSE, 5 * sizeof(GLfloat), &mVertices[3] ) );
+    // Load the vertex position
+    GL_CHECK( glEnableVertexAttribArray ( mPositionLoc ) );
+    GL_CHECK( glEnableVertexAttribArray ( mTexCoordLoc ) );
+
 
     // Setup OpenGL
     // Attach the two PiPo-textures to the 2 fbos
@@ -220,6 +221,9 @@ double LabelPhase::run()
 
         // Switch read and write texture
     }
+
+    GL_CHECK( glDisableVertexAttribArray ( mPositionLoc ) );
+    GL_CHECK( glDisableVertexAttribArray ( mTexCoordLoc ) );
 
     endTime = getRealTime();
 
