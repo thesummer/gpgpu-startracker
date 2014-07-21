@@ -109,7 +109,7 @@ void Ogles::run()
 
     mReductionPhase.updateTextures(mLabelPhase.getLastTexture(), mLabelPhase.getLastTexUnit(),
                                    mLabelPhase.getFreeTexture(), mLabelPhase.getFreeTexUnit() );
-//    mReductionPhase.setupGeometry();
+    mReductionPhase.setupGeometry();
     reductionTime = mReductionPhase.run();
 
     mLookupPhase.updateTextures(mReductionPhase.getLastTexture(), mReductionPhase.getLastTexUnit(),

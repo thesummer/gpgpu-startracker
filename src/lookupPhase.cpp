@@ -103,9 +103,9 @@ void LookupPhase::setupGeometry()
 
 void LookupPhase::updateTextures(GLuint reducedTex, GLint reducedTexUnit, GLuint freeTex, GLint freeTexUnit)
 {
-    mTexReducedId = reducedTex;
+    mTexReducedId              = reducedTex;
     mTextureUnits[TEX_REDUCED] = reducedTexUnit;
-    mTexLookUpId =  freeTex;
+    mTexLookUpId               = freeTex;
     mTextureUnits[TEX_LOOKUP]  = freeTexUnit;
 }
 

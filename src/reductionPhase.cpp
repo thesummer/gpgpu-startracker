@@ -143,11 +143,11 @@ void ReductionPhase::setupGeometry()
 void ReductionPhase::updateTextures(GLuint labelTex, GLint labelTexUnit, GLuint freeTex, GLint freeTexUnit)
 {
     // 1. texture for label image
-    mTexLabelId = labelTex;
+    mTexLabelId              = labelTex;
     mTextureUnits[TEX_LABEL] = labelTexUnit;
 
     // 2. Texture for root pixels
-    mTexRootId = freeTex;
+    mTexRootId              = freeTex;
     mTextureUnits[TEX_ROOT] = freeTexUnit;
 }
 

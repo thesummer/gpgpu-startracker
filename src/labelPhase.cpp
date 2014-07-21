@@ -49,34 +49,36 @@ GLint LabelPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
     }
 
 
-     // Get the attribute locations
-     mPositionLoc = glGetAttribLocation ( mProgramObject, "a_position" );
-     mTexCoordLoc = glGetAttribLocation ( mProgramObject, "a_texCoord" );
+    GL_CHECK( glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
+    GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, 0) );
+    // Get the attribute locations
+    mPositionLoc = glGetAttribLocation ( mProgramObject, "a_position" );
+    mTexCoordLoc = glGetAttribLocation ( mProgramObject, "a_texCoord" );
 
-     // Get the sampler locations
-     mSamplerLoc     = glGetUniformLocation( mProgramObject, "s_texture" );
-     u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
-     u_thresholdLoc  = glGetUniformLocation ( mProgramObject, "u_threshold" );
-     u_passLoc       = glGetUniformLocation ( mProgramObject, "u_pass" );
-     u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
-     u_factorLoc     = glGetUniformLocation ( mProgramObject, "u_factor" );
+    // Get the sampler locations
+    mSamplerLoc     = glGetUniformLocation( mProgramObject,  "s_texture" );
+    u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
+    u_thresholdLoc  = glGetUniformLocation ( mProgramObject, "u_threshold" );
+    u_passLoc       = glGetUniformLocation ( mProgramObject, "u_pass" );
+    u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
+    u_factorLoc     = glGetUniformLocation ( mProgramObject, "u_factor" );
 
-     // 2. and 3. texture for ping-pong
-     for(int j=0; j<2; ++j)
-     {
-         int i = 0;
-         while( (1<<i) & bfUsedTextures) ++i;
+    // 2. and 3. texture for ping-pong
+    for(int j=0; j<2; ++j)
+    {
+        int i = 0;
+        while( (1<<i) & bfUsedTextures) ++i;
 
-         GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-         mTexPiPoId[j]  = createSimpleTexture2D(mWidth, mHeight);
-         bfUsedTextures |= (1<<i);
-         mTextureUnits[TEX_PIPO+j] = i;
-         GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexPiPoId[j]) );
-     }
+        GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+        mTexPiPoId[j]  = createSimpleTexture2D(mWidth, mHeight);
+        bfUsedTextures |= (1<<i);
+        mTextureUnits[TEX_PIPO+j] = i;
+        GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexPiPoId[j]) );
+    }
 
-     GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
+    GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
 
-     return GL_TRUE;
+    return GL_TRUE;
 }
 
 GLint LabelPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
