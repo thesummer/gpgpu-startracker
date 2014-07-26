@@ -51,6 +51,7 @@ public:
 
     // Texture to attach to the frambuffers
 //    GLuint mTexOrigId;
+    GLuint mTexLabelId;
     GLuint mTexPiPoId[2];
     GLuint mFboId[2];
     GLint  mTextureUnits[4];

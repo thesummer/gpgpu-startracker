@@ -88,10 +88,10 @@ GLint StatsPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
     while( (1<<i) & bfUsedTextures) ++i;
 
     GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-    mTexOrigId = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
+    mTexLabelId = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
     bfUsedTextures |= (1<<i);
     mTextureUnits[TEX_LABEL] = i;
-    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexOrigId) );
+    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexLabelId) );
 
     // Setup 2 Textures for Ping-Pong and
     // the program object
@@ -170,7 +170,7 @@ double StatsPhase::run()
     ///---------- 1. THRESHOLD AND INITIAL LABELING --------------------
 
 #ifdef _DEBUG
-        printf("Pixels before run:\n", i);
+        printf("Pixels before run:\n");
         printLabels(mWidth, mHeight, mTgaData->img_data);
 #endif
 
