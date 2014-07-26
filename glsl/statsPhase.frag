@@ -93,9 +93,10 @@ void main()
 {
 
     vec2 curLabel = unpack2shorts( texture2D( s_texture, v_texCoord ) );
+    vec2 curCoord = tex2imgCoord(v_texCoord);
     // If curLabel is not 0 it means it already has a label assigned and no
     // further action has to be done
-    if (curLabel == vec4(ZERO))
+    if (curLabel != vec2(ZERO))
     {
         gl_FragColor = pack2shorts( curLabel );
     }
@@ -103,28 +104,43 @@ void main()
     {
         // Sample corner pixels of a u_pass * u_pass sized square
         float twoPow = exp2( u_pass );
-        vec2 rightLabel       = unpack2shorts( texture2D( s_texture, img2texCoord( curLabel + vec2(twoPow, ZERO) ) ) );
-        vec2 bottomLabel      = unpack2shorts( texture2D( s_texture, img2texCoord( curLabel + vec2(ZERO, twoPow) ) ) );
-        vec2 bottomRightLabel = unpack2shorts( texture2D( s_texture, img2texCoord( curLabel + vec2(twoPow, twoPow) ) ) );
+        vec3 rightLabel, bottomLabel, bottomRightLabel;
+
+        rightLabel.xy       = unpack2shorts( texture2D( s_texture, img2texCoord( curCoord + vec2(twoPow, ZERO) ) ) );
+        bottomLabel.xy      = unpack2shorts( texture2D( s_texture, img2texCoord( curCoord + vec2(ZERO, twoPow) ) ) );
+        bottomRightLabel.xy = unpack2shorts( texture2D( s_texture, img2texCoord( curCoord + vec2(twoPow, twoPow) ) ) );
 
         // Check if these pixels are zero
-        float rIsZero  = step(ONE/256.0, length(rightLabel) );
-        float bIsZero  = step(ONE/256.0, length(bottomLabel) );
-        float brIsZero = step(ONE/256.0, length(bottomRightLabel) );
+        float rIsZero  = ONE-step(ONE/256.0, length(rightLabel.xy) );
+        float bIsZero  = ONE-step(ONE/256.0, length(bottomLabel.xy) );
+        float brIsZero = ONE-step(ONE/256.0, length(bottomRightLabel.xy) );
 
         // Make sure zero-pixel will have the maximum distance
-        rightLabel       += rIsZero  * vec2(OUT);
-        bottomLabel      += bIsZero  * vec2(OUT);
-        bottomRightLabel += brIsZero * vec2(OUT);
+        rightLabel       += rIsZero  * OUT;
+        bottomLabel      += bIsZero  * OUT;
+        bottomRightLabel += brIsZero * OUT;
+
+        rightLabel.z       =  distance(rightLabel.xy, curLabel);
+        bottomLabel.z      =  distance(bottomLabel.xy, curLabel);
+        bottomRightLabel.z =  distance(bottomRightLabel.xy, curLabel);
+
 
         // Find the label with the smallest distance to current pixel
-        float result = min( distance(rightLabel, curLabel), distance(bottomLabel, curLabel)  );
-        result = min(result, distance(bottomRightLabel, curLabel) );
+        float result = min( rightLabel.z, bottomLabel.z );
+        result = min(result, bottomRightLabel.z );
+
+        vec3 mask = ( step(-result, -vec3(rightLabel.z, bottomLabel.z, bottomRightLabel.z)) );
+        rightLabel       *= mask[0];
+        bottomLabel      *= mask[1];
+        bottomRightLabel *= mask[2];
 
         // If all 3 corner pixel were 0 result will have an unreasonable large value --> set it back to 0
-        result = ( ONE-step(5000.0, result) ) * result;
+        result = ( ONE-step(5000.0, result) );
+//        gl_FragColor = vec4(result);
 
-        gl_FragColor = pack2shorts(result);
-
+        // Adding all xy-coordinates of the 3 corner labels will only add the ones which have the smallest distance
+        // to the current pixel. Divide by length(mask) to correct for the cases where more than one pixel have
+        // the same distance (hence same value), multiply by result to correct for the case where all 3 are zero
+        gl_FragColor = pack2shorts( (rightLabel.xy+bottomLabel.xy+bottomRightLabel.xy) / dot(mask, mask) ) * result;
     }
 }

@@ -170,9 +170,16 @@ double StatsPhase::run()
     ///---------- 1. THRESHOLD AND INITIAL LABELING --------------------
 
 #ifdef _DEBUG
+    {
+        // Make the BYTE array, factor of 3 because it's RGBA.
         printf("Pixels before run:\n");
-        printLabels(mWidth, mHeight, mTgaData->img_data);
+//        printLabels(mWidth, mHeight, mTgaData->img_data);
+        char filename[50];
+        sprintf(filename, "out0%03d.tga", 0);
+        writeTgaImage(mWidth, mHeight, filename, mTgaData->img_data);
+    }
 #endif
+
 
 
     // Bind the FBO to write to
@@ -185,6 +192,20 @@ double StatsPhase::run()
     // Draw scene
     GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
     std::swap(mRead, mWrite);
+
+#ifdef _DEBUG
+    {
+        // Make the BYTE array, factor of 3 because it's RGBA.
+        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
+        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+        printf("Pixels after pass %d:\n", 0);
+//        printLabels(mWidth, mHeight, pixels);
+        char filename[50];
+        sprintf(filename, "outF%03d.tga", 0);
+        writeTgaImage(mWidth, mHeight, filename, pixels);
+        delete [] pixels;
+    }
+#endif
 
     for(int i=1; i<4; ++i)
     {
@@ -200,15 +221,17 @@ double StatsPhase::run()
         std::swap(mRead, mWrite);
 
 #ifdef _DEBUG
-        // Make the BYTE array, factor of 3 because it's RGBA.
-        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-        printf("Pixels after pass %d:\n", i);
-        printLabels(mWidth, mHeight, pixels);
-        char filename[50];
-        sprintf(filename, "outF%03d.tga", i);
-        writeTgaImage(mWidth, mHeight, filename, pixels);
-        delete [] pixels;
+        {
+            // Make the BYTE array, factor of 3 because it's RGBA.
+            GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
+            GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+            printf("Pixels after pass %d:\n", i);
+//            printLabels(mWidth, mHeight, pixels);
+            char filename[50];
+            sprintf(filename, "outF%03d.tga", i);
+            writeTgaImage(mWidth, mHeight, filename, pixels);
+            delete [] pixels;
+        }
 #endif
 
     }
