@@ -158,12 +158,12 @@ int main()
     if(!statsPhase.initIndependent(fboId, usedTexUnits) )
         exit(1);
 
-    double labelTime;
+    double statsTime;
 
     statsPhase.setupGeometry();
-    labelTime = statsPhase.run();
+    statsTime = statsPhase.run();
 
-    cout << "Stats time: " << labelTime << endl;
+    cout << "Stats time: " << statsTime << endl;
 
 
 #ifdef _RPI

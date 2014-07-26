@@ -155,8 +155,6 @@ double StatsPhase::run()
         CHECK_FBO();
     }
 
-//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
     // Use the program object
     GL_CHECK( glUseProgram ( mProgramObject ) );
 
@@ -171,59 +169,92 @@ double StatsPhase::run()
 
     ///---------- 1. THRESHOLD AND INITIAL LABELING --------------------
 
+#ifdef _DEBUG
+        printf("Pixels before run:\n", i);
+        printLabels(mWidth, mHeight, mTgaData->img_data);
+#endif
+
+
     // Bind the FBO to write to
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
-    // Set the sampler texture to use the original image
-    GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_ORIG] ) );
+    // Set the sampler texture to use the texture containing the labels
+    GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_LABEL] ) );
     // Set the pass index
     GL_CHECK( glUniform1i ( u_passLoc,  0) );
-//    GL_CHECK( glUniform1f ( u_factorLoc, u_factor) );
+    //    GL_CHECK( glUniform1f ( u_factorLoc, u_factor) );
     // Draw scene
     GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
     std::swap(mRead, mWrite);
 
-    ///---------- 2. CONNECTED COMPONENT LABELING  --------------------
-
-    for (int i = 1; i < logBase2(mHeight)+10; i++)
+    for(int i=1; i<4; ++i)
     {
-        if( i%2 == 1)
-        {
-            u_pass = 1;
-            u_factor *= -1.0;
-            u_debug = 0;
-        }
-        else
-        {
-            u_pass = i;
-            u_debug = 0;
-        }
-
         // Bind the FBO to write to
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
-        // Set the sampler texture unit to 0
+        // Set the sampler texture to use the texture containing the labels
         GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_PIPO+mRead] ) );
         // Set the pass index
-        GL_CHECK( glUniform1i ( u_passLoc,  u_pass) );
-//        GL_CHECK( glUniform1i ( u_debugLoc, u_debug) );
-//        GL_CHECK( glUniform1f ( u_factorLoc, u_factor) );
+        GL_CHECK( glUniform1i ( u_passLoc,  i) );
+        //    GL_CHECK( glUniform1f ( u_factorLoc, u_factor) );
         // Draw scene
         GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
         std::swap(mRead, mWrite);
 
 #ifdef _DEBUG
-//        // Make the BYTE array, factor of 3 because it's RGBA.
-//        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-//        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-//        printf("Pixels after pass %d:\n", i);
-//        printLabels(mWidth, mHeight, pixels);
-//        char filename[50];
-//        sprintf(filename, "outl%03d.tga", i);
-//        writeTgaImage(mWidth, mHeight, filename, pixels);
-//        delete [] pixels;
+        // Make the BYTE array, factor of 3 because it's RGBA.
+        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
+        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+        printf("Pixels after pass %d:\n", i);
+        printLabels(mWidth, mHeight, pixels);
+        char filename[50];
+        sprintf(filename, "outF%03d.tga", i);
+        writeTgaImage(mWidth, mHeight, filename, pixels);
+        delete [] pixels;
 #endif
 
-        // Switch read and write texture
     }
+
+//    ///---------- 2. CONNECTED COMPONENT LABELING  --------------------
+
+//    for (int i = 1; i < logBase2(mHeight)+10; i++)
+//    {
+//        if( i%2 == 1)
+//        {
+//            u_pass = 1;
+//            u_factor *= -1.0;
+//            u_debug = 0;
+//        }
+//        else
+//        {
+//            u_pass = i;
+//            u_debug = 0;
+//        }
+
+//        // Bind the FBO to write to
+//        GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
+//        // Set the sampler texture unit to 0
+//        GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_PIPO+mRead] ) );
+//        // Set the pass index
+//        GL_CHECK( glUniform1i ( u_passLoc,  u_pass) );
+////        GL_CHECK( glUniform1i ( u_debugLoc, u_debug) );
+////        GL_CHECK( glUniform1f ( u_factorLoc, u_factor) );
+//        // Draw scene
+//        GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
+//        std::swap(mRead, mWrite);
+
+//#ifdef _DEBUG
+////        // Make the BYTE array, factor of 3 because it's RGBA.
+////        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
+////        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+////        printf("Pixels after pass %d:\n", i);
+////        printLabels(mWidth, mHeight, pixels);
+////        char filename[50];
+////        sprintf(filename, "outl%03d.tga", i);
+////        writeTgaImage(mWidth, mHeight, filename, pixels);
+////        delete [] pixels;
+//#endif
+
+//        // Switch read and write texture
+//    }
 
     GL_CHECK( glDisableVertexAttribArray ( mPositionLoc ) );
     GL_CHECK( glDisableVertexAttribArray ( mTexCoordLoc ) );
