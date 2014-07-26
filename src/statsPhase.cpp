@@ -3,7 +3,8 @@ using std::cerr;
 using std::endl;
 
 #define TEX_ORIG   0
-#define TEX_PIPO   1
+#define TEX_LABEL  1
+#define TEX_PIPO   2
 
 #include "statsPhase.h"
 
@@ -89,7 +90,7 @@ GLint StatsPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
     GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
     mTexOrigId = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
     bfUsedTextures |= (1<<i);
-    mTextureUnits[TEX_ORIG] = i;
+    mTextureUnits[TEX_LABEL] = i;
     GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexOrigId) );
 
     // Setup 2 Textures for Ping-Pong and

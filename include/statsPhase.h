@@ -53,7 +53,7 @@ public:
 //    GLuint mTexOrigId;
     GLuint mTexPiPoId[2];
     GLuint mFboId[2];
-    GLint  mTextureUnits[3];
+    GLint  mTextureUnits[4];
 
     int mWrite;
     int mRead;
