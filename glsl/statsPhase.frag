@@ -120,9 +120,9 @@ void main()
         bottomLabel      += bIsZero  * OUT;
         bottomRightLabel += brIsZero * OUT;
 
-        rightLabel.z       =  distance(rightLabel.xy, curLabel);
-        bottomLabel.z      =  distance(bottomLabel.xy, curLabel);
-        bottomRightLabel.z =  distance(bottomRightLabel.xy, curLabel);
+        rightLabel.z       =  distance(rightLabel.xy, curCoord);
+        bottomLabel.z      =  distance(bottomLabel.xy, curCoord);
+        bottomRightLabel.z =  distance(bottomRightLabel.xy, curCoord);
 
 
         // Find the label with the smallest distance to current pixel
