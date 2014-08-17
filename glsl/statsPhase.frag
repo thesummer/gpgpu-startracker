@@ -129,14 +129,27 @@ void main()
         float result = min( rightLabel.z, bottomLabel.z );
         result = min(result, bottomRightLabel.z );
 
-        vec3 mask = ( step(-result, -vec3(rightLabel.z, bottomLabel.z, bottomRightLabel.z)) );
+        vec3 mask = ONE - ( step(-result, -vec3(rightLabel.z, bottomLabel.z, bottomRightLabel.z)) );
+        rightLabel       += mask[0] * OUT;
+        bottomLabel      += mask[1] * OUT;
+        bottomRightLabel += mask[2] * OUT;
+
+
+        // In case 2 different labels have the same distance from the current Pixels choose the one with the
+        // smallest y-coordinate (it shouldn't be too important anyways)
+        float smallestY = min(rightLabel.y, bottomLabel.y);
+        smallestY = min(smallestY, bottomRightLabel.y);
+
+        mask = ( step(-smallestY, -vec3(rightLabel.y, bottomLabel.y, bottomRightLabel.y) ) );
+
         rightLabel       *= mask[0];
         bottomLabel      *= mask[1];
         bottomRightLabel *= mask[2];
 
         // If all 3 corner pixel were 0 result will have an unreasonable large value --> set it back to 0
         result = ( ONE-step(5000.0, result) );
-//        gl_FragColor = vec4(result);
+
+
 
         // Adding all xy-coordinates of the 3 corner labels will only add the ones which have the smallest distance
         // to the current pixel. Divide by length(mask) to correct for the cases where more than one pixel have
