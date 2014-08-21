@@ -168,34 +168,36 @@ void main()
     else if(u_stage == STAGE_COUNT)
     {
         float curCount = unpack2shorts( texture2D( s_result, v_texCoord ) ).x;
-        vec2 curLabel  = unpack2shorts( texture2D( s_label, v_texCoord ) );
-        vec2 curFill   = unpack2shorts( texture2D( s_fill, v_texCoord ) );
-        vec2 curCoord  = tex2imgCoord(v_texCoord);
+        vec2  curLabel  = unpack2shorts( texture2D( s_label, v_texCoord ) );
+        vec2  curFill   = unpack2shorts( texture2D( s_fill, v_texCoord ) );
+        vec2  curCoord  = tex2imgCoord(v_texCoord);
 
         if(u_pass == -1)
         {
-            curCount = float( all( equal(curLabel, curFill) ) );
-            gl_FragColor = pack2shorts( vec2(curCount, ZERO) );
+            vec2 test = vec2( equal(curLabel, curFill) ) * step(ONE, curLabel);
+            gl_FragColor = pack2shorts( test );
             return;
+//            curCount = float( all( equal(curLabel, curFill) ) );
+//            gl_FragColor = pack2shorts( curFill );
         }
 
         float twoPow = exp2( u_pass );
-        vec3 rightPixel, bottomPixel, bottomRightPixel;
+        vec3 leftPixel, topPixel, topLeftPixel;
 
-        rightPixel.xy       = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord + vec2(twoPow, ZERO) ) ) );
-        bottomPixel.xy      = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord + vec2(ZERO, twoPow) ) ) );
-        bottomRightPixel.xy = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord + vec2(twoPow, twoPow) ) ) );
+        leftPixel.xy       = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord - vec2(twoPow, ZERO) ) ) );
+        topPixel.xy      = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord - vec2(ZERO, twoPow) ) ) );
+        topLeftPixel.xy = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord - vec2(twoPow, twoPow) ) ) );
 
-        rightPixel.z       = unpack2shorts( texture2D( s_result, img2texCoord( curCoord + vec2(twoPow, ZERO) ) ) ).x;
-        bottomPixel.z      = unpack2shorts( texture2D( s_result, img2texCoord( curCoord + vec2(ZERO, twoPow) ) ) ).x;
-        bottomRightPixel.z = unpack2shorts( texture2D( s_result, img2texCoord( curCoord + vec2(twoPow, twoPow))) ).x;
+        leftPixel.z       = unpack2shorts( texture2D( s_result, img2texCoord( curCoord - vec2(twoPow, ZERO) ) ) ).x;
+        topPixel.z      = unpack2shorts( texture2D( s_result, img2texCoord( curCoord - vec2(ZERO, twoPow) ) ) ).x;
+        topLeftPixel.z = unpack2shorts( texture2D( s_result, img2texCoord( curCoord - vec2(twoPow, twoPow))) ).x;
 
-        float isEqual = float( all(equal(rightPixel.xy, curLabel) ) );
-        curCount += isEqual * rightPixel.z;
-        isEqual = float( all(equal(bottomPixel.xy, curLabel) ) );
-        curCount += isEqual * bottomPixel.z;
-        isEqual = float( all(equal(bottomRightPixel.xy, curLabel) ) );
-        curCount += isEqual * bottomRightPixel.z;
+        float isEqual = float( all(equal(leftPixel.xy, curLabel) ) );
+        curCount += isEqual * leftPixel.z;
+        isEqual = float( all(equal(topPixel.xy, curLabel) ) );
+        curCount += isEqual * topPixel.z;
+        isEqual = float( all(equal(topLeftPixel.xy, curLabel) ) );
+        curCount += isEqual * topLeftPixel.z;
 
         gl_FragColor = pack2shorts( vec2(curCount, ZERO) );
     }

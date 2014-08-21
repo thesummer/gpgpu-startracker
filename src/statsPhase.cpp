@@ -4,10 +4,13 @@ using std::endl;
 
 #define TEX_ORIG   0
 #define TEX_LABEL  1
-#define TEX_PIPO   2
+#define TEX_FILL   2
+#define TEX_PIPO   3
 
 #define MODE_FILL  0
 #define MODE_COUNT 1
+
+#define SIZE 1
 
 #include "statsPhase.h"
 
@@ -86,6 +89,15 @@ GLint StatsPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
         GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexPiPoId[j]) );
     }
 
+    int i = 0;
+    while( (1<<i) & bfUsedTextures) ++i;
+
+    GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+    mTexFillId = createSimpleTexture2D(mWidth, mHeight);
+    bfUsedTextures |= (1<<i);
+    mTextureUnits[TEX_FILL] = i;
+    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexFillId) );
+
     GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
 
     return GL_TRUE;
@@ -143,6 +155,8 @@ double StatsPhase::run()
 
     startTime = getRealTime();
 
+    ///////////// --------- GENERAL SETUP ---------- ////////////////////
+
     GL_CHECK( glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
     GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, 0) );
     // Load the texture coordinates
@@ -168,7 +182,6 @@ double StatsPhase::run()
 
     // Set the uniforms
     GL_CHECK( glUniform2f ( u_texDimLoc, mWidth, mHeight) );
-    GL_CHECK( glUniform1i ( u_stageLoc , MODE_FILL) );
 
     // Do the runs
 //    u_factor = -1.0;
@@ -185,8 +198,9 @@ double StatsPhase::run()
     }
 #endif
 
+///////////// --------- FILL AREA IN AND AROUND EACH SPOT---------- ////////////////////
 
-
+    GL_CHECK( glUniform1i ( u_stageLoc , MODE_FILL) );
     // Bind the FBO to write to
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
     // Set the sampler texture to use the texture containing the labels
@@ -204,7 +218,7 @@ double StatsPhase::run()
         GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
         GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
         printf("Pixels after pass %d:\n", 0);
-//        printLabels(mWidth, mHeight, pixels);
+        printLabels(mWidth, mHeight, pixels);
         char filename[50];
         sprintf(filename, "outF%03d.tga", 0);
         writeTgaImage(mWidth, mHeight, filename, pixels);
@@ -212,7 +226,7 @@ double StatsPhase::run()
     }
 #endif
 
-    for(int i=1; i<4; ++i)
+    for(int i=1; i<SIZE; ++i)
     {
         // Bind the FBO to write to
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
@@ -240,6 +254,53 @@ double StatsPhase::run()
 #endif
 
     }
+
+    ///////////// --------- COUNT NUMBER OF PIXELS FOR EACH SPOT---------- ////////////////////
+
+    GL_CHECK( glUniform1i ( u_stageLoc , MODE_COUNT) );
+    // Save the texture with the results of the filling and use a new texture for PIPO
+    std::swap(mTexPiPoId[mRead], mTexFillId);
+    std::swap(mTextureUnits[TEX_FILL], mTextureUnits[TEX_PIPO+mRead]);
+    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mRead]) );
+    GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexPiPoId[mRead], 0) );
+    CHECK_FBO();
+
+    // Bind the different sampler2D
+    // Texture with the filled spots from previous stage (read only)
+    GL_CHECK( glUniform1i ( s_fillLoc,   mTextureUnits[TEX_FILL] ) );
+    // Texture with the labels from last phase (read only)
+    GL_CHECK( glUniform1i ( s_labelLoc,  mTextureUnits[TEX_LABEL] ) );
+
+    // Start with -1 because that is the initalization pass
+    for (int i=-1; i<4   ; ++i)
+    {
+        // Bind the FBO to write to
+        GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
+        // Set the pass index
+        GL_CHECK( glUniform1i ( u_passLoc,  i) );
+        // Set the sampler texture to use the texture containing the labels
+        GL_CHECK( glUniform1i ( s_resultLoc, mTextureUnits[TEX_PIPO+mRead] ) );
+
+        // Draw scene
+        GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
+        std::swap(mRead, mWrite);
+
+#ifdef _DEBUG
+        {
+            // Make the BYTE array, factor of 3 because it's RGBA.
+            GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
+            GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+            printf("Pixels after pass %d:\n", i);
+            printLabels(mWidth, mHeight, pixels);
+            char filename[50];
+            sprintf(filename, "outC%03d.tga", i);
+            writeTgaImage(mWidth, mHeight, filename, pixels);
+            delete [] pixels;
+        }
+#endif
+
+    }
+
 
 //    ///---------- 2. CONNECTED COMPONENT LABELING  --------------------
 
