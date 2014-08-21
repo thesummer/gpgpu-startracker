@@ -6,6 +6,9 @@ using std::endl;
 #define TEX_LABEL  1
 #define TEX_PIPO   2
 
+#define MODE_FILL  0
+#define MODE_COUNT 1
+
 #include "statsPhase.h"
 
 StatsPhase::StatsPhase(int width, int height)
@@ -57,10 +60,16 @@ GLint StatsPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
     mTexCoordLoc = glGetAttribLocation ( mProgramObject, "a_texCoord" );
 
     // Get the sampler locations
-    mSamplerLoc     = glGetUniformLocation( mProgramObject,  "s_texture" );
-    u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
-//    u_thresholdLoc  = glGetUniformLocation ( mProgramObject, "u_threshold" );
-    u_passLoc       = glGetUniformLocation ( mProgramObject, "u_pass" );
+    s_fillLoc         = glGetUniformLocation( mProgramObject,  "s_fill" );
+    s_labelLoc        = glGetUniformLocation( mProgramObject,  "s_label" );
+    s_resultLoc       = glGetUniformLocation( mProgramObject,  "s_result" );
+    s_originalLoc     = glGetUniformLocation( mProgramObject,  "s_original" );
+
+    // Get uniform locations
+    u_texDimLoc  = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
+    u_passLoc    = glGetUniformLocation ( mProgramObject, "u_pass" );
+    u_stageLoc   = glGetUniformLocation ( mProgramObject, "u_stage" );
+
 //    u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
 //    u_factorLoc     = glGetUniformLocation ( mProgramObject, "u_factor" );
 
@@ -145,7 +154,6 @@ double StatsPhase::run()
     GL_CHECK( glEnableVertexAttribArray ( mPositionLoc ) );
     GL_CHECK( glEnableVertexAttribArray ( mTexCoordLoc ) );
 
-
     // Setup OpenGL
     // Attach the two PiPo-textures to the 2 fbos
     for(int i=0; i<2; i++)
@@ -160,14 +168,11 @@ double StatsPhase::run()
 
     // Set the uniforms
     GL_CHECK( glUniform2f ( u_texDimLoc, mWidth, mHeight) );
-//    GL_CHECK( glUniform1f ( u_thresholdLoc, u_threshold) );
+    GL_CHECK( glUniform1i ( u_stageLoc , MODE_FILL) );
 
     // Do the runs
 //    u_factor = -1.0;
 
-
-
-    ///---------- 1. THRESHOLD AND INITIAL LABELING --------------------
 
 #ifdef _DEBUG
     {
@@ -185,7 +190,7 @@ double StatsPhase::run()
     // Bind the FBO to write to
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
     // Set the sampler texture to use the texture containing the labels
-    GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_LABEL] ) );
+    GL_CHECK( glUniform1i ( s_fillLoc, mTextureUnits[TEX_LABEL] ) );
     // Set the pass index
     GL_CHECK( glUniform1i ( u_passLoc,  0) );
     //    GL_CHECK( glUniform1f ( u_factorLoc, u_factor) );
@@ -212,7 +217,7 @@ double StatsPhase::run()
         // Bind the FBO to write to
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
         // Set the sampler texture to use the texture containing the labels
-        GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_PIPO+mRead] ) );
+        GL_CHECK( glUniform1i ( s_fillLoc, mTextureUnits[TEX_PIPO+mRead] ) );
         // Set the pass index
         GL_CHECK( glUniform1i ( u_passLoc,  i) );
         //    GL_CHECK( glUniform1f ( u_factorLoc, u_factor) );

@@ -29,21 +29,22 @@ public:
     GLushort mIndices[6];
 
     // Uniform locations
-    GLint  u_texDimLoc;
-//    GLint  u_thresholdLoc;
-    GLint  u_passLoc;
+    GLint u_texDimLoc;
+    GLint u_passLoc;
+    GLint u_stageLoc;
 //    GLint  u_debugLoc;
 //    GLint  u_factorLoc;
 
     // Uniform values
-//    float u_threshold;
     GLint u_pass;
 //    GLint u_debug;
 //    GLint u_factor;
 
     // Sampler location
-    GLint mSamplerLoc;
-
+    GLint s_labelLoc;
+    GLint s_fillLoc;
+    GLint s_resultLoc;
+    GLint s_originalLoc;
     // Texture handle
     /// TODO: tga somewhere else?
     TGA    *mTgaImage;
