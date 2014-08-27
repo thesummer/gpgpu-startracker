@@ -6,12 +6,17 @@ uniform sampler2D s_result;
 uniform vec2 u_texDimensions;   // image/texture dimensions
 uniform int u_pass;
 uniform int u_stage;
+uniform int u_savingOffset;
+
 //uniform float u_factor;
 //uniform int u_debug;
 //uniform float u_threshold;      // threshold value for the threshold operation
 
 #define STAGE_FILL  0
 #define STAGE_COUNT 1
+#define STAGE_COPY  2
+#define SAVE_COUNT  3
+
 
 const float ZERO = 0.0;
 const float ONE  = 1.0;
@@ -174,11 +179,10 @@ void main()
 
         if(u_pass == -1)
         {
-            vec2 test = vec2( equal(curLabel, curFill) ) * step(ONE, curLabel);
-            gl_FragColor = pack2shorts( test );
+            curCount = float( all( equal(curLabel, curFill) ) );
+            gl_FragColor = pack2shorts( vec2( equal(curLabel, curFill) ) * step(ONE, curLabel) );
             return;
-//            curCount = float( all( equal(curLabel, curFill) ) );
-//            gl_FragColor = pack2shorts( curFill );
+
         }
 
         float twoPow = exp2( u_pass );
@@ -200,5 +204,25 @@ void main()
         curCount += isEqual * topLeftPixel.z;
 
         gl_FragColor = pack2shorts( vec2(curCount, ZERO) );
+    }
+    else if(u_stage == STAGE_COPY)
+    {
+        gl_FragColor = texture2D( s_result, v_texCoord);
+    }
+    else if(u_stage == STAGE_SAVE)
+    {
+        vec2 curCoord = tex2imgCoord(v_texCoord);
+        vec2 lookupLabel = texture2D( s_label, img2texCoord( curCoord - vec2(u_savingOffset, ZERO) ) );
+
+        if(equal(lookupLabel, vec2(ZERO) ) )
+        {
+            gl_FragColor = vec4(ZERO);
+            return
+        }
+
+        vec2 currentValue = unpack2shorts( texture2D( s_fill,   img2texCoord( lookupLabel ) ) );
+        vec2 addValue     = unpack2shorts( texture2D( s_result, img2texCoord( lookupLabel ) ) );
+
+        gl_FragColor = pack2shorts(currentValue + addValue);
     }
 }
