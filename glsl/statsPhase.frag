@@ -3,19 +3,20 @@ varying vec2 v_texCoord;        // texture coordinates
 uniform sampler2D s_fill;
 uniform sampler2D s_label;
 uniform sampler2D s_result;
-uniform vec2 u_texDimensions;   // image/texture dimensions
-uniform int u_pass;
-uniform int u_stage;
-uniform int u_savingOffset;
+uniform vec2  u_texDimensions;   // image/texture dimensions
+uniform int   u_pass;
+uniform int   u_stage;
+uniform float u_savingOffset;
 
 //uniform float u_factor;
 //uniform int u_debug;
 //uniform float u_threshold;      // threshold value for the threshold operation
 
-#define STAGE_FILL  0
-#define STAGE_COUNT 1
-#define STAGE_COPY  2
-#define SAVE_COUNT  3
+#define STAGE_FILL          0
+#define STAGE_COUNT         1
+#define STAGE_CENTROIDING   2
+#define STAGE_BLEND         3
+#define STAGE_SAVE          4
 
 
 const float ZERO = 0.0;
@@ -23,7 +24,7 @@ const float ONE  = 1.0;
 const float TWO  = 2.0;
 
 const float OUT  = 10000.0;
-
+const float bias = ONE/1024.0;
 /*
 Assuming that the texture is 8-bit RGBA 32bits are available for packing.
 This function packs 2 16-bit short integer values into the 4 texture channels.
@@ -37,7 +38,6 @@ return vec4: RGBA value which contains the packed shorts with LSB first.
 vec4 pack2shorts(in vec2 shorts)
 {
     // Correct for rounding errors due to the raspberry's limited precision (works at least between 0..2700)
-    const float bias = ONE/1024.0;
     shorts = shorts/256.0 + bias;
     return vec4(floor(shorts)/255.0, fract(shorts)*256.0/255.0).zxwy;
 }
@@ -170,6 +170,10 @@ void main()
             gl_FragColor = pack2shorts( (rightLabel.xy+bottomLabel.xy+bottomRightLabel.xy) / dot(mask, mask) ) * result;
         }
     }
+    else if(u_stage == STAGE_CENTROIDING)
+    {
+        // TODO: write logic for centroiding
+    }
     else if(u_stage == STAGE_COUNT)
     {
         float curCount = unpack2shorts( texture2D( s_result, v_texCoord ) ).x;
@@ -205,24 +209,24 @@ void main()
 
         gl_FragColor = pack2shorts( vec2(curCount, ZERO) );
     }
-    else if(u_stage == STAGE_COPY)
+    else if(u_stage == STAGE_BLEND)
     {
-        gl_FragColor = texture2D( s_result, v_texCoord);
+        vec2 result   = unpack2shorts( texture2D( s_result, v_texCoord ) );
+        vec2 reduced  = unpack2shorts( texture2D( s_label, v_texCoord ) );
+        gl_FragColor = pack2shorts( result + reduced);
     }
     else if(u_stage == STAGE_SAVE)
     {
-        vec2 curCoord = tex2imgCoord(v_texCoord);
-        vec2 lookupLabel = texture2D( s_label, img2texCoord( curCoord - vec2(u_savingOffset, ZERO) ) );
+        vec2 coord = tex2imgCoord(v_texCoord) - vec2(u_savingOffset, ZERO);
+        float outOfBounds = float( coord.x >= ZERO);
+        vec2  lookupLabel = unpack2shorts (texture2D( s_label, img2texCoord( coord ) ) );
 
-        if(equal(lookupLabel, vec2(ZERO) ) )
+        if( all(equal(lookupLabel, vec2(ZERO) )) )
         {
             gl_FragColor = vec4(ZERO);
-            return
+            return;
         }
 
-        vec2 currentValue = unpack2shorts( texture2D( s_fill,   img2texCoord( lookupLabel ) ) );
-        vec2 addValue     = unpack2shorts( texture2D( s_result, img2texCoord( lookupLabel ) ) );
-
-        gl_FragColor = pack2shorts(currentValue + addValue);
+        gl_FragColor = texture2D( s_result,   img2texCoord( lookupLabel - ONE) ) * outOfBounds;
     }
 }
