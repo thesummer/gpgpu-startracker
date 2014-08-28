@@ -137,16 +137,22 @@ int main()
     statsPhase.mFragFilename = "statsPhase.frag";
 
     // Read TGA-file
-    TGA *tgaImage = 0;
-    TGAData imgData;
-    loadTgaImage(&tgaImage, &imgData, "test.tga");
+    TGA *tgaLabel = 0;
+    TGAData dataLabel;
+    loadTgaImage(&tgaLabel, &dataLabel, "testLabel.tga");
 
-    int width  = tgaImage->hdr.width;
-    int height = tgaImage->hdr.height;
+    int width  = tgaLabel->hdr.width;
+    int height = tgaLabel->hdr.height;
+
+    TGA *tgaReduced = 0;
+    TGAData dataReduced;
+    loadTgaImage(&tgaReduced, &dataReduced, "testReduced.tga");
+
 
     statsPhase.mWidth  = width;
     statsPhase.mHeight = height;
-    statsPhase.mTgaData = &imgData;
+    statsPhase.mTgaLabel   = &dataLabel;
+    statsPhase.mTgaReduced = &dataReduced;
 
     // initialize EGL-context
     initEGL(width, height);

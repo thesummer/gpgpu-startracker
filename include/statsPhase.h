@@ -32,6 +32,7 @@ public:
     GLint u_texDimLoc;
     GLint u_passLoc;
     GLint u_stageLoc;
+    GLint u_savingOffsetLoc;
 //    GLint  u_debugLoc;
 //    GLint  u_factorLoc;
 
@@ -45,18 +46,22 @@ public:
     GLint s_fillLoc;
     GLint s_resultLoc;
     GLint s_originalLoc;
+
     // Texture handle
     /// TODO: tga somewhere else?
     TGA    *mTgaImage;
-    TGAData *mTgaData;
+    TGAData *mTgaLabel;
+    TGAData *mTgaReduced;
+    TGAData *mTgaOrig;
 
     // Texture to attach to the frambuffers
 //    GLuint mTexOrigId;
     GLuint mTexLabelId;
+    GLuint mTexReducedId;
     GLuint mTexFillId;
     GLuint mTexPiPoId[2];
     GLuint mFboId[2];
-    GLint  mTextureUnits[5];
+    GLint  mTextureUnits[6];
 
     int mWrite;
     int mRead;

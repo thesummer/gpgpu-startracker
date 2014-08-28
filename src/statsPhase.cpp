@@ -2,14 +2,20 @@
 using std::cerr;
 using std::endl;
 
-#define TEX_ORIG   0
-#define TEX_LABEL  1
-#define TEX_FILL   2
-#define TEX_PIPO   3
+#define TEX_ORIG    0
+#define TEX_REDUCED 1
+#define TEX_LABEL   2
+#define TEX_FILL    3
+#define TEX_PIPO    4
 
-#define MODE_FILL  0
-#define MODE_COUNT 1
+#define STAGE_FILL          0
+#define STAGE_COUNT         1
+#define STAGE_CENTROIDING   2
+#define STAGE_BLEND         3
+#define STAGE_SAVE          4
 
+
+#define OFFSET 3.0
 #define SIZE 1
 
 #include "statsPhase.h"
@@ -69,9 +75,10 @@ GLint StatsPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
     s_originalLoc     = glGetUniformLocation( mProgramObject,  "s_original" );
 
     // Get uniform locations
-    u_texDimLoc  = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
-    u_passLoc    = glGetUniformLocation ( mProgramObject, "u_pass" );
-    u_stageLoc   = glGetUniformLocation ( mProgramObject, "u_stage" );
+    u_texDimLoc       = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
+    u_passLoc         = glGetUniformLocation ( mProgramObject, "u_pass" );
+    u_stageLoc        = glGetUniformLocation ( mProgramObject, "u_stage" );
+    u_savingOffsetLoc = glGetUniformLocation ( mProgramObject, "u_savingOffset" );
 
 //    u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
 //    u_factorLoc     = glGetUniformLocation ( mProgramObject, "u_factor" );
@@ -109,10 +116,18 @@ GLint StatsPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
     while( (1<<i) & bfUsedTextures) ++i;
 
     GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-    mTexLabelId = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
+    mTexLabelId = createSimpleTexture2D(mWidth, mHeight, mTgaLabel->img_data);
     bfUsedTextures |= (1<<i);
     mTextureUnits[TEX_LABEL] = i;
     GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexLabelId) );
+
+    i = 0;
+    while( (1<<i) & bfUsedTextures) ++i;
+    GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+    mTexReducedId = createSimpleTexture2D(mWidth, mHeight, mTgaReduced->img_data);
+    bfUsedTextures |= (1<<i);
+    mTextureUnits[TEX_REDUCED] = i;
+    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexReducedId) );
 
     // Setup 2 Textures for Ping-Pong and
     // the program object
@@ -194,13 +209,13 @@ double StatsPhase::run()
 //        printLabels(mWidth, mHeight, mTgaData->img_data);
         char filename[50];
         sprintf(filename, "out0%03d.tga", 0);
-        writeTgaImage(mWidth, mHeight, filename, mTgaData->img_data);
+        writeTgaImage(mWidth, mHeight, filename, mTgaLabel->img_data);
     }
 #endif
 
 ///////////// --------- FILL AREA IN AND AROUND EACH SPOT---------- ////////////////////
 
-    GL_CHECK( glUniform1i ( u_stageLoc , MODE_FILL) );
+    GL_CHECK( glUniform1i ( u_stageLoc , STAGE_FILL) );
     // Bind the FBO to write to
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
     // Set the sampler texture to use the texture containing the labels
@@ -257,7 +272,7 @@ double StatsPhase::run()
 
     ///////////// --------- COUNT NUMBER OF PIXELS FOR EACH SPOT---------- ////////////////////
 
-    GL_CHECK( glUniform1i ( u_stageLoc , MODE_COUNT) );
+    GL_CHECK( glUniform1i ( u_stageLoc , STAGE_COUNT) );
     // Save the texture with the results of the filling and use a new texture for PIPO
     std::swap(mTexPiPoId[mRead], mTexFillId);
     std::swap(mTextureUnits[TEX_FILL], mTextureUnits[TEX_PIPO+mRead]);
@@ -290,7 +305,7 @@ double StatsPhase::run()
             // Make the BYTE array, factor of 3 because it's RGBA.
             GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
             GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-            printf("Pixels after pass %d:\n", i);
+            printf("Pixels after count %d:\n", i);
             printLabels(mWidth, mHeight, pixels);
             char filename[50];
             sprintf(filename, "outC%03d.tga", i);
@@ -301,49 +316,63 @@ double StatsPhase::run()
 
     }
 
+    ///////////// --------- WRITE COUNT RESULT INTO FINAL TEXTURE ---------- ////////////////////
 
-//    ///---------- 2. CONNECTED COMPONENT LABELING  --------------------
+    // Write the count result as a reduced table (with an offset so it won't interfere
+    // with the table in texLabelId in the next step
+    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
+    GL_CHECK( glUniform1i ( u_stageLoc,  STAGE_SAVE ) );
+    GL_CHECK( glUniform1f ( u_savingOffsetLoc, OFFSET ) );
+    GL_CHECK( glUniform1i ( s_labelLoc,  mTextureUnits[TEX_REDUCED] ) );
+    GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
+    std::swap(mRead, mWrite);
 
-//    for (int i = 1; i < logBase2(mHeight)+10; i++)
-//    {
-//        if( i%2 == 1)
-//        {
-//            u_pass = 1;
-//            u_factor *= -1.0;
-//            u_debug = 0;
-//        }
-//        else
-//        {
-//            u_pass = i;
-//            u_debug = 0;
-//        }
+#ifdef _DEBUG
+        {
+            // Make the BYTE array, factor of 3 because it's RGBA.
+            GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
+            GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+            printf("Pixels after save:\n");
+            printLabels(mWidth, mHeight, pixels);
+            char filename[50];
+            sprintf(filename, "outS.tga");
+            writeTgaImage(mWidth, mHeight, filename, pixels);
+            delete [] pixels;
+        }
+#endif
 
-//        // Bind the FBO to write to
-//        GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
-//        // Set the sampler texture unit to 0
-//        GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_PIPO+mRead] ) );
-//        // Set the pass index
-//        GL_CHECK( glUniform1i ( u_passLoc,  u_pass) );
-////        GL_CHECK( glUniform1i ( u_debugLoc, u_debug) );
-////        GL_CHECK( glUniform1f ( u_factorLoc, u_factor) );
-//        // Draw scene
-//        GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
-//        std::swap(mRead, mWrite);
+    // Add/blend texture from previous step and mTexLabel together
+    // This yields a texture which has the lookup table for root pixels in its first few
+    // columns and the count values in the next few columns
+    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
+    GL_CHECK( glUniform1i ( u_stageLoc,  STAGE_BLEND ) );
+    GL_CHECK( glUniform1i ( s_resultLoc, mTextureUnits[TEX_PIPO+mRead] ) );
+    GL_CHECK( glUniform1i ( s_labelLoc,  mTextureUnits[TEX_REDUCED] ) );
+    GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
+    std::swap(mRead, mWrite);
 
-//#ifdef _DEBUG
-////        // Make the BYTE array, factor of 3 because it's RGBA.
-////        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-////        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-////        printf("Pixels after pass %d:\n", i);
-////        printLabels(mWidth, mHeight, pixels);
-////        char filename[50];
-////        sprintf(filename, "outl%03d.tga", i);
-////        writeTgaImage(mWidth, mHeight, filename, pixels);
-////        delete [] pixels;
-//#endif
+#ifdef _DEBUG
+        {
+            // Make the BYTE array, factor of 3 because it's RGBA.
+            GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
+            GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+            printf("Pixels after merge:\n");
+            printLabels(mWidth, mHeight, pixels);
+            char filename[50];
+            sprintf(filename, "outM.tga");
+            writeTgaImage(mWidth, mHeight, filename, pixels);
+            delete [] pixels;
+        }
+#endif
 
-//        // Switch read and write texture
-//    }
+    // Save the result from the previous step into mTexLabel (by switching the texture
+    // objects and the corresponding texture unit)
+    std::swap(mTexPiPoId[mRead], mTexLabelId);
+    std::swap(mTextureUnits[TEX_LABEL], mTextureUnits[TEX_PIPO+mRead]);
+    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mRead]) );
+    GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexPiPoId[mRead], 0) );
+    CHECK_FBO();
+
 
     GL_CHECK( glDisableVertexAttribArray ( mPositionLoc ) );
     GL_CHECK( glDisableVertexAttribArray ( mTexCoordLoc ) );
