@@ -33,8 +33,8 @@ public:
     GLint u_passLoc;
     GLint u_stageLoc;
     GLint u_savingOffsetLoc;
+    GLint u_factorLoc;
 //    GLint  u_debugLoc;
-//    GLint  u_factorLoc;
 
     // Uniform values
     GLint u_pass;
@@ -79,6 +79,11 @@ public:
     void setupGeometry();
 
     virtual double run();
+
+private:
+    void fillStage(float factorX, float factorY);
+    void countStage();
+    void saveStage(float factorX, float factorY, float savingOffset);
 };
 
 #endif // LABELPHASE_H
