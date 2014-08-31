@@ -1,9 +1,5 @@
-
-
-precision highp float;
 varying vec2 v_texCoord;        // texture coordinates
 uniform sampler2D s_texture;    // texture sampler
-uniform vec2 u_texDimensions;   // image/texture dimensions
 uniform int    u_forward;       // forward or backward mask operation
 
 /*

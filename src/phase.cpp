@@ -39,9 +39,26 @@ GLuint Phase::loadProgramFromFile(const std::string vertShaderFile, const std::s
     GLuint fragmentShader;
     GLuint programObject = 0;
     GLint linked;
-    std::string sourceString;
+    std::string sourceString = "";
+    std::string commonSource;
 
-    std::ifstream sourceFile(vertShaderFile);
+    std::ifstream sourceFile("common.glsl");
+
+    if( !sourceFile.good() )
+    {
+        cerr << "Failed to open file: common.glsl" << endl;
+        sourceFile.close();
+        goto error;
+    }
+    else
+    {
+        commonSource = std::string((std::istreambuf_iterator<char>(sourceFile)),
+                                               std::istreambuf_iterator<char>());
+    }
+
+    sourceFile.close();
+
+    sourceFile.open(vertShaderFile);
 
     if(! sourceFile.good() )
     {
@@ -55,7 +72,7 @@ GLuint Phase::loadProgramFromFile(const std::string vertShaderFile, const std::s
     sourceFile.close();
 
     // Load the vertex/fragment shaders
-    vertexShader = loadShader( GL_VERTEX_SHADER, sourceString );
+    vertexShader = loadShader( GL_VERTEX_SHADER, commonSource + sourceString );
     if ( vertexShader == 0 )
     {
         cerr << "Failed to compile vertex shader!" << endl;
@@ -72,7 +89,7 @@ GLuint Phase::loadProgramFromFile(const std::string vertShaderFile, const std::s
                               std::istreambuf_iterator<char>());
     sourceFile.close();
 
-    fragmentShader = loadShader(GL_FRAGMENT_SHADER, sourceString );
+    fragmentShader = loadShader(GL_FRAGMENT_SHADER, commonSource + sourceString );
     if ( fragmentShader == 0 )
     {
         cerr << "Failed to compile fragment shader" << endl;
