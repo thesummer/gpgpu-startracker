@@ -1,5 +1,6 @@
 precision highp float;
 varying vec2 v_texCoord;        // texture coordinates
+uniform sampler2D s_orig;
 uniform sampler2D s_fill;
 uniform sampler2D s_label;
 uniform sampler2D s_result;
@@ -173,19 +174,26 @@ void main()
     {
         // TODO: write logic for centroiding
     }
-    else if(u_stage == STAGE_COUNT)
+    else if(u_stage == STAGE_COUNT || u_stage == STAGE_CENTROIDING)
     {
-        float curCount = unpack2shorts( texture2D( s_result, v_texCoord ) ).x;
+        vec2 curCount = unpack2shorts( texture2D( s_result, v_texCoord ) );
         vec2  curLabel  = unpack2shorts( texture2D( s_label, v_texCoord ) );
         vec2  curFill   = unpack2shorts( texture2D( s_fill, v_texCoord ) );
         vec2  curCoord  = tex2imgCoord(v_texCoord);
 
         if(u_pass == -1)
         {
-            curCount = float( all( equal(curLabel, curFill) ) );
-            gl_FragColor = pack2shorts( vec2( equal(curLabel, curFill) ) * step(ONE, curLabel) );
-            return;
-
+            if(u_stage == STAGE_COUNT)
+            {
+                float area = all( equal(curLabel, curFill) );
+                float luminance = texture2D( s_orig, v_texCoord );
+                gl_FragColor = pack2shorts( vec2( area, luminance  ) * step(ONE, curLabel) );
+                return;
+            }
+            else
+            {
+                // TODO
+            }
         }
 
         vec2 offset = clamp(-u_factor, ZERO, ONE);
@@ -195,24 +203,24 @@ void main()
         }
 
         float twoPow = exp2( u_pass );
-        vec3 cornerX, cornerY, cornerXY;
+        vec4 cornerX, cornerY, cornerXY;
 
         cornerX.xy  = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord - u_factor * vec2(twoPow, ZERO) ) ) );
         cornerY.xy  = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord - u_factor * vec2(ZERO, twoPow) ) ) );
         cornerXY.xy = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord - u_factor * vec2(twoPow, twoPow) ) ) );
 
-        cornerX.z  = unpack2shorts( texture2D( s_result, img2texCoord( curCoord - u_factor * vec2(twoPow, ZERO) ) ) ).x;
-        cornerY.z  = unpack2shorts( texture2D( s_result, img2texCoord( curCoord - u_factor * vec2(ZERO, twoPow) ) ) ).x;
-        cornerXY.z = unpack2shorts( texture2D( s_result, img2texCoord( curCoord - u_factor * vec2(twoPow, twoPow))) ).x;
+        cornerX.zw  = unpack2shorts( texture2D( s_result, img2texCoord( curCoord - u_factor * vec2(twoPow, ZERO) ) ) );
+        cornerY.zw  = unpack2shorts( texture2D( s_result, img2texCoord( curCoord - u_factor * vec2(ZERO, twoPow) ) ) );
+        cornerXY.zw = unpack2shorts( texture2D( s_result, img2texCoord( curCoord - u_factor * vec2(twoPow, twoPow))) );
 
         float isEqual = float( all(equal(cornerX.xy, curLabel) ) );
-        curCount += isEqual * cornerX.z;
+        curCount += isEqual * cornerX.zw;
         isEqual = float( all(equal(cornerY.xy, curLabel) ) );
-        curCount += isEqual * cornerY.z;
+        curCount += isEqual * cornerY.zw;
         isEqual = float( all(equal(cornerXY.xy, curLabel) ) );
-        curCount += isEqual * cornerXY.z;
+        curCount += isEqual * cornerXY.zw;
 
-        gl_FragColor = pack2shorts( vec2(curCount, ZERO) );
+        gl_FragColor = pack2shorts( curCount );
     }
     else if(u_stage == STAGE_BLEND)
     {
