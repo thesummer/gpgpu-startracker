@@ -170,29 +170,26 @@ void main()
             gl_FragColor = pack2shorts( (cornerX.xy+cornerY.xy+cornerXY.xy) / dot(mask, mask) ) * result;
         }
     }
-    else if(u_stage == STAGE_CENTROIDING)
-    {
-        // TODO: write logic for centroiding
-    }
     else if(u_stage == STAGE_COUNT || u_stage == STAGE_CENTROIDING)
     {
-        vec2 curCount = unpack2shorts( texture2D( s_result, v_texCoord ) );
+        vec2  curCount  = unpack2shorts( texture2D( s_result, v_texCoord ) );
         vec2  curLabel  = unpack2shorts( texture2D( s_label, v_texCoord ) );
         vec2  curFill   = unpack2shorts( texture2D( s_fill, v_texCoord ) );
         vec2  curCoord  = tex2imgCoord(v_texCoord);
 
         if(u_pass == -1)
         {
+            float luminance = texture2D( s_orig, v_texCoord ).r * 255.0;
             if(u_stage == STAGE_COUNT)
             {
                 float area = all( equal(curLabel, curFill) );
-                float luminance = texture2D( s_orig, v_texCoord );
                 gl_FragColor = pack2shorts( vec2( area, luminance  ) * step(ONE, curLabel) );
                 return;
             }
             else
             {
-                // TODO
+                vec2 weightedCoord = (curLabel-ONE-curCoord) * luminance;
+                gl_FragColor = pack2shorts( weightedCoord ) * step(ONE, curLabel);
             }
         }
 
