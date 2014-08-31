@@ -182,14 +182,14 @@ void main()
             float luminance = texture2D( s_orig, v_texCoord ).r * 255.0;
             if(u_stage == STAGE_COUNT)
             {
-                float area = all( equal(curLabel, curFill) );
+                float area = float( all(equal(curLabel, curFill)) );
                 gl_FragColor = pack2shorts( vec2( area, luminance  ) * step(ONE, curLabel) );
                 return;
             }
             else
             {
                 vec2 weightedCoord = (curLabel-ONE-curCoord) * luminance;
-                gl_FragColor = pack2shorts( weightedCoord ) * step(ONE, curLabel);
+                gl_FragColor = pack2shorts( weightedCoord * step(ONE, curLabel) );
             }
         }
 
