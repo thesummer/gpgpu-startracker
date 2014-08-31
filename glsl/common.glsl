@@ -39,6 +39,24 @@ vec2 unpack2shorts(in vec4 rgba)
     return floor(vec2(rgba.xz * 255.0 + 255.0*256.0 * rgba.yw)+0.5);
 }
 
+vec4 pack2signed( in vec2 signed)
+{
+    // Build the bytes with pack2shorts and flip the MSbit if the sign is negative
+    // No range checks are performed
+    vec4 result = pack2shorts(signed);
+    result.yw += 128.0 * step(ZERO, signed);
+    return result;
+}
+
+vec2 unpack2signed(in vec4 rgba)
+{
+    // Correct the MSbit unpack using unpack2shorts and
+    // apply the signs.
+    vec2 signs = step(0.5, rgba.yw);
+    rgba.yw -= 128.0/255.0 * signs;
+    return unpack2shorts(rgba) * (ONE-2*signs) ;
+}
+
 /*
 This functions computes the image coordinates of the texture with the dimensions from u_texDimensions
 Example:
