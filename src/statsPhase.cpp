@@ -72,7 +72,7 @@ GLint StatsPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
     s_fillLoc         = glGetUniformLocation( mProgramObject,  "s_fill" );
     s_labelLoc        = glGetUniformLocation( mProgramObject,  "s_label" );
     s_resultLoc       = glGetUniformLocation( mProgramObject,  "s_result" );
-    s_originalLoc     = glGetUniformLocation( mProgramObject,  "s_original" );
+    s_origLoc     = glGetUniformLocation( mProgramObject,  "s_orig" );
 
     // Get uniform locations
     u_texDimLoc       = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
@@ -130,6 +130,13 @@ GLint StatsPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
     mTextureUnits[TEX_REDUCED] = i;
     GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexReducedId) );
 
+    i = 0;
+    while( (1<<i) & bfUsedTextures) ++i;
+    GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+    mTexOrigId = createSimpleTexture2D(mWidth, mHeight, mTgaOrig->img_data);
+    bfUsedTextures |= (1<<i);
+    mTextureUnits[TEX_ORIG] = i;
+    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexOrigId) );
     // Setup 2 Textures for Ping-Pong and
     // the program object
     return init(fbos, bfUsedTextures);
@@ -313,6 +320,7 @@ void StatsPhase::countStage()
 
     // Bind the different sampler2D
     // Texture with the filled spots from previous stage (read only)
+    GL_CHECK( glUniform1i ( s_origLoc,  mTextureUnits[TEX_ORIG] ) );
     GL_CHECK( glUniform1i ( s_fillLoc,   mTextureUnits[TEX_FILL] ) );
     // Texture with the labels from last phase (read only)
     GL_CHECK( glUniform1i ( s_labelLoc,  mTextureUnits[TEX_LABEL] ) );

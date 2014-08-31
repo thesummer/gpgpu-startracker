@@ -45,7 +45,7 @@ public:
     GLint s_labelLoc;
     GLint s_fillLoc;
     GLint s_resultLoc;
-    GLint s_originalLoc;
+    GLint s_origLoc;
 
     // Texture handle
     /// TODO: tga somewhere else?
@@ -55,7 +55,7 @@ public:
     TGAData *mTgaOrig;
 
     // Texture to attach to the frambuffers
-//    GLuint mTexOrigId;
+    GLuint mTexOrigId;
     GLuint mTexLabelId;
     GLuint mTexReducedId;
     GLuint mTexFillId;

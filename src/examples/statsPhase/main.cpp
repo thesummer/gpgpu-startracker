@@ -148,11 +148,15 @@ int main()
     TGAData dataReduced;
     loadTgaImage(&tgaReduced, &dataReduced, "testReduced.tga");
 
+    TGA *tgaOrig = 0;
+    TGAData dataOrig;
+    loadTgaImage(&tgaOrig, &dataOrig, "testOrig.tga");
 
     statsPhase.mWidth  = width;
     statsPhase.mHeight = height;
     statsPhase.mTgaLabel   = &dataLabel;
     statsPhase.mTgaReduced = &dataReduced;
+    statsPhase.mTgaOrig    = &dataOrig;
 
     // initialize EGL-context
     initEGL(width, height);
