@@ -41,10 +41,10 @@ vec2 unpack2shorts(in vec4 rgba)
 
 vec4 pack2signed( in vec2 signed)
 {
-    // Build the bytes with pack2shorts and flip the MSbit if the sign is negative
+    // Build the bytes with pack2shorts and flip the MSbit if the sign is positive
     // No range checks are performed
-    vec4 result = pack2shorts(signed);
-    result.yw += 128.0 * step(ZERO, signed);
+    vec4 result = pack2shorts( abs(signed) );
+    result.yw += (128.0/255.0) * step(ZERO, signed);
     return result;
 }
 
@@ -54,7 +54,32 @@ vec2 unpack2signed(in vec4 rgba)
     // apply the signs.
     vec2 signs = step(0.5, rgba.yw);
     rgba.yw -= 128.0/255.0 * signs;
-    return unpack2shorts(rgba) * (ONE-2*signs) ;
+    return unpack2shorts(rgba) * (TWO*signs-ONE) ;
+}
+
+vec4 packLong(in float uint32)
+{
+    const vec4 bitSh = vec4(ONE/(256.0),
+                            ONE/(256.0 * 256.0),
+                            ONE/(256.0 * 256.0 * 256.0),
+                            ONE/(256.0 * 256.0 * 256.0 * 256.0) );
+    const vec4 bitMsk = vec4(256.0,
+                             256.0,
+                             256.0,
+                             ONE);
+    vec4 comp = fract(uint32 * bitSh);
+
+    return floor(comp*bitMsk)/255.0;
+}
+
+
+float unpackLong(in vec4 rgba)
+{
+    const vec4 bitShifts = vec4(255.0,
+                                256.0 * 255.0,
+                                256.0 * 256.0 * 255.0,
+                                256.0 * 256.0 * 256.0 * 255.0);
+    return dot(rgba , bitShifts);
 }
 
 /*
