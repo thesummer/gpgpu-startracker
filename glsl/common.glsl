@@ -82,6 +82,21 @@ float unpackLong(in vec4 rgba)
     return dot(rgba , bitShifts);
 }
 
+vec4 packSignedLong(in float int32)
+{
+    vec4 comp = packLong( abs(int32) );
+    comp.w += (128.0/255.0) * step(ZERO, int32);
+    return comp;
+}
+
+float unpackSignedLong(in vec4 rgba)
+{
+    float sign = step(0.5, rgba.w);
+    rgba.w -= 128.0/255.0 * sign;
+    return unpackLong(rgba) * (TWO*sign-ONE) ;
+}
+
+
 /*
 This functions computes the image coordinates of the texture with the dimensions from u_texDimensions
 Example:
