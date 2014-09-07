@@ -6,6 +6,8 @@ const float ZERO = 0.0;
 const float ONE  = 1.0;
 const float TWO  = 2.0;
 const float bias = ONE/1024.0;
+const float conv = 256.0/255.0;
+
 
 /*
 Assuming that the texture is 8-bit RGBA 32bits are available for packing.
@@ -19,9 +21,16 @@ return vec4: RGBA value which contains the packed shorts with LSB first.
 */
 vec4 pack2shorts(in vec2 shorts)
 {
-    // Correct for rounding errors due to the raspberry's limited precision (works at least between 0..2700)
+    const vec4 bitSh = vec4(ONE/(256.0),
+                            ONE/(256.0 * 256.0),
+                            ONE/(256.0),
+                            ONE/(256.0 * 256.0) );
+    vec4 comp = fract(vec4(shorts.xx, shorts.yy) * bitSh);
+    return floor(comp * 256.0) /255.0;
+
     shorts = shorts/256.0 + bias;
     return vec4(floor(shorts)/255.0, fract(shorts)*256.0/255.0).zxwy;
+
 }
 
 /*
@@ -36,7 +45,10 @@ return vec2: vector which will contain the 2 shorts
 vec2 unpack2shorts(in vec4 rgba)
 {
     // LSB * 255 + MSB * 255*256
-    return floor(vec2(rgba.xz * 255.0 + 255.0*256.0 * rgba.yw)+0.5);
+//    return floor(vec2(rgba.xz * 255.0 + 255.0*256.0 * rgba.yw)+0.5);
+    const vec2 bitSh = vec2(255.0,
+                            256.0 * 255.0 );
+    return vec2(dot(rgba.xy, bitSh), dot(rgba.zw, bitSh) );
 }
 
 vec4 pack2signed( in vec2 signed)
@@ -57,43 +69,38 @@ vec2 unpack2signed(in vec4 rgba)
     return unpack2shorts(rgba) * (TWO*signs-ONE) ;
 }
 
-vec4 packLong(in float uint32)
+vec3 packLong(in float uint32)
 {
-    const vec4 bitSh = vec4(ONE/(256.0),
+    const vec3 bitSh = vec3(ONE/(256.0),
                             ONE/(256.0 * 256.0),
-                            ONE/(256.0 * 256.0 * 256.0),
-                            ONE/(256.0 * 256.0 * 256.0 * 256.0) );
-    const vec4 bitMsk = vec4(256.0,
-                             256.0,
-                             256.0,
-                             ONE);
-    vec4 comp = fract(uint32 * bitSh);
+                            ONE/(256.0 * 256.0 * 256.0) );
+    vec3 comp = fract(uint32 * bitSh);
 
-    return floor(comp*bitMsk)/255.0;
+    return floor(comp*256.0)/255.0;
 }
 
 
-float unpackLong(in vec4 rgba)
+float unpackLong(in vec3 rgb)
 {
-    const vec4 bitShifts = vec4(255.0,
+    const vec3 bitShifts = vec3(255.0,
                                 256.0 * 255.0,
-                                256.0 * 256.0 * 255.0,
-                                256.0 * 256.0 * 256.0 * 255.0);
-    return dot(rgba , bitShifts);
+                                256.0 * 256.0 * 255.0 );
+    return dot(rgb , bitShifts);
 }
 
-vec4 packSignedLong(in float int32)
+vec3 packSignedLong(in float int32)
 {
-    vec4 comp = packLong( abs(int32) );
-    comp.w += (128.0/255.0) * step(ZERO, int32);
+    vec3 comp = packLong( abs(int32) );
+    comp.z += (128.0/255.0) * step(0.5, -int32);
     return comp;
 }
 
-float unpackSignedLong(in vec4 rgba)
+float unpackSignedLong(in vec3 rgb)
 {
-    float sign = step(0.5, rgba.w);
-    rgba.w -= 128.0/255.0 * sign;
-    return unpackLong(rgba) * (TWO*sign-ONE) ;
+    float sign = step(0.5, rgb.z);
+//    rgb.z -= sign* 128.0/255.0; doesn't work (changes the x-byte as well????)
+    rgb.z = (rgb.z*255.0 - 128.0* sign)/255.0;
+    return unpackLong(rgb) * (ONE-TWO*sign) ;
 }
 
 
