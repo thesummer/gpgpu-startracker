@@ -83,7 +83,8 @@ public:
 private:
     void fillStage(float factorX, float factorY);
     void countStage();
-    void saveStage(float factorX, float factorY, float savingOffset);
+    void centroidingStage(int coordinate);
+    void saveStage(float factorX, float factorY, float savingOffset, int stage);
 };
 
 #endif // LABELPHASE_H

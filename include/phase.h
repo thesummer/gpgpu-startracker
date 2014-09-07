@@ -46,6 +46,7 @@ public:
     static int writeRawTgaImage(int width, int height, char *filename, GLubyte *pixels);
 
     void printLabels(int width, int height, GLubyte *pixels);
+    void printSignedLabels(int width, int height, GLubyte *pixels);
 
     static int logBase2(int n);
 
