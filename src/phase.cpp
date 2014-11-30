@@ -308,7 +308,7 @@ void Phase::printLabels(int width, int height, GLubyte *pixels)
         for(int j=0; j<width; j++)
         {
             int index = 4*(i*width + j);
-//            printf("%04x %04x | ", *(GLushort*) (pixels+index), *(GLushort*) (pixels+index+2) );
+            printf("%04x %04x | ", *(GLushort*) (pixels+index), *(GLushort*) (pixels+index+2) );
             printf("%4u %4u | ", *(GLushort*) (pixels+index), *(GLushort*) (pixels+index+2) );
         }
         printf("\n");
@@ -327,7 +327,7 @@ void Phase::printSignedLabels(int width, int height, GLubyte *pixels)
             val1 &= ~(1<<23);
             int sVal1 = val1 * (1-2*sign);
 
-//            printf("\t%08x\t | ", val1);
+            printf("\t%08x\t | ",val1);
             printf("\t%8d\t | ", sVal1);
         }
         printf("\n");

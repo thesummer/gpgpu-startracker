@@ -17,35 +17,71 @@ public:
     // Handle to a program object
     GLuint mProgramObject;
 
+    struct
+    {
+        std::string filename;
+        GLuint program;
+        // Sampler location
+        GLint s_fillLoc;
+
+        // Uniform locations
+        GLint u_texDimLoc;
+        GLint u_passLoc;
+        GLint u_factorLoc;
+
+        // Attribute locations
+        GLint  positionLoc;
+        GLint  texCoordLoc;
+
+    } mProgFill;
+
+    struct
+    {
+        std::string filename;
+        GLuint program;
+        // Sampler locations
+        GLint s_labelLoc;
+        GLint s_fillLoc;
+        GLint s_resultLoc;
+        GLint s_origLoc;
+        // Uniform locations
+        GLint u_texDimLoc;
+        GLint u_passLoc;
+        GLint u_stageLoc;
+        GLint u_savingOffsetLoc;
+        GLint u_factorLoc;
+
+        // Attribute locations
+        GLint  positionLoc;
+        GLint  texCoordLoc;
+    } mProgCount;
+
+    struct
+    {
+        std::string filename;
+        GLuint program;
+        // Sampler locations
+        GLint s_labelLoc;
+        GLint s_fillLoc;
+        GLint s_resultLoc;
+        GLint s_origLoc;
+        // Uniform locations
+        GLint u_texDimLoc;
+        GLint u_passLoc;
+        GLint u_stageLoc;
+        GLint u_savingOffsetLoc;
+        GLint u_factorLoc;
+        // Attribute locations
+        GLint  positionLoc;
+        GLint  texCoordLoc;
+    } mProgCentroid;
+
     int mWidth;
     int mHeight;
-
-    // Attribute locations
-    GLint  mPositionLoc;
-    GLint  mTexCoordLoc;
 
     // Vertices
     GLfloat mVertices[20];
     GLushort mIndices[6];
-
-    // Uniform locations
-    GLint u_texDimLoc;
-    GLint u_passLoc;
-    GLint u_stageLoc;
-    GLint u_savingOffsetLoc;
-    GLint u_factorLoc;
-//    GLint  u_debugLoc;
-
-    // Uniform values
-    GLint u_pass;
-//    GLint u_debug;
-//    GLint u_factor;
-
-    // Sampler location
-    GLint s_labelLoc;
-    GLint s_fillLoc;
-    GLint s_resultLoc;
-    GLint s_origLoc;
 
     // Texture handle
     /// TODO: tga somewhere else?
@@ -82,9 +118,9 @@ public:
 
 private:
     void fillStage(float factorX, float factorY);
-    void countStage();
-    void centroidingStage(int coordinate);
-    void saveStage(float factorX, float factorY, float savingOffset, int stage);
+    void countStage(float factorX, float factorY, int offset);
+    void centroidingStage(float factorX, float factorY, int coordinate, int offset);
+    void saveStage(float factorX, float factorY, float savingOffset, int stage, GLuint programObject);
 };
 
 #endif // LABELPHASE_H

@@ -60,8 +60,8 @@ void main()
 
         mask = ( step(-smallestY, -vec3(cornerX.y, cornerY.y, cornerXY.y) ) );
 
-        cornerX       *= mask[0];
-        cornerY      *= mask[1];
+        cornerX  *= mask[0];
+        cornerY  *= mask[1];
         cornerXY *= mask[2];
 
         // If all 3 corner pixel were 0 result will have an unreasonable large value --> set it back to 0

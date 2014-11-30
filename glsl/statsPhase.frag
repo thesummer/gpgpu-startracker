@@ -40,7 +40,7 @@ void main()
         else
         {
             // Sample corner pixels of a u_pass * u_pass sized square
-            float twoPow = exp2( u_pass );
+            float twoPow = exp2( float(u_pass) );
             vec3 cornerX, cornerY, cornerXY;
 
             cornerX.xy  = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord + u_factor * vec2(twoPow, ZERO) ) ) );
@@ -94,7 +94,7 @@ void main()
             gl_FragColor = pack2shorts( (cornerX.xy+cornerY.xy+cornerXY.xy) / dot(mask, mask) ) * result;
         }
     }
-    else if(u_stage == STAGE_COUNT)
+   else if(u_stage == STAGE_COUNT)
     {
         vec2  curCount  = unpack2shorts( texture2D( s_result, v_texCoord ) );
         vec2  curLabel  = unpack2shorts( texture2D( s_label, v_texCoord ) );
@@ -115,7 +115,7 @@ void main()
             curLabel = curFill;
         }
 
-        float twoPow = exp2( u_pass );
+        float twoPow = exp2( float(u_pass) );
         vec4 cornerX, cornerY, cornerXY;
 
         cornerX.xy  = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord - u_factor * vec2(twoPow, ZERO) ) ) );
@@ -165,7 +165,7 @@ void main()
             curLabel = curFill;
         }
 
-        float twoPow = exp2( u_pass );
+        float twoPow = exp2( float(u_pass) );
         vec3 cornerX, cornerY, cornerXY;
 
         cornerX.xy  = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord - u_factor * vec2(twoPow, ZERO) ) ) );
