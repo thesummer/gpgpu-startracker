@@ -6,7 +6,8 @@ const float ZERO = 0.0;
 const float ONE  = 1.0;
 const float TWO  = 2.0;
 const float bias = ONE/1024.0;
-const float conv = 256.0/255.0;
+const float f256 = 256.0;
+const float f255 = 255.0;
 
 
 /*
@@ -21,16 +22,12 @@ return vec4: RGBA value which contains the packed shorts with LSB first.
 */
 vec4 pack2shorts(in vec2 shorts)
 {
-    const vec4 bitSh = vec4(ONE/(256.0),
-                            ONE/(256.0 * 256.0),
-                            ONE/(256.0),
-                            ONE/(256.0 * 256.0) );
+    const vec4 bitSh = vec4(ONE/(f256),
+                            ONE/(f256 * f256),
+                            ONE/(f256),
+                            ONE/(f256 * f256) );
     vec4 comp = fract(vec4(shorts.xx, shorts.yy) * bitSh);
-    return floor(comp * 256.0) /255.0;
-
-    shorts = shorts/256.0 + bias;
-    return vec4(floor(shorts)/255.0, fract(shorts)*256.0/255.0).zxwy;
-
+    return floor(comp * f256) /f255;
 }
 
 /*
@@ -44,48 +41,35 @@ return vec2: vector which will contain the 2 shorts
 */
 vec2 unpack2shorts(in vec4 rgba)
 {
-    // LSB * 255 + MSB * 255*256
-//    return floor(vec2(rgba.xz * 255.0 + 255.0*256.0 * rgba.yw)+0.5);
-    const vec2 bitSh = vec2(255.0,
-                            256.0 * 255.0 );
-    return vec2(dot(rgba.xy, bitSh), dot(rgba.zw, bitSh) );
+    const highp vec2 bitSh = vec2(ONE, f256);
+    vec4 rounded = floor((rgba * f255) + 0.5);
+    return vec2(dot(rounded.xy, bitSh), dot(rounded.zw, bitSh));
 }
 
-vec4 pack2signed( in vec2 signed)
+vec4 packLong(in float uint32)
 {
-    // Build the bytes with pack2shorts and flip the MSbit if the sign is positive
-    // No range checks are performed
-    vec4 result = pack2shorts( abs(signed) );
-    result.yw += (128.0/255.0) * step(ZERO, signed);
-    return result;
+    float sign = ONE - step(ZERO, uint32);
+    uint32 = floor(abs(uint32)+0.5);
+    const vec3 bitSh = vec3(ONE/(f256),
+                            ONE/(f256 * f256),
+                            ONE/(f256 * f256 * f256) );
+    vec4 comp;
+    comp.xyz = fract( uint32 * bitSh );
+    comp.xyz = floor(comp.xyz*f256)/f255;
+    comp.w = sign;
+
+    // floor needed by the rpi
+    return comp;
 }
 
-vec2 unpack2signed(in vec4 rgba)
+float unpackLong(in vec4 rgba)
 {
-    // Correct the MSbit unpack using unpack2shorts and
-    // apply the signs.
-    vec2 signs = step(0.5, rgba.yw);
-    rgba.yw -= 128.0/255.0 * signs;
-    return unpack2shorts(rgba) * (TWO*signs-ONE) ;
-}
-
-vec3 packLong(in float uint32)
-{
-    const vec3 bitSh = vec3(ONE/(256.0),
-                            ONE/(256.0 * 256.0),
-                            ONE/(256.0 * 256.0 * 256.0) );
-    vec3 comp = fract(uint32 * bitSh);
-
-    return floor(comp*256.0)/255.0;
-}
-
-
-float unpackLong(in vec3 rgb)
-{
-    const vec3 bitShifts = vec3(255.0,
-                                256.0 * 255.0,
-                                256.0 * 256.0 * 255.0 );
-    return dot(rgb , bitShifts);
+    float sign = step(0.5, rgba.w);
+    vec3 rounded = floor((rgba.xyz * f255) + 0.5);
+    const highp vec3 bitShifts = vec3(ONE,
+                                f256,
+                                f256 * f256);
+    return floor(dot(rounded , bitShifts)+0.5) * (ONE-TWO*sign);
 }
 
 vec3 packSignedLong(in float int32)
@@ -98,11 +82,22 @@ vec3 packSignedLong(in float int32)
 float unpackSignedLong(in vec3 rgb)
 {
     float sign = step(0.5, rgb.z);
-//    rgb.z -= sign* 128.0/255.0; doesn't work (changes the x-byte as well????)
-    rgb.z = (rgb.z*255.0 - 128.0* sign)/255.0;
+//    rgb.z -= sign* 128.0/255.0; doesn't work, floor needed by the rpi
+    rgb.z = floor( (floor(rgb.z*f255+0.5) - 128.0 * sign+0.5))/f255;
     return unpackLong(rgb) * (ONE-TWO*sign) ;
 }
 
+float unpackSignedLong2(in vec3 rgb)
+{
+    float sign = step(0.5, rgb.z);
+    rgb.z = floor( (floor(rgb.z*f255+0.5) - 128.0 * sign+0.5))/f255;
+
+    float temp = unpackLong(rgb);
+//    rgb.z = sign* 128.0/255.0; //doesn't work, floor needed by the rpi
+//    rgb.z = floor( (floor(rgb.z*f255+0.5) - 128.0 * sign+0.5))/f255;
+//    rgb.z = temp;
+    return floor(unpackLong(rgb) * (ONE-TWO*sign)+0.5 ) ;
+}
 
 /*
 This functions computes the image coordinates of the texture with the dimensions from u_texDimensions
@@ -146,4 +141,3 @@ vec2 img2texCoord(in vec2 imgCoord)
 {
     return (TWO*imgCoord + ONE)/(TWO*u_texDimensions);
 }
- 
