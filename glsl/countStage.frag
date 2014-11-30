@@ -26,7 +26,7 @@ void main()
 
         if(u_pass == -1)
         {
-            float luminance = texture2D( s_orig, v_texCoord ).r * 255.0 ;
+            float luminance = texture2D( s_orig, v_texCoord ).r * f255 ;
             float area = float( all(equal(curLabel, curFill)) );
             gl_FragColor = pack2shorts( vec2( area, luminance  ) * step(ONE, curLabel) );
             return;
