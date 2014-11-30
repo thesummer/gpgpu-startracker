@@ -72,33 +72,6 @@ float unpackLong(in vec4 rgba)
     return floor(dot(rounded , bitShifts)+0.5) * (ONE-TWO*sign);
 }
 
-vec3 packSignedLong(in float int32)
-{
-    vec3 comp = packLong( abs(int32) );
-    comp.z += (128.0/255.0) * step(0.5, -int32);
-    return comp;
-}
-
-float unpackSignedLong(in vec3 rgb)
-{
-    float sign = step(0.5, rgb.z);
-//    rgb.z -= sign* 128.0/255.0; doesn't work, floor needed by the rpi
-    rgb.z = floor( (floor(rgb.z*f255+0.5) - 128.0 * sign+0.5))/f255;
-    return unpackLong(rgb) * (ONE-TWO*sign) ;
-}
-
-float unpackSignedLong2(in vec3 rgb)
-{
-    float sign = step(0.5, rgb.z);
-    rgb.z = floor( (floor(rgb.z*f255+0.5) - 128.0 * sign+0.5))/f255;
-
-    float temp = unpackLong(rgb);
-//    rgb.z = sign* 128.0/255.0; //doesn't work, floor needed by the rpi
-//    rgb.z = floor( (floor(rgb.z*f255+0.5) - 128.0 * sign+0.5))/f255;
-//    rgb.z = temp;
-    return floor(unpackLong(rgb) * (ONE-TWO*sign)+0.5 ) ;
-}
-
 /*
 This functions computes the image coordinates of the texture with the dimensions from u_texDimensions
 Example:
