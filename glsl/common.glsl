@@ -22,6 +22,7 @@ return vec4: RGBA value which contains the packed shorts with LSB first.
 */
 vec4 pack2shorts(in vec2 shorts)
 {
+    shorts = floor(shorts+0.5);
     const vec4 bitSh = vec4(ONE/(f256),
                             ONE/(f256 * f256),
                             ONE/(f256),
