@@ -120,7 +120,6 @@ private:
     void fillStage(float factorX, float factorY);
     void countStage(float factorX, float factorY, int offset);
     void centroidingStage(float factorX, float factorY, int coordinate, int offset);
-    void saveStage(float factorX, float factorY, float savingOffset, int stage, GLuint programObject);
 };
 
 #endif // LABELPHASE_H

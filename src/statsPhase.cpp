@@ -1,4 +1,5 @@
 #include <iostream>
+using std::cout;
 using std::cerr;
 using std::endl;
 
@@ -18,7 +19,7 @@ using std::endl;
 #define CENTROID_Y_COORD   -2
 
 #define OFFSET 3.0
-#define SIZE 1
+#define SIZE 2
 
 #include "statsPhase.h"
 
@@ -243,7 +244,7 @@ double StatsPhase::run()
     {
         // Make the BYTE array, factor of 3 because it's RGBA.
         printf("Pixels before run:\n");
-//        printLabels(mWidth, mHeight, mTgaData->img_data);
+        printLabels(mWidth, mHeight, mTgaLabel->img_data);
         char filename[50];
         sprintf(filename, "out0%03d.tga", 0);
         writeTgaImage(mWidth, mHeight, filename, mTgaLabel->img_data);
@@ -254,33 +255,28 @@ double StatsPhase::run()
     fillStage(factorX, factorY);
     countStage(factorX, factorY, OFFSET);
     centroidingStage(factorX, factorY,CENTROID_X_COORD, 2*OFFSET);
-//    saveStage(factorX, factorX, 2*OFFSET, STAGE_CENTROIDING);
-//    centroidingStage(factorX, factorY, CENTROID_Y_COORD);
-//    saveStage(factorX, factorX, 3*OFFSET, STAGE_CENTROIDING);
+    centroidingStage(factorX, factorY, CENTROID_Y_COORD, 3*OFFSET);
+    cout << "Finished direction 1" << endl << endl;
 
     factorX = -1.0;
-//    fillStage(factorX, factorY);
-//    countStage(factorX, factorY);
-//    centroidingStage(factorX, factorY,CENTROID_X_COORD);
-////    saveStage(factorX, factorX, 2*OFFSET, STAGE_CENTROIDING);
-//    centroidingStage(factorX, factorY, CENTROID_Y_COORD);
-////    saveStage(factorX, factorX, 3*OFFSET, STAGE_CENTROIDING);
+    fillStage(factorX, factorY);
+    countStage(factorX, factorY, OFFSET);
+    centroidingStage(factorX, factorY,CENTROID_X_COORD, 2*OFFSET);
+    centroidingStage(factorX, factorY, CENTROID_Y_COORD, 3*OFFSET);
+    cout << "Finished direction 2" << endl << endl;
 
     factorY = -1.0;
-//    fillStage(factorX, factorY);
-//    countStage(factorX, factorY);
-//    centroidingStage(factorX, factorY,CENTROID_X_COORD);
-////    saveStage(factorX, factorX, 2*OFFSET, STAGE_CENTROIDING);
-//    centroidingStage(factorX, factorY, CENTROID_Y_COORD);
-////    saveStage(factorX, factorX, 3*OFFSET, STAGE_CENTROIDING);
+    fillStage(factorX, factorY);
+    countStage(factorX, factorY, OFFSET);
+    centroidingStage(factorX, factorY,CENTROID_X_COORD, 2*OFFSET);
+    centroidingStage(factorX, factorY, CENTROID_Y_COORD, 3*OFFSET);
+    cout << "Finished direction 3" << endl << endl;
 
     factorX = 1.0;
-//    fillStage(factorX, factorY);
-//    countStage(factorX, factorY);
-//    centroidingStage(factorX, factorY,CENTROID_X_COORD);
-////    saveStage(factorX, factorX, 2*OFFSET, STAGE_CENTROIDING);
-//    centroidingStage(factorX, factorY, CENTROID_Y_COORD);
-////    saveStage(factorX, factorX, 3*OFFSET, STAGE_CENTROIDING);
+    fillStage(factorX, factorY);
+    countStage(factorX, factorY, OFFSET);
+    centroidingStage(factorX, factorY,CENTROID_X_COORD, 2*OFFSET);
+    centroidingStage(factorX, factorY, CENTROID_Y_COORD, 3*OFFSET);
 
     endTime = getRealTime();
 
@@ -340,7 +336,7 @@ void StatsPhase::fillStage(float factorX, float factorY)
             GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
             GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
             printf("Pixels after fill pass %d:\n", i);
-//            printLabels(mWidth, mHeight, pixels);
+            printLabels(mWidth, mHeight, pixels);
             char filename[50];
             sprintf(filename, "outF%03d.tga", i);
             writeTgaImage(mWidth, mHeight, filename, pixels);
@@ -400,7 +396,7 @@ void StatsPhase::countStage(float factorX, float factorY, int offset)
             printf("Pixels after count %d:\n", i);
             printLabels(mWidth, mHeight, pixels);
             char filename[50];
-            sprintf(filename, "outC%03d.tga", i);
+            sprintf(filename, "outC%03d.tga", i+1);
             writeTgaImage(mWidth, mHeight, filename, pixels);
             delete [] pixels;
         }
@@ -425,7 +421,7 @@ void StatsPhase::countStage(float factorX, float factorY, int offset)
         GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
         printf("Pixels after save:\n");
         printLabels(mWidth, mHeight, pixels);
-        printSignedLabels(mWidth, mHeight, pixels);
+//        printSignedLabels(mWidth, mHeight, pixels);
         char filename[50];
         sprintf(filename, "outS.tga");
         writeTgaImage(mWidth, mHeight, filename, pixels);
@@ -452,7 +448,7 @@ void StatsPhase::countStage(float factorX, float factorY, int offset)
         //        if(stage == STAGE_COUNT)
         printLabels(mWidth, mHeight, pixels);
         //        else
-        printSignedLabels(mWidth, mHeight, pixels);
+//        printSignedLabels(mWidth, mHeight, pixels);
         char filename[50];
         sprintf(filename, "outM.tga");
         writeTgaImage(mWidth, mHeight, filename, pixels);
@@ -507,8 +503,9 @@ void StatsPhase::centroidingStage(float factorX, float factorY, int coordinate, 
         GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
         printf("Pixels after Init:\n");
         printSignedLabels(mWidth, mHeight, pixels);
+//        printLabels(mWidth, mHeight, pixels);
         char filename[50];
-        sprintf(filename, "outS.tga");
+        sprintf(filename, "outS1.tga");
         writeTgaImage(mWidth, mHeight, filename, pixels);
         delete [] pixels;
     }
@@ -557,7 +554,7 @@ void StatsPhase::centroidingStage(float factorX, float factorY, int coordinate, 
         GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
         GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
         printf("Pixels after save:\n");
-        printLabels(mWidth, mHeight, pixels);
+//        printLabels(mWidth, mHeight, pixels);
         printSignedLabels(mWidth, mHeight, pixels);
         char filename[50];
         sprintf(filename, "outS.tga");
@@ -605,70 +602,3 @@ void StatsPhase::centroidingStage(float factorX, float factorY, int coordinate, 
     GL_CHECK( glDisableVertexAttribArray ( mProgCentroid.positionLoc ) );
     GL_CHECK( glDisableVertexAttribArray ( mProgCentroid.texCoordLoc ) );
 }
-
-void StatsPhase::saveStage(float factorX, float factorY, float savingOffset, int stage, GLuint programObject)
-{
-//    // Write the count result as a reduced table (with an offset so it won't interfere
-//    // with the table in texLabelId in the next step
-//    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
-//    GL_CHECK( glUniform1i ( u_stageLoc,  STAGE_SAVE ) );
-//    GL_CHECK( glUniform2f ( u_factorLoc, factorX, factorY ) );
-//    GL_CHECK( glUniform1f ( u_savingOffsetLoc, savingOffset) );
-//    GL_CHECK( glUniform1i ( s_labelLoc,  mTextureUnits[TEX_REDUCED] ) );
-//    GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
-//    std::swap(mRead, mWrite);
-
-//#ifdef _DEBUG
-//    {
-//        // Make the BYTE array, factor of 3 because it's RGBA.
-//        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-//        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-//        printf("Pixels after save:\n");
-//        if(stage == STAGE_COUNT)
-//            printLabels(mWidth, mHeight, pixels);
-//        else
-//            printSignedLabels(mWidth, mHeight, pixels);
-//        char filename[50];
-//        sprintf(filename, "outS.tga");
-//        writeTgaImage(mWidth, mHeight, filename, pixels);
-//        delete [] pixels;
-//    }
-//#endif
-
-//    // Add/blend texture from previous step and mTexLabel together
-//    // This yields a texture which has the lookup table for root pixels in its first few
-//    // columns and the count values in the next few columns
-//    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
-//    GL_CHECK( glUniform1i ( u_stageLoc,  STAGE_BLEND ) );
-//    GL_CHECK( glUniform1i ( u_passLoc,   stage) );
-//    GL_CHECK( glUniform1i ( s_resultLoc, mTextureUnits[TEX_PIPO+mRead] ) );
-//    GL_CHECK( glUniform1i ( s_labelLoc,  mTextureUnits[TEX_REDUCED] ) );
-//    GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
-//    std::swap(mRead, mWrite);
-
-//#ifdef _DEBUG
-//    {
-//        // Make the BYTE array, factor of 3 because it's RGBA.
-//        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-//        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-//        printf("Pixels after merge:\n");
-////        if(stage == STAGE_COUNT)
-//            printLabels(mWidth, mHeight, pixels);
-////        else
-//            printSignedLabels(mWidth, mHeight, pixels);
-//        char filename[50];
-//        sprintf(filename, "outM.tga");
-//        writeTgaImage(mWidth, mHeight, filename, pixels);
-//        delete [] pixels;
-//    }
-//#endif
-
-//    // Save the result from the previous step into mTexLabel (by switching the texture
-//    // objects and the corresponding texture unit)
-//    std::swap(mTexPiPoId[mRead], mTexReducedId);
-//    std::swap(mTextureUnits[TEX_REDUCED], mTextureUnits[TEX_PIPO+mRead]);
-//    GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mRead]) );
-//    GL_CHECK( glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexPiPoId[mRead], 0) );
-//    CHECK_FBO();
-}
-
