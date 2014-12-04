@@ -136,8 +136,6 @@ void ReductionPhase::setupGeometry()
     GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, 0) );
     // Set the viewport
     GL_CHECK( glViewport ( 0, 0, mWidth, mHeight ) );
-    // Clear the color buffer
-    GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
 }
 
 void ReductionPhase::updateTextures(GLuint labelTex, GLint labelTexUnit, GLuint freeTex, GLint freeTexUnit)
@@ -190,6 +188,7 @@ double ReductionPhase::run()
     // Set the mode to ROOT_INIT
     GL_CHECK( glUniform1i ( u_stageLoc, MODE_ROOT_INIT ) );
     // Set the read only texture
+    std::cout << "texunit " << mTextureUnits[TEX_LABEL] << std::endl;
     GL_CHECK( glUniform1i ( s_valuesLoc, mTextureUnits[TEX_LABEL] ) );
     // Just bind any texture (not used in this stage)
     GL_CHECK( glUniform1i ( s_reductionLoc, mTextureUnits[TEX_PIPO] ) );
@@ -208,7 +207,7 @@ double ReductionPhase::run()
 
     GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
     printf("Pixels after root pass\n");
-////    printLabels(mWidth, mHeight, pixels);
+    printLabels(mWidth, mHeight, pixels);
     char filename[50];
     sprintf(filename, "outRoot.tga");
     writeTgaImage(mWidth, mHeight, filename, pixels);
@@ -244,7 +243,7 @@ double ReductionPhase::run()
     pixels = new GLubyte[4*mWidth*mHeight];
     GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
     printf("Pixels after horizontal pass\n");
-////    printLabels(mWidth, mHeight, pixels);
+    printLabels(mWidth, mHeight, pixels);
 //    char filename[50];
     sprintf(filename, "outHori.tga");
     writeTgaImage(mWidth, mHeight, filename, pixels);
@@ -277,7 +276,7 @@ double ReductionPhase::run()
     pixels = new GLubyte[4*mWidth*mHeight];
     GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
     printf("Pixels after vertical pass\n");
-//    printLabels(mWidth, mHeight, pixels);
+    printLabels(mWidth, mHeight, pixels);
 //    char filename[50];
     sprintf(filename, "out.tga");
     writeTgaImage(mWidth, mHeight, filename, pixels);
@@ -349,7 +348,7 @@ void ReductionPhase::reduce(int length)
 #ifdef _DEBUG
         GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
         printf("Pixels after pass %d:\n", i);
-//        printLabels(mWidth, mHeight, pixels);
+        printLabels(mWidth, mHeight, pixels);
 //        char filename[50];
 //        sprintf(filename, "out%03d.tga", i);
 //        writeRawTgaImage(mWidth, mHeight, filename, pixels);
