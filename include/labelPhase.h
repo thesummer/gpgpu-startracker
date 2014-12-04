@@ -63,9 +63,11 @@ public:
     GLint init(GLuint fbos[], GLuint &bfUsedTextures);
     GLint initIndependent(GLuint fbos[], GLuint &bfUsedTextures);
 
-    GLint getLastTexture();
+    GLuint getOrigTexture();
+    GLint getOrigTexUnit();
+    GLuint getLastTexture();
     GLint getLastTexUnit();
-    GLint getFreeTexture();
+    GLuint getFreeTexture();
     GLint getFreeTexUnit();
 
     void setupGeometry();

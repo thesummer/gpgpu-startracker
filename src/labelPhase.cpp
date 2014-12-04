@@ -97,7 +97,17 @@ GLint LabelPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
     return init(fbos, bfUsedTextures);
 }
 
-GLint LabelPhase::getLastTexture()
+GLuint LabelPhase::getOrigTexture()
+{
+    return mTexOrigId;
+}
+
+GLint LabelPhase::getOrigTexUnit()
+{
+    return mTextureUnits[TEX_ORIG];
+}
+
+GLuint LabelPhase::getLastTexture()
 {
     return mTexPiPoId[mRead];
 }
@@ -107,7 +117,7 @@ GLint LabelPhase::getLastTexUnit()
     return mTextureUnits[TEX_PIPO+mRead];
 }
 
-GLint LabelPhase::getFreeTexture()
+GLuint LabelPhase::getFreeTexture()
 {
     return mTexPiPoId[mWrite];
 }
