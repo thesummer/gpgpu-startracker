@@ -83,15 +83,10 @@ Ogles::Ogles(std::string tgaFilename)
     if (!mReductionPhase.init(mFboId, mUsedTexUnits) )
         exit(1);
 //    mReductionPhase.initIndependent(mFboId, mUsedTexUnits);
-
-    mLookupPhase.mTexWidth  = mWidth;
-    mLookupPhase.mTexHeight = mHeight;
-    mLookupPhase.mTgaData   = &mImgData;
-    mLookupPhase.mVertexWidth  = 16;
-    mLookupPhase.mVertexHeight = mHeight;
-
-   if (!mLookupPhase.init(mUsedTexUnits) )
-       exit(1);
+    mStatsPhase.mWidth   = mWidth;
+    mStatsPhase.mHeight  = mHeight;
+    if (!mStatsPhase.init(mFboId, mUsedTexUnits) )
+        exit(1);
 
 }
 
@@ -99,31 +94,40 @@ void Ogles::run()
 {
     double startTime, endTime;
     double labelTime, reductionTime;
-    double lookupTime;
+    double statsTime;
 
     startTime = getRealTime();
 
+    cout << "*** LABEL PHASE START" << endl;
     mLabelPhase.setupGeometry();
     labelTime = mLabelPhase.run();
-
+    cout << "*** LABEL PHASE END" << endl;
 
     mReductionPhase.updateTextures(mLabelPhase.getLastTexture(), mLabelPhase.getLastTexUnit(),
                                    mLabelPhase.getFreeTexture(), mLabelPhase.getFreeTexUnit() );
     mReductionPhase.setupGeometry();
+    cout << "*** REDUCTION PHASE START" << endl;
     reductionTime = mReductionPhase.run();
 
-    mLookupPhase.updateTextures(mReductionPhase.getLastTexture(), mReductionPhase.getLastTexUnit(),
-                                mReductionPhase.getFreeTexture(), mReductionPhase.getFreeTexUnit() );
-    mLookupPhase.setFbo(mReductionPhase.getFreeFbo());
+    cout << "*** REDUCTION PHASE END" << endl;
 
-    mLookupPhase.setupGeometry();
-    lookupTime = mLookupPhase.run();
+    mStatsPhase.updateTextures( mLabelPhase.getOrigTexture(), mLabelPhase.getOrigTexUnit(),
+                                mLabelPhase.getLastTexture(), mLabelPhase.getLastTexUnit(),
+                                mReductionPhase.getLastTexture(), mReductionPhase.getLastTexUnit(),
+                                mReductionPhase.getFreeTexture(), mReductionPhase.getFreeTexUnit(),
+                                mReductionPhase.getFreeTexture2(), mReductionPhase.getFreeTexUnit2()
+                               );
+
+    mStatsPhase.setupGeometry();
+    cout << "*** STATS PHASE START" << endl;
+    statsTime = mStatsPhase.run();
+    cout << "*** STATS PHASE END" << endl;
 
     endTime = getRealTime();
 
     cout << "Label time: " << labelTime << endl;
     cout << "Reduction time: " << reductionTime << endl;
-    cout << "Lookup time: " << lookupTime << endl;
+    cout << "Stats time: " << statsTime << endl;
     cout << "Total time: " << (endTime-startTime)*1000 << endl;
 }
 

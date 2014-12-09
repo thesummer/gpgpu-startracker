@@ -75,6 +75,8 @@ public:
     GLint getLastTexUnit();
     GLint getFreeTexture();
     GLint getFreeTexUnit();
+    GLint getFreeTexture2();
+    GLint getFreeTexUnit2();
 
 private:
     void reduce(int length);

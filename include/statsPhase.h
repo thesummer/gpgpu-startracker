@@ -1,11 +1,15 @@
-#ifndef LABELPHASE_H
-#define LABELPHASE_H
+#ifndef STATSPHASE_H
+#define STATSPHASE_H
 
 #include <stdio.h>
 
 #include "phase.h"
 #include "tga.h"
-#include "getTime.h"
+
+class test1
+{
+  int mtest;
+};
 
 class StatsPhase: public Phase
 {
@@ -107,6 +111,11 @@ public:
     GLint init(GLuint fbos[], GLuint &bfUsedTextures);
     GLint initIndependent(GLuint fbos[], GLuint &bfUsedTextures);
 
+    void updateTextures(GLuint origTex   , GLint origTexUnit,
+                        GLuint labelTex  , GLint labelTexUnit,
+                        GLuint reducedTex, GLint reducedTexUnit,
+                        GLuint freeTex   , GLint freeTexUnit,
+                        GLuint freeTex2   , GLint freeTexUnit2);
 //    GLint getLastTexture();
 //    GLint getLastTexUnit();
 //    GLint getFreeTexture();
@@ -122,4 +131,4 @@ private:
     void centroidingStage(float factorX, float factorY, int coordinate, int offset);
 };
 
-#endif // LABELPHASE_H
+#endif // STATSPHASE_H

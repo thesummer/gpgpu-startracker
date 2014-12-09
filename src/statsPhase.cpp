@@ -22,6 +22,7 @@ using std::endl;
 #define SIZE 2
 
 #include "statsPhase.h"
+#include "getTime.h"
 
 StatsPhase::StatsPhase(int width, int height)
     : mVertFilename("../glsl/quad.vert"), mFragFilename("../glsl/statsPhase.frag"),
@@ -132,29 +133,15 @@ GLint StatsPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
     mProgCount.u_savingOffsetLoc = glGetUniformLocation ( mProgCount.program, "u_savingOffset" );
     mProgCount.u_factorLoc       = glGetUniformLocation ( mProgCount.program, "u_factor" );
 
-    // 2. and 3. texture for ping-pong
-    for(int j=0; j<2; ++j)
-    {
-        int i = 0;
-        while( (1<<i) & bfUsedTextures) ++i;
-
-        GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-        mTexPiPoId[j]  = createSimpleTexture2D(mWidth, mHeight);
-        bfUsedTextures |= (1<<i);
-        mTextureUnits[TEX_PIPO+j] = i;
-        GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexPiPoId[j]) );
-    }
-
+    // missing texture for ping-pong
     int i = 0;
     while( (1<<i) & bfUsedTextures) ++i;
 
     GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-    mTexFillId = createSimpleTexture2D(mWidth, mHeight);
+    mTexPiPoId[1]  = createSimpleTexture2D(mWidth, mHeight);
     bfUsedTextures |= (1<<i);
-    mTextureUnits[TEX_FILL] = i;
-    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexFillId) );
-
-    GL_CHECK( glClearColor ( 0.0f, 0.0f, 0.0f, 0.0f ) );
+    mTextureUnits[TEX_PIPO+1] = i;
+    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexPiPoId[1]) );
 
     return GL_TRUE;
 }
@@ -185,30 +172,49 @@ GLint StatsPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
     bfUsedTextures |= (1<<i);
     mTextureUnits[TEX_ORIG] = i;
     GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexOrigId) );
+
+    i = 0;
+    while( (1<<i) & bfUsedTextures) ++i;
+
+    GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+    mTexFillId = createSimpleTexture2D(mWidth, mHeight);
+    bfUsedTextures |= (1<<i);
+    mTextureUnits[TEX_FILL] = i;
+    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexFillId) );
+
+    i = 0;
+    while( (1<<i) & bfUsedTextures) ++i;
+
+    GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
+    mTexPiPoId[0]  = createSimpleTexture2D(mWidth, mHeight);
+    bfUsedTextures |= (1<<i);
+    mTextureUnits[TEX_PIPO+0] = i;
+    GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexPiPoId[0]) );
     // Setup 2 Textures for Ping-Pong and
     // the program object
     return init(fbos, bfUsedTextures);
 }
 
-//GLint StatsPhase::getLastTexture()
-//{
-//    return mTexPiPoId[mRead];
-//}
+void StatsPhase::updateTextures(GLuint origTex, GLint origTexUnit,
+                                GLuint labelTex, GLint labelTexUnit,
+                                GLuint reducedTex, GLint reducedTexUnit,
+                                GLuint freeTex, GLint freeTexUnit, GLuint freeTex2, GLint freeTexUnit2)
+{
+    mTexOrigId                 = origTex;
+    mTextureUnits[TEX_ORIG]    = origTexUnit;
 
-//GLint StatsPhase::getLastTexUnit()
-//{
-//    return mTextureUnits[TEX_PIPO+mRead];
-//}
+    mTexLabelId                = labelTex;
+    mTextureUnits[TEX_LABEL]   = labelTexUnit;
 
-//GLint StatsPhase::getFreeTexture()
-//{
-//    return mTexPiPoId[mWrite];
-//}
+    mTexReducedId              = reducedTex;
+    mTextureUnits[TEX_REDUCED] = reducedTexUnit;
 
-//GLint StatsPhase::getFreeTexUnit()
-//{
-//    return mTextureUnits[TEX_PIPO+mWrite];
-//}
+    mTexFillId                 = freeTex;
+    mTextureUnits[TEX_FILL]    = freeTexUnit;
+
+    mTexPiPoId[0]              = freeTex2;
+    mTextureUnits[TEX_PIPO+0]  = freeTexUnit2;
+}
 
 void StatsPhase::setupGeometry()
 {
@@ -216,8 +222,6 @@ void StatsPhase::setupGeometry()
     GL_CHECK( glBindBuffer(GL_ARRAY_BUFFER, 0) );
     // Set the viewport
     GL_CHECK( glViewport ( 0, 0, mWidth, mHeight ) );
-    // Clear the color buffer
-    GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
 }
 
 double StatsPhase::run()
@@ -244,10 +248,10 @@ double StatsPhase::run()
     {
         // Make the BYTE array, factor of 3 because it's RGBA.
         printf("Pixels before run:\n");
-        printLabels(mWidth, mHeight, mTgaLabel->img_data);
+//        printLabels(mWidth, mHeight, mTgaLabel->img_data);
         char filename[50];
         sprintf(filename, "out0%03d.tga", 0);
-        writeTgaImage(mWidth, mHeight, filename, mTgaLabel->img_data);
+//        writeTgaImage(mWidth, mHeight, filename, mTgaLabel->img_data);
     }
 #endif
     float factorX = 1.0, factorY = 1.0;
@@ -256,21 +260,18 @@ double StatsPhase::run()
     countStage(factorX, factorY, OFFSET);
     centroidingStage(factorX, factorY,CENTROID_X_COORD, 2*OFFSET);
     centroidingStage(factorX, factorY, CENTROID_Y_COORD, 3*OFFSET);
-    cout << "Finished direction 1" << endl << endl;
 
     factorX = -1.0;
     fillStage(factorX, factorY);
     countStage(factorX, factorY, OFFSET);
     centroidingStage(factorX, factorY,CENTROID_X_COORD, 2*OFFSET);
     centroidingStage(factorX, factorY, CENTROID_Y_COORD, 3*OFFSET);
-    cout << "Finished direction 2" << endl << endl;
 
     factorY = -1.0;
     fillStage(factorX, factorY);
     countStage(factorX, factorY, OFFSET);
     centroidingStage(factorX, factorY,CENTROID_X_COORD, 2*OFFSET);
     centroidingStage(factorX, factorY, CENTROID_Y_COORD, 3*OFFSET);
-    cout << "Finished direction 3" << endl << endl;
 
     factorX = 1.0;
     fillStage(factorX, factorY);

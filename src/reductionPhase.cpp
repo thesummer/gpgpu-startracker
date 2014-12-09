@@ -188,7 +188,6 @@ double ReductionPhase::run()
     // Set the mode to ROOT_INIT
     GL_CHECK( glUniform1i ( u_stageLoc, MODE_ROOT_INIT ) );
     // Set the read only texture
-    std::cout << "texunit " << mTextureUnits[TEX_LABEL] << std::endl;
     GL_CHECK( glUniform1i ( s_valuesLoc, mTextureUnits[TEX_LABEL] ) );
     // Just bind any texture (not used in this stage)
     GL_CHECK( glUniform1i ( s_reductionLoc, mTextureUnits[TEX_PIPO] ) );
@@ -311,6 +310,16 @@ GLint ReductionPhase::getLastTexUnit()
 GLint ReductionPhase::getFreeTexture()
 {
     return mTexPiPoId[mWrite];
+}
+
+GLint ReductionPhase::getFreeTexture2()
+{
+    return mTexRootId;
+}
+
+GLint ReductionPhase::getFreeTexUnit2()
+{
+    return mTextureUnits[TEX_ROOT];
 }
 
 GLint ReductionPhase::getFreeTexUnit()
