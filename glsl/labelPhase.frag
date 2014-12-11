@@ -31,11 +31,6 @@ void main()
         xValues[0] = tempLabel.x;
         yValues[0] = tempLabel.y;
 
-        if(u_debug == 1)
-        {
-            gl_FragColor = pack2shorts(tempLabel);
-            return;
-        }
 
         tempCol = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(-ONE, ONE)) );
         tempLabel  = unpack2shorts(tempCol);
@@ -71,14 +66,21 @@ void main()
         maxY = dot(mask, yValues) / dot(mask, mask);
 
         // Compare the maximum of the neighbor pixels with current coord and assign the maximum label to current pixel
-        xValues.xy = vec2(maxX, curLabel.x);
-        yValues.xy = vec2(maxY, curLabel.y);
+        // Floor seems to be necessary for the rpi, otherwise mask.xy = step(maxY, yValues.xy); yields a different result compared to intel
+        xValues.xy = floor(vec2(maxX, curLabel.x)+0.5);
+        yValues.xy = floor(vec2(maxY, curLabel.y)+0.5);
 
         maxY = max(yValues[0], yValues[1]);
         mask.xy = step(maxY, yValues.xy);
 
+        if(u_debug == 1)
+        {
+            gl_FragColor = pack2shorts(mask.xy);
+            return;
+        }
+
         xValues.xy *= mask.xy;
-        maxX = max(xValues[0], xValues[1]);
+        maxX = floor(max(xValues[0], xValues[1]) +0.5);
         mask.xy *= step(maxX, xValues.xy);
         maxX = dot(mask.xy, xValues.xy) / dot(mask.xy, mask.xy);
         maxY = dot(mask.xy, yValues.xy) / dot(mask.xy, mask.xy);
