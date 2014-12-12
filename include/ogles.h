@@ -118,7 +118,7 @@ private:
     int loadTgaImage(TGA **image, TGAData *data, const char *filename);
 
     /*!
-     \brief Checks the EGL error flag is set and prints an error message
+     \brief Checks if the EGL error flag is set and prints an error message
 
      This function is mainly called by the debug macro EGL_CHECK when
      compiled with _DEBUG flag set. It will check if the previous
