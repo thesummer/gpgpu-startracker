@@ -258,7 +258,7 @@ int Phase::writeTgaImage(int width, int height, char *filename, GLubyte *pixels)
     free(data.img_data);
     TGAClose(image);
 
-    return 0;
+    return TGA_OK;
 }
 
 int Phase::writeRawTgaImage(int width, int height, char *filename, GLubyte *pixels)
