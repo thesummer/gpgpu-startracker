@@ -2,8 +2,16 @@ varying vec2 v_texCoord;        // texture coordinates
 uniform sampler2D s_texture;    // texture sampler
 uniform int u_pass;
 uniform float u_factor;
-uniform int u_debug;
 uniform float u_threshold;      // threshold value for the threshold operation
+
+/**
+ * A simple 3x3 gaussian convolution filter, non-separated version
+ * @author Sebastian Schaefer
+ * @date 2012
+ * @namespace GLSL::FILTER::BLUR
+ * @class Gauss3x3
+ */
+
 
 void main()
 {
@@ -72,12 +80,6 @@ void main()
 
         maxY = max(yValues[0], yValues[1]);
         mask.xy = step(maxY, yValues.xy);
-
-        if(u_debug == 1)
-        {
-            gl_FragColor = pack2shorts(mask.xy);
-            return;
-        }
 
         xValues.xy *= mask.xy;
         maxX = floor(max(xValues[0], xValues[1]) +0.5);
