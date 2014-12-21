@@ -1,4 +1,4 @@
-#ifndef LABELPHASE_H
+//#ifndef LABELPHASE_H
 #define LABELPHASE_H
 
 #include <stdio.h>
@@ -50,13 +50,11 @@ public:
     GLint  u_texDimLoc; /*!< Handle to the uniform u_texDimensions */
     GLint  u_thresholdLoc; /*!< Handle to the uniform u_threshold */
     GLint  u_passLoc; /*!< Handle to the uniform u_pass*/
-    GLint  u_debugLoc; /*!< Handle to the uniform u_debug TODO: remove*/
     GLint  u_factorLoc; /*!< Handle to the uniform u_factor*/
 
     // Uniform values
     float u_threshold; /*!< Value of uniform u_threshold */
     GLint u_pass; /*!< Value of uniform u_pass */
-    GLint u_debug; /*!< Value of uniform u_debug TODO: remove*/
     GLint u_factor; /*!< Value of uniform u_factor */
 
     // Sampler location

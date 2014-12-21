@@ -60,7 +60,6 @@ GLint LabelPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
     u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
     u_thresholdLoc  = glGetUniformLocation ( mProgramObject, "u_threshold" );
     u_passLoc       = glGetUniformLocation ( mProgramObject, "u_pass" );
-    u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
     u_factorLoc     = glGetUniformLocation ( mProgramObject, "u_factor" );
 
     // 2. and 3. texture for ping-pong
@@ -213,12 +212,10 @@ double LabelPhase::run()
         {
             u_pass = 1;
             u_factor *= -1.0;
-            u_debug = 0;
         }
         else
         {
             u_pass = i;
-            u_debug = 0;
         }
 
         // Bind the FBO to write to
@@ -227,7 +224,6 @@ double LabelPhase::run()
         GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_PIPO+mRead] ) );
         // Set the pass index
         GL_CHECK( glUniform1i ( u_passLoc,  u_pass) );
-        GL_CHECK( glUniform1i ( u_debugLoc, u_debug) );
         GL_CHECK( glUniform1f ( u_factorLoc, u_factor) );
         // Draw scene
         GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
