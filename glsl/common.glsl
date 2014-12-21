@@ -1,23 +1,30 @@
 precision highp float;
 precision highp sampler2D;
-uniform vec2  u_texDimensions;   // image/texture dimensions
 
-const float ZERO = 0.0;
-const float ONE  = 1.0;
-const float TWO  = 2.0;
-const float bias = ONE/1024.0;
-const float f256 = 256.0;
-const float f255 = 255.0;
+/*!
+ * A simple 3x3 gaussian convolution filter, non-separated version
+ * @author Jan Sommer
+ * @date 2014
+ * @namespace GLSL::COMMON
+ * @class CommonFunctions
+ */
+
+uniform vec2  u_texDimensions;   /*!< Dimensions of the image in pixels */
+const float ZERO = 0.0;          /*!< Constant for 0.0 otherwise memory is reserved for every literal */
+const float ONE  = 1.0;          /*!< Constant for 1.0 otherwise memory is reserved for every literal*/
+const float TWO  = 2.0;          /*!< Constant for 2.0 otherwise memory is reserved for every literal*/
+const float f256 = 256.0;        /*!< Constant for 256.0 otherwise memory is reserved for every literal */
+const float f255 = 255.0;        /*!< Constant for 256.0 otherwise memory is reserved for every literal*/
 
 
-/*
+/*!
 Assuming that the texture is 8-bit RGBA 32bits are available for packing.
-This function packs 2 16-bit short integer values into the 4 texture channels.
-They then can be used in subsequent shader operations or by the client after a call to glReadPixels.
+This function packs 2 16-bit unsigned short integer values into the 4 texture channels.
+They can be used in subsequent shader operations or by the client after a call to glReadPixels.
 
-in vec2:  it is assumed that each element contains an integer in float representation
+\param shorts  the two unsigned integer as float vectors
 
-return vec4: RGBA value which contains the packed shorts with LSB first.
+\return RGBA value which contains the packed shorts with LSB first.
 
 */
 vec4 pack2shorts(in vec2 shorts)
@@ -31,13 +38,13 @@ vec4 pack2shorts(in vec2 shorts)
     return floor(comp * f256) /f255;
 }
 
-/*
+/*!
 Assuming that the texture is 8-bit RGBA 32bits are available for packing.
 This function unpacks 2 16-bit short integer values from the 4 texture channels into 2 floats.
 
-in vec4:  RGBA value to unpack with LSB first
+\param rgba RGBA value which contains 2 packed unsigned shorts with LSB first
 
-return vec2: vector which will contain the 2 shorts
+\return float vector which will contain the 2 unpacked shorts
 
 */
 vec2 unpack2shorts(in vec4 rgba)
@@ -47,15 +54,24 @@ vec2 unpack2shorts(in vec4 rgba)
     return vec2(dot(rounded.xy, bitSh), dot(rounded.zw, bitSh));
 }
 
-vec4 packLong(in float uint32)
+/*!
+  Assuming that the texture is 8-bit RGBA 32bits are available for packing.
+  This function uses the first 24bits to pack a long integer (24bit)
+  The last Byte is used to store the sign of the integer, hence in total
+  a 25bit signed integer is packed.
+
+  \param int32 the signed integer as float
+  \result RGBA value with the packed integer representation
+*/
+vec4 packLong(in float int32)
 {
-    float sign = ONE - step(ZERO, uint32);
-    uint32 = floor(abs(uint32)+0.5);
+    float sign = ONE - step(ZERO, int32);
+    int32 = floor(abs(int32)+0.5);
     const vec3 bitSh = vec3(ONE/(f256),
                             ONE/(f256 * f256),
                             ONE/(f256 * f256 * f256) );
     vec4 comp;
-    comp.xyz = fract( uint32 * bitSh );
+    comp.xyz = fract( int32 * bitSh );
     comp.xyz = floor(comp.xyz*f256)/f255;
     comp.w = sign;
 
@@ -63,6 +79,16 @@ vec4 packLong(in float uint32)
     return comp;
 }
 
+/*!
+  Assuming that the texture is 8-bit RGBA 32bits are available for packing.
+  This function uses the first 24bits to unpack a long integer (24bit)
+  The last Byte stores the sign of the integer, hence in total
+  a 25bit signed integer is unpacked.
+
+  \param rgba the RGBA value which has the packed integer
+  \return the signed integer as float
+
+*/
 float unpackLong(in vec4 rgba)
 {
     float sign = step(0.5, rgba.w);
@@ -73,26 +99,26 @@ float unpackLong(in vec4 rgba)
     return floor(dot(rounded , bitShifts)+0.5) * (ONE-TWO*sign);
 }
 
-/*
-This functions computes the image coordinates of the texture with the dimensions from u_texDimensions
+/*!
+This function computes the image coordinates of the texture with the dimensions from u_texDimensions
 Example:
 
 For an 8 pixel texture (8x1) the texture coordinates are in [0.0, 1.0].
 glNearest will yield texture coordinates which are  in the center of each pixel (e.g. 1/16, 3/16 etc).
 
- | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
- ^   ^   ^   ^   ^   ^   ^   ^   ^
-0.0  |   |   |   |   |   |   |  1.0
- |   |   |   |   |   |   |   |   |
-0/8 1/8 2/8 3/8 4/8 5/8 6/8 7/8 8/8
+     | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+     ^   ^   ^   ^   ^   ^   ^   ^   ^
+    0.0  |   |   |   |   |   |   |  1.0
+     |   |   |   |   |   |   |   |   |
+    0/8 1/8 2/8 3/8 4/8 5/8 6/8 7/8 8/8
 
 Therefore, in order to get the pixel coordinates the following formular is used:
 
-px = (2*tx*dimX-1)/2
-py = (2*ty*dimY-1)/2
+        px = (2*tx*dimX-1)/2
+        py = (2*ty*dimY-1)/2
 
-in vec2: vector with texture coordinates
-return vec2: vecture with image coordinates
+\param texCoord vector with texture coordinates in [0,1], [0,1]
+\return vector with corresponding image coordinates [0, width], [0, height]
 
 */
 vec2 tex2imgCoord(in vec2 texCoord)
@@ -101,15 +127,15 @@ vec2 tex2imgCoord(in vec2 texCoord)
 }
 
 
-/*
-Reverse function of tex2imgCoord. Takes image coordinates and
-return the  corresponding texture coordinates.
+/*!
+Reverse function of \ref tex2imgCoord. Takes image coordinates and
+returns the  corresponding texture coordinates.
 
-tx = (2*px+1)/2dimX
-ty = (2*py+1)/2dimY
+        tx = (2*px+1)/2dimX
+        ty = (2*py+1)/2dimY
 
-in vec2: image coordinates in [0, width], [0, height]
-return vec2: texture coordinates in [0,1], [0,1]
+\param imgCoord image coordinates in [0, width], [0, height]
+\return texture coordinates in [0,1], [0,1]
 */
 vec2 img2texCoord(in vec2 imgCoord)
 {
