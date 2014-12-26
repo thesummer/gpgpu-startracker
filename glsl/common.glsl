@@ -2,7 +2,8 @@ precision highp float;
 precision highp sampler2D;
 
 /*!
- * A simple 3x3 gaussian convolution filter, non-separated version
+ * Common functions for packing and unpacking
+ * of integer values and computation of texture and image coordinates.
  * @author Jan Sommer
  * @date 2014
  * @namespace GLSL::COMMON
