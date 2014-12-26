@@ -5,6 +5,9 @@ using std::endl;
 #define TEX_ORIG   0
 #define TEX_PIPO   1
 
+#define STAGE_INITIAL_LABELING   0
+#define STAGE_HIGHEST_LABEL      1
+
 #include "labelPhase.h"
 
 LabelPhase::LabelPhase(int width, int height)
@@ -163,8 +166,6 @@ double LabelPhase::run()
         CHECK_FBO();
     }
 
-//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
     // Use the program object
     GL_CHECK( glUseProgram ( mProgramObject ) );
 
@@ -184,7 +185,7 @@ double LabelPhase::run()
     // Set the sampler texture to use the original image
     GL_CHECK( glUniform1i ( mSamplerLoc, mTextureUnits[TEX_ORIG] ) );
     // Set the pass index
-    GL_CHECK( glUniform1i ( u_passLoc,  0) );
+    GL_CHECK( glUniform1i ( u_passLoc,  STAGE_INITIAL_LABELING) );
     GL_CHECK( glUniform1f ( u_factorLoc, u_factor) );
     // Draw scene
     GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
@@ -210,7 +211,7 @@ double LabelPhase::run()
     {
         if( i%2 == 1)
         {
-            u_pass = 1;
+            u_pass = STAGE_HIGHEST_LABEL;
             u_factor *= -1.0;
         }
         else

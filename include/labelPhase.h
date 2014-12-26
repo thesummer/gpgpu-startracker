@@ -1,4 +1,4 @@
-//#ifndef LABELPHASE_H
+#ifndef LABELPHASE_H
 #define LABELPHASE_H
 
 #include <stdio.h>
