@@ -8,6 +8,11 @@
 #include "getTime.h"
 
 /*!
+    \ingroup labeling
+    @{
+*/
+
+/*!
  \brief Contains all handles and functions for the labeling phase
 
  This class is responsible for the thresholding of the initial image and the
@@ -186,5 +191,9 @@ public:
     */
     virtual double run();
 };
+
+/*!
+    @}
+*/
 
 #endif // LABELPHASE_H

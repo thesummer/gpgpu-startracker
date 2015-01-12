@@ -72,6 +72,8 @@
 
     @image html cpu-gpu-step-2.svg "Figure 3 Intended memory layout on the RaspberryPi"
 
+
+    \ref labeling
 */
 
 
