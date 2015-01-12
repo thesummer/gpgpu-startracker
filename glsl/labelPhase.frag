@@ -1,14 +1,20 @@
+/*!
+    \ingroup labeling
+    @{
+*/
 varying vec2 v_texCoord;        /*!< texture coordinates of the current pixel */
 uniform sampler2D s_texture;    /*!< Sampler holding the input image */
 uniform int u_pass;             /*!< The number of the pass this algorithm is in */
 uniform float u_factor;         /*!< The factor for the displacement */
 uniform float u_threshold;      /*!< Threshold value for the threshold operation */
 
+
+
 /*!
  * A simple 3x3 gaussian convolution filter, non-separated version
  * @author Jan Sommer
  * @date 2014
- * @namespace GLSL::PHASES::LABELING
+ * @namespace GLSL
  * @class labelingShader
  */
 
@@ -151,3 +157,7 @@ void main()
         gl_FragColor  = texture2D(s_texture, img2texCoord(curLabel-ONE) );
     }
 }
+
+/*!
+    @}
+*/
