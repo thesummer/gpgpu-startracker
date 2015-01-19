@@ -26,10 +26,6 @@
 
 
 */
-/*!
- \brief
-
-*/
 class LabelPhase: public Phase
 {
 public:
