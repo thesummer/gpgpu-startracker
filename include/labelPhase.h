@@ -17,7 +17,7 @@
 
  This class is responsible for the thresholding of the initial image and the
  labeling of the remaining spots.
- A more elaborate explanation of the GLSL-algorithm can be found TODO.
+ A more elaborate explanation of the GLSL-algorithm can be found in \ref labeling.
 
  NOTE: The handles for shader-, texture-, fbo-objects etc. are public at the moment
  for easy debugging purposes. Probably would be a good idea to move them to
