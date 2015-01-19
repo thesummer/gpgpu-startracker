@@ -4,7 +4,6 @@ uniform sampler2D s_values;
 uniform int u_stage;            // different stages
 uniform int u_pass;
 uniform int u_direction;
-uniform int u_debug;
 
 #define RUNNING_SUM     0
 #define BINARY_SEARCH   1
