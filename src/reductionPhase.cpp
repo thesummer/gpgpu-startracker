@@ -292,11 +292,6 @@ double ReductionPhase::run()
     return (endTime-startTime)*1000;
 }
 
-GLuint ReductionPhase::getFreeFbo()
-{
-    return mFboId[mWrite];
-}
-
 GLint ReductionPhase::getLastTexture()
 {
     return mTexPiPoId[mRead];
