@@ -54,9 +54,9 @@ public:
     GLint  u_factorLoc; /*!< Handle to the uniform u_factor*/
 
     // Uniform values
-    float u_threshold; /*!< Value of uniform u_threshold */
-    GLint u_pass; /*!< Value of uniform u_pass */
-    GLint u_factor; /*!< Value of uniform u_factor */
+    float u_threshold; /*!< threshold value for the thresholding operation*/
+    GLint u_pass; /*!< Number of the current iteration */
+    GLint u_factor; /*!< determines if forward mask (1.0) or backward mask (-1.0)*/
 
     // Sampler location
     GLint mSamplerLoc; /*!< Handle to the sampler s_texture */
@@ -108,9 +108,9 @@ public:
     /*!
      \brief Initializes the scene and all necessary objects
 
-     This init-function is used for if the phase should be run without the need
+     This init-function is used if the phase should be run without the need
      of the results of any previous stages or input. The image data of the
-     original image is copied from \ref mTgaData->`
+     original image is copied from \ref mTgaData
 
      \param fbos[] The 2 framebuffers necessary for rendering
      \param bfUsedTextures The bitfield to determine which texture units are already used
@@ -153,7 +153,7 @@ public:
     GLint getLastTexUnit();
 
     /*!
-     \brief Return the handle to the texture which holds now important data and can be reused
+     \brief Return the handle to the texture which holds no important data and can be reused
 
      The free texture holds data from the iteration before the last one which
      served as input of the last labeling iteration. It is old data, therefore
