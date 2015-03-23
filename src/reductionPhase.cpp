@@ -29,7 +29,7 @@ ReductionPhase::ReductionPhase(int width, int height)
                   1.0f, -1.0f, 0.0f,  // Position 3
                   1.0f,  0.0f         // TexCoord 3
                 },
-      mIndices { 0, 1, 2, 0, 2, 3 }, u_debug(0)
+      mIndices { 0, 1, 2, 0, 2, 3 }
 
 {
 }
@@ -70,7 +70,7 @@ GLint ReductionPhase::init(GLuint fbos[], GLuint &bfUsedTextures)
      s_valuesLoc     = glGetUniformLocation ( mProgramObject, "s_values" );
      u_texDimLoc     = glGetUniformLocation ( mProgramObject, "u_texDimensions" );
      u_passLoc       = glGetUniformLocation ( mProgramObject, "u_pass" );
-     u_debugLoc      = glGetUniformLocation ( mProgramObject, "u_debug" );
+
      u_stageLoc      = glGetUniformLocation ( mProgramObject, "u_stage" );
      u_directionLoc  = glGetUniformLocation ( mProgramObject, "u_direction" );
 
@@ -375,7 +375,6 @@ void ReductionPhase::reduce(int length)
         GL_CHECK( glUniform1i ( s_reductionLoc, mTextureUnits[TEX_PIPO+mRead] ) );
         // Set the pass index
         GL_CHECK( glUniform1i ( u_passLoc,  u_pass) );
-        GL_CHECK( glUniform1i ( u_debugLoc, u_debug) );
         // Draw scene
         GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
 
