@@ -11,7 +11,7 @@ uniform float u_threshold;      /*!< Threshold value for the threshold operation
 
 
 /*!
- * A simple 3x3 gaussian convolution filter, non-separated version
+ * The labeling shader
  * @author Jan Sommer
  * @date 2014
  * @namespace GLSL
