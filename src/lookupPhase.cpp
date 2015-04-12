@@ -1,4 +1,5 @@
  
+#include "lookupPhase.h"
 #include <iostream>
 using std::cerr;
 using std::endl;
@@ -6,7 +7,6 @@ using std::endl;
 #define TEX_REDUCED 0
 #define TEX_LOOKUP  1
 
-#include "lookupPhase.h"
 
 LookupPhase::LookupPhase(int texWidth, int texHeight, int vertexWidth, int vertexHeight)
     : mVertFilename("../glsl/lookup.vert"), mFragFilename("../glsl/lookup.frag"),
@@ -78,7 +78,7 @@ GLint LookupPhase::initIndependent(GLuint fbo, GLuint &bfUsedTextures)
     while( (1<<i) & bfUsedTextures) ++i;
     GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
     mTexLookUpId = createSimpleTexture2D(mTexWidth, mTexHeight, NULL);
-    mTexReducedId = createSimpleTexture2D(mTexWidth, mTexHeight, mTgaData->img_data);
+    mTexReducedId = createSimpleTexture2D(mTexWidth, mTexHeight, mImage.data());
     bfUsedTextures |= (1<<i);
     mTextureUnits[TEX_REDUCED] = i;
 
@@ -144,15 +144,15 @@ double LookupPhase::run()
     GL_CHECK( glDrawArrays( GL_POINTS, 0, mNumVertices) );
 
 #ifdef _DEBUG
-        // Make the BYTE array, factor of 3 because it's RGBA.
-        GLubyte* pixels = new GLubyte[4*mTexWidth*mTexHeight];
-        GL_CHECK( glReadPixels(0, 0, mTexWidth, mTexHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-        printf("Pixels after pass:\n");
-//        printLabels(mTexWidth, mTexHeight, pixels);
-        char filename[50];
-        sprintf(filename, "outlookup.tga");
-        writeTgaImage(mTexWidth, mTexHeight, filename, pixels);
-        delete [] pixels;
+{
+    CImg<unsigned char> image(4, mTexWidth, mTexHeight, 1, 0);
+    GL_CHECK( glReadPixels(0, 0, mTexWidth, mTexHeight, GL_RGBA, GL_UNSIGNED_BYTE, image.data()) );
+    printf("Pixels after pass:\n");
+//    printLabels(mWidth, mHeight, image.data());
+    char filename[50];
+    sprintf(filename, "outlookup.png");
+    writeImage(mTexWidth, mTexHeight, filename, image);
+}
 #endif
 
         // Switch read and write texture

@@ -1,3 +1,6 @@
+#include "ogles.h"
+#include "phase.h"
+
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
 
@@ -7,8 +10,6 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-#include "ogles.h"
-#include "phase.h"
 #include "getTime.h"
 
 
@@ -51,22 +52,20 @@ Ogles::~Ogles()
     EGL_CHECK ( eglTerminate(esContext.eglDisplay) );
 }
 
-Ogles::Ogles(std::string tgaFilename)
+Ogles::Ogles(std::string imageFilename)
     :mLabelPhase(0, 0), mUsedTexUnits(0)
 {
     // Initialize esContext to 0
     esContext = {};
 
-    // Read TGA-file
-    TGA *tgaImage = 0;
-    loadTgaImage(&tgaImage, &mImgData, tgaFilename.c_str());
+    // Read image-file
+    mImage.assign(imageFilename.c_str());
 
-    mWidth  = tgaImage->hdr.width;
-    mHeight = tgaImage->hdr.height;
+    mWidth  = mImage.width();
+    mHeight = mImage.height();
 
     mLabelPhase.mWidth  = mWidth;
     mLabelPhase.mHeight = mHeight;
-    mLabelPhase.mTgaData = &mImgData;
 
     // initialize EGL-context
     initEGL(mWidth, mHeight);
@@ -79,15 +78,13 @@ Ogles::Ogles(std::string tgaFilename)
 
     mReductionPhase.mWidth   = mWidth;
     mReductionPhase.mHeight  = mHeight;
-    mReductionPhase.mTgaData = &mImgData;
     if (!mReductionPhase.init(mFboId, mUsedTexUnits) )
         exit(1);
-//    mReductionPhase.initIndependent(mFboId, mUsedTexUnits);
+
     mStatsPhase.mWidth   = mWidth;
     mStatsPhase.mHeight  = mHeight;
     if (!mStatsPhase.init(mFboId, mUsedTexUnits) )
         exit(1);
-
 }
 
 void Ogles::run()
@@ -195,25 +192,6 @@ int Ogles::initEGL(int width, int height)
    esContext.eglContext = eglContext;
 
    return EGL_TRUE;
-}
-
-int Ogles::loadTgaImage(TGA **image, TGAData *data, const char *filename)
-{
-    *image = TGAOpen(filename, "r");
-    data->flags = TGA_IMAGE_DATA | TGA_RGB;
-
-    if(!*image || (*image)->last != TGA_OK)
-    {
-        printf("Opening tga-file failed\n");
-        return (*image)->last;
-    }
-
-    if(TGAReadImage(*image, data) != TGA_OK)
-    {
-        printf("Failed to read tga-file\n");
-        return (*image)->last;
-    }
-    return TGA_OK;
 }
 
 void Ogles::checkEGLError(const char *stmt, const char *fname, int line)

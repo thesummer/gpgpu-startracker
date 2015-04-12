@@ -1,3 +1,5 @@
+#include "CImg.h"
+using namespace cimg_library;
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
 
@@ -10,7 +12,6 @@ using std::endl;
 #include "getTime.h"
 #include "phase.h"
 #include"reductionPhase.h"
-#include "tga.h"
 
 #ifdef _RPI
 #include "bcm_host.h"
@@ -36,25 +37,6 @@ struct ESContext
    /// EGL surface
    EGLSurface  eglSurface;
 } esContext;
-
-int loadTgaImage(TGA **image, TGAData *data, const char *filename)
-{
-    *image = TGAOpen(filename, "r");
-    data->flags = TGA_IMAGE_DATA | TGA_RGB;
-
-    if(!*image || (*image)->last != TGA_OK)
-    {
-        printf("Opening tga-file failed\n");
-        return (*image)->last;
-    }
-
-    if(TGAReadImage(*image, data) != TGA_OK)
-    {
-        printf("Failed to read tga-file\n");
-        return (*image)->last;
-    }
-    return TGA_OK;
-}
 
 #define EGL_CHECK(stmt) stmt
 
@@ -136,17 +118,13 @@ int main()
     reductionPhase.mVertFilename = "quad.vert";
     reductionPhase.mFragFilename = "reductionPhase.frag";
 
-    // Read TGA-file
-    TGA *tgaImage = 0;
-    TGAData imgData;
-    loadTgaImage(&tgaImage, &imgData, "test.tga");
-
-    int width  = tgaImage->hdr.width;
-    int height = tgaImage->hdr.height;
-
+    // Read PNG-file
+    reductionPhase.mImage.assign("test.png");
+    int width  = reductionPhase.mImage.width();
+    int height = reductionPhase.mImage.height();
     reductionPhase.mWidth  = width;
     reductionPhase.mHeight = height;
-    reductionPhase.mTgaData = &imgData;
+    reductionPhase.mImage.permute_axes("cxyz");
 
     // initialize EGL-context
     initEGL(width, height);

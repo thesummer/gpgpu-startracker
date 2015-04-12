@@ -1,16 +1,40 @@
 
-//////////////////////////////  BEGIN SHADER //////////////////////////
+/*!
+    \ingroup stats
+    @{
+*/
 
-varying vec2 v_texCoord;        // texture coordinates
-uniform highp sampler2D s_fill;
-uniform int   u_pass;
-uniform vec2  u_factor;
+varying vec2 v_texCoord;        /*!< texture coordinates of the current pixel */
+uniform highp sampler2D s_label; /*!< Sampler holding the input image */
+uniform int   u_pass;           /*!< The number of the pass this algorithm is in */
+uniform vec2  u_factor;         /*!< The factor for the displacement */
 
-const float OUT  = 10000.0;
+const float OUT  = 10000.0;     /*!< Used to filter values */
 
+/*!
+ * First stage of the statistics computation
+ *
+ * @author Jan Sommer
+ * @date 2014
+ * @namespace GLSL
+ * @class fillShader
+ */
+
+/*!
+  \brief Main program of the filling shader
+
+  The fill stage of the statistics computation will fill a rectangular area
+  around each extracted spot and assign the label of that spot to it.
+  This is needed for counting the statistics for each label in a later
+  stage. The rectangular filling starts from the root pixel of each spot and
+  expands iteratively in a direction determined by \ref u_factor.
+
+  The input image is the result from the labeling phase.
+
+*/
 void main()
 {
-    vec2 curLabel = unpack2shorts( texture2D( s_fill, v_texCoord ) );
+    vec2 curLabel = unpack2shorts( texture2D( s_label, v_texCoord ) );
     vec2 curCoord = tex2imgCoord(v_texCoord);
     // If curLabel is not 0 it means it already has a label assigned and no
     // further action has to be done
@@ -24,9 +48,9 @@ void main()
         float twoPow = floor(exp2( float(u_pass) )+0.5);
         vec3 cornerX, cornerY, cornerXY;
 
-        cornerX.xy  = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord + u_factor * vec2(twoPow, ZERO) ) ) );
-        cornerY.xy  = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord + u_factor * vec2(ZERO, twoPow) ) ) );
-        cornerXY.xy = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord + u_factor * vec2(twoPow, twoPow) ) ) );
+        cornerX.xy  = unpack2shorts( texture2D( s_label, img2texCoord( curCoord + u_factor * vec2(twoPow, ZERO) ) ) );
+        cornerY.xy  = unpack2shorts( texture2D( s_label, img2texCoord( curCoord + u_factor * vec2(ZERO, twoPow) ) ) );
+        cornerXY.xy = unpack2shorts( texture2D( s_label, img2texCoord( curCoord + u_factor * vec2(twoPow, twoPow) ) ) );
 
         // Check if these pixels are zero
         float xIsZero  = ONE-step(ONE/256.0, length(cornerX.xy) );
@@ -75,3 +99,6 @@ void main()
         gl_FragColor = pack2shorts( (cornerX.xy+cornerY.xy+cornerXY.xy) / dot(mask, mask) ) * result;
     }
 }
+/*!
+    @}
+*/

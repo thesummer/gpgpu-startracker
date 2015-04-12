@@ -1,3 +1,6 @@
+#include "reductionPhase.h"
+#include "getTime.h"
+
 #include <iostream>
 using std::cerr;
 using std::endl;
@@ -14,8 +17,6 @@ using std::endl;
 #define MODE_ROOT_INIT       2
 
 
-#include "reductionPhase.h"
-#include "getTime.h"
 
 ReductionPhase::ReductionPhase(int width, int height)
     :mVertFilename("../glsl/quad.vert"), mFragFilename("../glsl/reductionPhase.frag"),
@@ -105,12 +106,12 @@ GLint ReductionPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
       *  3.+4. 2 textures for the ping-pong of the algorithm
       */
 
-    // 1. texture for Label image (read from tga-file)
+    // 1. texture for Label image (read from png-file)
     int i = 0;
     while( (1<<i) & bfUsedTextures) ++i;
 
     GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-    mTexLabelId  = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
+    mTexLabelId  = createSimpleTexture2D(mWidth, mHeight, mImage.data());
     bfUsedTextures |= (1<<i);
     mTextureUnits[TEX_LABEL] = i;
     GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexLabelId) );
@@ -201,19 +202,12 @@ double ReductionPhase::run()
     GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
 
 #ifdef _DEBUG
-    // Make the BYTE array, factor of 3 because it's RGBA.
-    GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-
-    GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-    printf("Pixels after root pass\n");
-    printLabels(mWidth, mHeight, pixels);
+{
     char filename[50];
-    sprintf(filename, "outRoot.tga");
-    writeTgaImage(mWidth, mHeight, filename, pixels);
-    delete [] pixels;
+    sprintf(filename, "outRoot.png");
+    debugImage("Pixels after root pass\n", filename);
+}
 #endif
-
-
 
     ///---------- 2. REDUCE HORIZONTALLY --------------------
 
@@ -237,16 +231,11 @@ double ReductionPhase::run()
     reduce(mWidth);
 
 #ifdef _DEBUG
-//    // Make the BYTE array, factor of 3 because it's RGBA.
-//    // GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-    pixels = new GLubyte[4*mWidth*mHeight];
-    GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-    printf("Pixels after horizontal pass\n");
-    printLabels(mWidth, mHeight, pixels);
-//    char filename[50];
-    sprintf(filename, "outHori.tga");
-    writeTgaImage(mWidth, mHeight, filename, pixels);
-    delete [] pixels;
+{
+    char filename[50];
+    sprintf(filename, "outHori.png");
+    debugImage("Pixels after horizontal pass\n", filename);
+}
 #endif
 
     ///---------- 3. SWITCH RESULT WITH TEX_ROOT --------------------
@@ -266,20 +255,14 @@ double ReductionPhase::run()
 
 
     GL_CHECK( glUniform1i ( u_directionLoc, VERTICAL) );
-//    u_debug = 1;
     reduce(mHeight);
 
 #ifdef _DEBUG
-    // Make the BYTE array, factor of 3 because it's RGBA.
-    // GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-    pixels = new GLubyte[4*mWidth*mHeight];
-    GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-    printf("Pixels after vertical pass\n");
-    printLabels(mWidth, mHeight, pixels);
-//    char filename[50];
-    sprintf(filename, "out.tga");
-    writeTgaImage(mWidth, mHeight, filename, pixels);
-    delete [] pixels;
+{
+    char filename[50];
+    sprintf(filename, "out.png");
+    debugImage("Pixels after vertical pass\n", filename);
+}
 #endif
 
     ///TODO: ---------- 5. RENDER RESULT INTO SMALL TEXTURE --------------------
@@ -324,11 +307,6 @@ GLint ReductionPhase::getFreeTexUnit()
 
 void ReductionPhase::reduce(int length)
 {
-#ifdef _DEBUG
-    // Make the BYTE array, factor of 3 because it's RGBA.
-    GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-#endif
-
     // First part is RUNNING_SUM
     GL_CHECK( glUniform1i ( u_stageLoc, MODE_RUNNING_SUM ) );
 
@@ -345,17 +323,17 @@ void ReductionPhase::reduce(int length)
 
         // Set the pass index
         GL_CHECK( glUniform1i ( u_passLoc,  u_pass) );
-        GL_CHECK( glUniform1i ( u_debugLoc, u_debug) );
         // Draw scene
         GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
 
 #ifdef _DEBUG
-        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-        printf("Pixels after pass %d:\n", i);
-        printLabels(mWidth, mHeight, pixels);
-//        char filename[50];
-//        sprintf(filename, "out%03d.tga", i);
-//        writeRawTgaImage(mWidth, mHeight, filename, pixels);
+{
+        char filename[50];
+        char text[50];
+        sprintf(filename, "out%03d.png", i);
+        sprintf(text, "Pixels after pass %d:\n", i);
+//        debugImage(text, filename);
+}
 #endif
 
         // Switch read and write texture
@@ -379,19 +357,23 @@ void ReductionPhase::reduce(int length)
         GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
 
 #ifdef _DEBUG
-        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-        printf("Pixels after pass %d:\n", i);
-//        printLabels(mWidth, mHeight, pixels);
-//        char filename[50];
-//        sprintf(filename, "out%03d.tga", i);
-//        writeRawTgaImage(mWidth, mHeight, filename, pixels);
+        char filename[50];
+        char text[50];
+        sprintf(filename, "out%03d.png", i);
+        sprintf(text, "Pixels after pass %d:\n", i);
+//        debugImage(text, filename);
 #endif
 
         // Switch read and write texture
         std::swap(mRead, mWrite);
     }
+}
 
-#ifdef _DEBUG
-    delete [] pixels;
-#endif
+void ReductionPhase::debugImage(const char *text, const char *filename)
+{
+    CImg<unsigned char> image(4, mWidth, mHeight, 1, 0);
+    GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, image.data()) );
+    printf("%s", text);
+    printLabels(mWidth, mHeight, image.data());
+    writeRawImage(mWidth, mHeight, filename, image);
 }

@@ -1,7 +1,8 @@
 #ifndef REDUCTIONPHASE_H
 #define REDUCTIONPHASE_H
 
-#include "tga.h"
+#include "CImg.h"
+using namespace cimg_library;
 #include "phase.h"
 
 /*!
@@ -61,8 +62,7 @@ public:
     GLint s_valuesLoc; /*!< Handle to sampler holding the label information */
 
     /// TODO: tga somewhere else?
-    TGA    *mTgaImage; /*!< Handle for the loaded tga image */
-    TGAData *mTgaData; /*!< Buffer holding the loaded image data */
+    CImg<unsigned char> mImage; /*!< Handle for the loaded image */
 
 // End Check
     // Texture to attach to the frambuffers
@@ -143,9 +143,8 @@ public:
     /*!
      \brief Runs the reduction algorithm
 
-     TODO: Cleanup the code and comments
      TODO: Write short explanation here?
-     TODO: refere to the general explanation and GLSL docu
+     TODO: refer to the general explanation and GLSL docu
 
      \return double The time (in ms) the computation took
     */
@@ -212,6 +211,13 @@ private:
      \param length Length of the row or column to be reduced
     */
     void reduce(int length);
+
+    void debugImage(const char * text, const char * filename);
 };
+
+/*!
+    @}
+*/
+
 
 #endif // REDUCTIONPHASE_H

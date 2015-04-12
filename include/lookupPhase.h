@@ -1,12 +1,12 @@
  
 #ifndef LOOKUPPHASE_H
 #define LOOKUPPHASE_H
-
-#include <stdio.h>
+#include "CImg.h"
+using namespace cimg_library;
 
 #include "phase.h"
-#include "tga.h"
 #include "getTime.h"
+#include <stdio.h>
 
 class LookupPhase: public Phase
 {
@@ -43,8 +43,7 @@ public:
 
     // Texture handle
     /// TODO: tga somewhere else?
-    TGA    *mTgaImage;
-    TGAData *mTgaData;
+    CImg<unsigned char> mImage;
 
     // Texture to attach to the frambuffers
     GLuint mTexReducedId;

@@ -1,3 +1,6 @@
+#include "CImg.h"
+using namespace cimg_library;
+
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
 
@@ -10,7 +13,6 @@ using std::endl;
 #include "getTime.h"
 #include "phase.h"
 #include "statsPhase.h"
-#include "tga.h"
 
 #ifdef _RPI
 #include "bcm_host.h"
@@ -36,25 +38,6 @@ struct ESContext
    /// EGL surface
    EGLSurface  eglSurface;
 } esContext;
-
-int loadTgaImage(TGA **image, TGAData *data, const char *filename)
-{
-    *image = TGAOpen(filename, "r");
-    data->flags = TGA_IMAGE_DATA | TGA_RGB;
-
-    if(!*image || (*image)->last != TGA_OK)
-    {
-        printf("Opening tga-file failed\n");
-        return (*image)->last;
-    }
-
-    if(TGAReadImage(*image, data) != TGA_OK)
-    {
-        printf("Failed to read tga-file\n");
-        return (*image)->last;
-    }
-    return TGA_OK;
-}
 
 #define EGL_CHECK(stmt) stmt
 
@@ -134,29 +117,18 @@ int main()
     GLuint fboId[2] ;
     StatsPhase statsPhase;
     statsPhase.mVertFilename = "quad.vert";
-    statsPhase.mFragFilename = "statsPhase.frag";
 
-    // Read TGA-file
-    TGA *tgaLabel = 0;
-    TGAData dataLabel;
-    loadTgaImage(&tgaLabel, &dataLabel, "testLabel.tga");
-
-    int width  = tgaLabel->hdr.width;
-    int height = tgaLabel->hdr.height;
-
-    TGA *tgaReduced = 0;
-    TGAData dataReduced;
-    loadTgaImage(&tgaReduced, &dataReduced, "testReduced.tga");
-
-    TGA *tgaOrig = 0;
-    TGAData dataOrig;
-    loadTgaImage(&tgaOrig, &dataOrig, "testOrig.tga");
-
+    // Read image-files
+    statsPhase.mImageLabel.assign("testLabel.png");
+    int width  = statsPhase.mImageLabel.width();
+    int height = statsPhase.mImageLabel.height();
+    statsPhase.mImageReduced.assign("testReduced.png");
+    statsPhase.mImageOrig.assign("testOrig.png");
+    statsPhase.mImageLabel.permute_axes("cxyz");
+    statsPhase.mImageReduced.permute_axes("cxyz");
+    statsPhase.mImageOrig.permute_axes("cxyz");
     statsPhase.mWidth  = width;
     statsPhase.mHeight = height;
-    statsPhase.mTgaLabel   = &dataLabel;
-    statsPhase.mTgaReduced = &dataReduced;
-    statsPhase.mTgaOrig    = &dataOrig;
 
     // initialize EGL-context
     initEGL(width, height);

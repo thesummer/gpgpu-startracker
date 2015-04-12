@@ -1,3 +1,6 @@
+#include "CImg.h"
+using namespace cimg_library;
+
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
 
@@ -10,7 +13,6 @@ using std::endl;
 #include "getTime.h"
 #include "phase.h"
 #include"labelPhase.h"
-#include "tga.h"
 
 #ifdef _RPI
 #include "bcm_host.h"
@@ -36,25 +38,6 @@ struct ESContext
    /// EGL surface
    EGLSurface  eglSurface;
 } esContext;
-
-int loadTgaImage(TGA **image, TGAData *data, const char *filename)
-{
-    *image = TGAOpen(filename, "r");
-    data->flags = TGA_IMAGE_DATA | TGA_RGB;
-
-    if(!*image || (*image)->last != TGA_OK)
-    {
-        printf("Opening tga-file failed\n");
-        return (*image)->last;
-    }
-
-    if(TGAReadImage(*image, data) != TGA_OK)
-    {
-        printf("Failed to read tga-file\n");
-        return (*image)->last;
-    }
-    return TGA_OK;
-}
 
 #define EGL_CHECK(stmt) stmt
 
@@ -136,17 +119,14 @@ int main()
     labelPhase.mVertFilename = "quad.vert";
     labelPhase.mFragFilename = "labelPhase.frag";
 
-    // Read TGA-file
-    TGA *tgaImage = 0;
-    TGAData imgData;
-    loadTgaImage(&tgaImage, &imgData, "test.tga");
 
-    int width  = tgaImage->hdr.width;
-    int height = tgaImage->hdr.height;
-
+    // Read PNG-file
+    labelPhase.mImage.assign("test.png");
+    int width  = labelPhase.mImage.width();
+    int height = labelPhase.mImage.height();
     labelPhase.mWidth  = width;
     labelPhase.mHeight = height;
-    labelPhase.mTgaData = &imgData;
+    labelPhase.mImage.permute_axes("cxyz");
 
     // initialize EGL-context
     initEGL(width, height);

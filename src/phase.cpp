@@ -1,12 +1,10 @@
+#include "phase.h"
 #include <fstream>
 #include <stdio.h>
 #include <iostream>
 using std::cout;
 using std::cerr;
 using std::endl;
-
-#include "phase.h"
-#include "tga.h"
 
 GLuint Phase::createSimpleTexture2D(GLsizei width, GLsizei height, GLubyte *data, GLint type)
 {
@@ -201,104 +199,35 @@ void Phase::checkOpenGLError(const char *stmt, const char *fname, int line)
     if(terminate) abort();
 }
 
-int Phase::writeTgaImage(int width, int height, char *filename, GLubyte *pixels)
+void Phase::writeImage(int width, int height, const char *filename, CImg<unsigned char> &image)
 {
-    TGA *image = TGAOpen(filename, "w");
-    if(!image || image->last != TGA_OK)
-    {
-        printf("Opening tga-file failed\n");
-        return image->last;
-    }
-
-    image->hdr.height = height;
-    image->hdr.width  = width;
-    image->hdr.alpha  = 8;
-    image->hdr.depth  = 32;
-    image->hdr.img_t  = 2;
-    image->hdr.id_len = 0;
-    image->hdr.vert   = 1;
-    image->hdr.horz   = 1;
-    image->hdr.x      = 0;
-    image->hdr.y      = 0;
-    image->hdr.map_entry = 0;
-    image->hdr.map_first = 0;
-    image->hdr.map_len   = 0;
-    image->hdr.map_t     = 0;
-
-    TGAData data = {0, 0, 0, TGA_IMAGE_DATA | TGA_RGB};
-    data.img_data = (tbyte*) malloc(4*sizeof(char) * width * height);
-
+    unsigned char * data = image.data();
     for(int i=0; i<(4*width*height); i+=4)
     {
-        unsigned test = *(unsigned*) &pixels[i];
+        unsigned test = *(unsigned*) &data[i];
         if( test == 0 )
         {
-            data.img_data[i+0] = 0;
-            data.img_data[i+1] = 0;
-            data.img_data[i+2] = 0;
-            data.img_data[i+3] = 255;
+            data[i+0] = 0;
+            data[i+1] = 0;
+            data[i+2] = 0;
+            data[i+3] = 255;
         }
         else
         {
-            data.img_data[i+0] = ( (5*pixels[i+0] + 7*pixels[i+1] + 1) * (pixels[i+2] + pixels[i+3]+1) )%256;
-            data.img_data[i+1] = ( (3*pixels[i+2] + 2*pixels[i+1] + 1) * (pixels[i+0] + pixels[i+3]+1) )%256;
-            data.img_data[i+2] = ( pixels[i+0] + pixels[i+1] + pixels[i+2] + pixels[i+3])%256;
-            data.img_data[i+3] = 255;
+            data[i+0] = ( (5*data[i+0] + 7*data[i+1] + 1) * (data[i+2] + data[i+3]+1) )%256;
+            data[i+1] = ( (3*data[i+2] + 2*data[i+1] + 1) * (data[i+0] + data[i+3]+1) )%256;
+            data[i+2] = ( data[i+0] + data[i+1] + data[i+2] + data[i+3])%256;
+            data[i+3] = 255;
         }
     }
-
-    if (TGAWriteImage(image, &data) != TGA_OK)
-    {
-        printf("Writing tga-file failed\n");
-        return image->last;
-    }
-    // Add footer for tga 2.0 files
-    fseek(image->fd, 0, SEEK_END);
-    fwrite("\0\0\0\0\0\0\0\0TRUEVISION-XFILE.\0", 1, 26, image->fd);
-    free(data.img_data);
-    TGAClose(image);
-
-    return TGA_OK;
+    image.permute_axes("yzcx");
+    image.save(filename);
 }
 
-int Phase::writeRawTgaImage(int width, int height, char *filename, GLubyte *pixels)
+void Phase::writeRawImage(int width, int height, const char *filename, CImg<unsigned char> &image)
 {
-    TGA *image = TGAOpen(filename, "w");
-    if(!image || image->last != TGA_OK)
-    {
-        printf("Opening tga-file failed\n");
-        return image->last;
-    }
-
-    image->hdr.height = height;
-    image->hdr.width  = width;
-    image->hdr.alpha  = 8;
-    image->hdr.depth  = 32;
-    image->hdr.img_t  = 2;
-    image->hdr.id_len = 0;
-    image->hdr.vert   = 1;
-    image->hdr.horz   = 1;
-    image->hdr.x      = 0;
-    image->hdr.y      = 0;
-    image->hdr.map_entry = 0;
-    image->hdr.map_first = 0;
-    image->hdr.map_len   = 0;
-    image->hdr.map_t     = 0;
-
-    TGAData data = {0, 0, 0, TGA_IMAGE_DATA | TGA_RGB};
-    data.img_data = pixels;
-
-    if (TGAWriteImage(image, &data) != TGA_OK)
-    {
-        printf("Writing tga-file failed\n");
-        return image->last;
-    }
-    // Add footer for tga 2.0 files
-    fseek(image->fd, 0, SEEK_END);
-    fwrite("\0\0\0\0\0\0\0\0TRUEVISION-XFILE.\0", 1, 26, image->fd);
-    TGAClose(image);
-
-    return 0;
+    image.permute_axes("yzcx");
+    image.save(filename);
 }
 
 void Phase::printLabels(int width, int height, GLubyte *pixels)

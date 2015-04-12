@@ -1,10 +1,12 @@
 #ifndef LABELPHASE_H
 #define LABELPHASE_H
 
+#include "CImg.h"
+using namespace cimg_library;
+
 #include <stdio.h>
 
 #include "phase.h"
-#include "tga.h"
 #include "getTime.h"
 
 /*!
@@ -62,9 +64,8 @@ public:
     GLint mSamplerLoc; /*!< Handle to the sampler s_texture */
 
     // Texture handle
-    /// TODO: tga somewhere else?
-    TGA    *mTgaImage; /*!< Handle for the loaded tga image */
-    TGAData *mTgaData; /*!< Buffer holding the loaded image data */
+    /// TODO: image somewhere else?
+    CImg<unsigned char> mImage;
 
     // Texture to attach to the frambuffers
     GLuint mTexOrigId; /*!< Handle to the texture which holdes the original image*/

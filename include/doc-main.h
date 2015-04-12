@@ -75,6 +75,7 @@
 
     @ref labeling
     @ref reduction
+    @ref stats
 */
 
 

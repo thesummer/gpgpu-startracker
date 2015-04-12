@@ -1,6 +1,8 @@
 #ifndef PHASE_H
 #define PHASE_H
 
+#include "CImg.h"
+using namespace cimg_library;
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
 #include <string>
@@ -113,7 +115,7 @@ public:
      \param pixels data array with RGBA array data of length 4*width*height
      \return int TGA_OK on success
     */
-    static int writeTgaImage(int width, int height, char *filename, GLubyte *pixels);
+    static void writeImage(int width, int height, const char *filename, CImg<unsigned char> &image);
     /*!
      \brief Writes the raw pixel values into a tga-file
 
@@ -127,7 +129,7 @@ public:
      \param pixels data array with RGBA array data of length 4*width*height
      \return int TGA_OK on success
     */
-    static int writeRawTgaImage(int width, int height, char *filename, GLubyte *pixels);
+    static void writeRawImage(int width, int height, const char *filename, CImg<unsigned char> &image);
 
     /*!
      \brief Simple function to print the values of labels as formatted text
@@ -167,7 +169,6 @@ public:
      \return int
     */
     static int logBase2(int n);
-
 };
 
 #endif // PHASE_H

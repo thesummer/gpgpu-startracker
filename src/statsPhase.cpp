@@ -1,3 +1,4 @@
+#include "statsPhase.h"
 #include <iostream>
 using std::cout;
 using std::cerr;
@@ -21,11 +22,10 @@ using std::endl;
 #define OFFSET 3.0
 #define SIZE 2
 
-#include "statsPhase.h"
 #include "getTime.h"
 
 StatsPhase::StatsPhase(int width, int height)
-    : mVertFilename("../glsl/quad.vert"), mFragFilename("../glsl/statsPhase.frag"),
+    : mVertFilename("../glsl/quad.vert"),
       mWidth(width), mHeight(height),
       mVertices {-1.0f, -1.0f, 0.0f,  // Position 0
                   0.0f,  0.0f,        // TexCoord 0
@@ -80,7 +80,7 @@ GLint StatsPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
     GL_CHECK( glVertexAttribPointer ( mProgFill.texCoordLoc, 2, GL_FLOAT,
                                       GL_FALSE, 5 * sizeof(GLfloat), &mVertices[3] ) );
 
-    mProgFill.s_fillLoc         = glGetUniformLocation( mProgFill.program ,  "s_fill" );
+    mProgFill.s_labelLoc         = glGetUniformLocation( mProgFill.program , "s_label" );
     mProgFill.u_texDimLoc       = glGetUniformLocation ( mProgFill.program , "u_texDimensions" );
     mProgFill.u_passLoc         = glGetUniformLocation ( mProgFill.program , "u_pass" );
     mProgFill.u_factorLoc       = glGetUniformLocation ( mProgFill.program , "u_factor" );
@@ -152,7 +152,7 @@ GLint StatsPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
     while( (1<<i) & bfUsedTextures) ++i;
 
     GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-    mTexLabelId = createSimpleTexture2D(mWidth, mHeight, mTgaLabel->img_data);
+    mTexLabelId = createSimpleTexture2D(mWidth, mHeight, mImageLabel.data());
     bfUsedTextures |= (1<<i);
     mTextureUnits[TEX_LABEL] = i;
     GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexLabelId) );
@@ -160,7 +160,7 @@ GLint StatsPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
     i = 0;
     while( (1<<i) & bfUsedTextures) ++i;
     GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-    mTexReducedId = createSimpleTexture2D(mWidth, mHeight, mTgaReduced->img_data);
+    mTexReducedId = createSimpleTexture2D(mWidth, mHeight, mImageReduced.data());
     bfUsedTextures |= (1<<i);
     mTextureUnits[TEX_REDUCED] = i;
     GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexReducedId) );
@@ -168,7 +168,7 @@ GLint StatsPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
     i = 0;
     while( (1<<i) & bfUsedTextures) ++i;
     GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-    mTexOrigId = createSimpleTexture2D(mWidth, mHeight, mTgaOrig->img_data);
+    mTexOrigId = createSimpleTexture2D(mWidth, mHeight, mImageOrig.data());
     bfUsedTextures |= (1<<i);
     mTextureUnits[TEX_ORIG] = i;
     GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexOrigId) );
@@ -245,14 +245,11 @@ double StatsPhase::run()
     }
 
 #ifdef _DEBUG
-    {
-        // Make the BYTE array, factor of 3 because it's RGBA.
-        printf("Pixels before run:\n");
-//        printLabels(mWidth, mHeight, mTgaLabel->img_data);
+{
         char filename[50];
-        sprintf(filename, "out0%03d.tga", 0);
-//        writeTgaImage(mWidth, mHeight, filename, mTgaLabel->img_data);
-    }
+        sprintf(filename, "out0%03d.png", 0);
+//        debugImage("Pixels before run:\n", filename);
+}
 #endif
     float factorX = 1.0, factorY = 1.0;
 
@@ -296,7 +293,7 @@ void StatsPhase::fillStage(float factorX, float factorY)
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
     GL_CHECK( glUniform2f ( mProgFill.u_texDimLoc, mWidth, mHeight) );
     // Set the sampler texture to use the texture containing the labels
-    GL_CHECK( glUniform1i (mProgFill.s_fillLoc, mTextureUnits[TEX_LABEL] ) );
+    GL_CHECK( glUniform1i (mProgFill.s_labelLoc, mTextureUnits[TEX_LABEL] ) );
     // Set the pass index
     GL_CHECK( glUniform1i ( mProgFill.u_passLoc,  0) );
     GL_CHECK( glUniform2f ( mProgFill.u_factorLoc, factorX, factorY ) );
@@ -305,17 +302,13 @@ void StatsPhase::fillStage(float factorX, float factorY)
     std::swap(mRead, mWrite);
 
 #ifdef _DEBUG
-    {
-        // Make the BYTE array, factor of 3 because it's RGBA.
-        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-        printf("Pixels after pass %d:\n", 0);
-        printLabels(mWidth, mHeight, pixels);
+{
         char filename[50];
-        sprintf(filename, "outF%03d.tga", 0);
-        writeTgaImage(mWidth, mHeight, filename, pixels);
-        delete [] pixels;
-    }
+        char text[50];
+        sprintf(filename, "outF%03d.png", 0);
+        sprintf(text, "Pixels after pass %d:\n", 0);
+        debugImage(text, filename);
+}
 #endif
 
     for(int i=1; i<SIZE; ++i)
@@ -323,7 +316,7 @@ void StatsPhase::fillStage(float factorX, float factorY)
         // Bind the FBO to write to
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
         // Set the sampler texture to use the texture containing the labels
-        GL_CHECK( glUniform1i ( mProgFill.s_fillLoc, mTextureUnits[TEX_PIPO+mRead] ) );
+        GL_CHECK( glUniform1i ( mProgFill.s_labelLoc, mTextureUnits[TEX_PIPO+mRead] ) );
         // Set the pass index
         GL_CHECK( glUniform1i ( mProgFill.u_passLoc,  i) );
         //    GL_CHECK( glUniform1f ( u_factorLoc, u_factor) );
@@ -332,17 +325,13 @@ void StatsPhase::fillStage(float factorX, float factorY)
         std::swap(mRead, mWrite);
 
 #ifdef _DEBUG
-        {
-            // Make the BYTE array, factor of 3 because it's RGBA.
-            GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-            GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-            printf("Pixels after fill pass %d:\n", i);
-            printLabels(mWidth, mHeight, pixels);
+{
             char filename[50];
-            sprintf(filename, "outF%03d.tga", i);
-            writeTgaImage(mWidth, mHeight, filename, pixels);
-            delete [] pixels;
-        }
+            char text[50];
+            sprintf(filename, "outF%03d.png", i);
+            sprintf(text, "Pixels after fill pass %d:\n", i);
+            debugImage(text, filename);
+}
 #endif
 
     }
@@ -391,15 +380,11 @@ void StatsPhase::countStage(float factorX, float factorY, int offset)
 
 #ifdef _DEBUG
         {
-            // Make the BYTE array, factor of 3 because it's RGBA.
-            GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-            GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-            printf("Pixels after count %d:\n", i);
-            printLabels(mWidth, mHeight, pixels);
             char filename[50];
-            sprintf(filename, "outC%03d.tga", i+1);
-            writeTgaImage(mWidth, mHeight, filename, pixels);
-            delete [] pixels;
+            char text[50];
+            sprintf(filename, "outC%03d.png", i+1);
+            sprintf(text, "Pixels after count %d:\n", i);
+            debugImage(text, filename);
         }
 #endif
 
@@ -417,16 +402,9 @@ void StatsPhase::countStage(float factorX, float factorY, int offset)
 
 #ifdef _DEBUG
     {
-        // Make the BYTE array, factor of 3 because it's RGBA.
-        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-        printf("Pixels after save:\n");
-        printLabels(mWidth, mHeight, pixels);
-//        printSignedLabels(mWidth, mHeight, pixels);
         char filename[50];
-        sprintf(filename, "outS.tga");
-        writeTgaImage(mWidth, mHeight, filename, pixels);
-        delete [] pixels;
+        sprintf(filename, "outS.png");
+        debugImage("Pixels after save:\n", filename);
     }
 #endif
 
@@ -442,18 +420,9 @@ void StatsPhase::countStage(float factorX, float factorY, int offset)
 
 #ifdef _DEBUG
     {
-        // Make the BYTE array, factor of 3 because it's RGBA.
-        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-        printf("Pixels after merge:\n");
-        //        if(stage == STAGE_COUNT)
-        printLabels(mWidth, mHeight, pixels);
-        //        else
-//        printSignedLabels(mWidth, mHeight, pixels);
         char filename[50];
-        sprintf(filename, "outM.tga");
-        writeTgaImage(mWidth, mHeight, filename, pixels);
-        delete [] pixels;
+        sprintf(filename, "outM.png");
+        debugImage("Pixels after merge:\n", filename);
     }
 #endif
 
@@ -499,16 +468,9 @@ void StatsPhase::centroidingStage(float factorX, float factorY, int coordinate, 
 
 #ifdef _DEBUG
     {
-        // Make the BYTE array, factor of 3 because it's RGBA.
-        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-        printf("Pixels after Init:\n");
-        printSignedLabels(mWidth, mHeight, pixels);
-//        printLabels(mWidth, mHeight, pixels);
         char filename[50];
-        sprintf(filename, "outS1.tga");
-        writeTgaImage(mWidth, mHeight, filename, pixels);
-        delete [] pixels;
+        sprintf(filename, "outS1.png");
+        debugImage("Pixels after Init:\n", filename);
     }
 #endif
 
@@ -527,15 +489,11 @@ void StatsPhase::centroidingStage(float factorX, float factorY, int coordinate, 
 
 #ifdef _DEBUG
         {
-            // Make the BYTE array, factor of 3 because it's RGBA.
-            GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-            GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-            printf("Pixels after count %d:\n", i);
-            printSignedLabels(mWidth, mHeight, pixels);
             char filename[50];
-            sprintf(filename, "outC%03d.tga", i);
-            writeTgaImage(mWidth, mHeight, filename, pixels);
-            delete [] pixels;
+            char text[50];
+            sprintf(filename, "outC%03d.png", i);
+            sprintf(text, "Pixels after count %d:\n", i);
+            debugImage(text, filename);
         }
 #endif
     }
@@ -551,16 +509,9 @@ void StatsPhase::centroidingStage(float factorX, float factorY, int coordinate, 
 
 #ifdef _DEBUG
     {
-        // Make the BYTE array, factor of 3 because it's RGBA.
-        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-        printf("Pixels after save:\n");
-//        printLabels(mWidth, mHeight, pixels);
-        printSignedLabels(mWidth, mHeight, pixels);
         char filename[50];
-        sprintf(filename, "outS.tga");
-        writeTgaImage(mWidth, mHeight, filename, pixels);
-        delete [] pixels;
+        sprintf(filename, "outS.png");
+        debugImage("Pixels after save:\n", filename);
     }
 #endif
 
@@ -576,18 +527,9 @@ void StatsPhase::centroidingStage(float factorX, float factorY, int coordinate, 
 
 #ifdef _DEBUG
     {
-        // Make the BYTE array, factor of 3 because it's RGBA.
-        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
-        printf("Pixels after merge:\n");
-        //        if(stage == STAGE_COUNT)
-        printLabels(mWidth, mHeight, pixels);
-        //        else
-        printSignedLabels(mWidth, mHeight, pixels);
         char filename[50];
-        sprintf(filename, "outM.tga");
-        writeTgaImage(mWidth, mHeight, filename, pixels);
-        delete [] pixels;
+        sprintf(filename, "outM.png");
+        debugImage("Pixels after merge:\n", filename);
     }
 #endif
 
@@ -602,4 +544,13 @@ void StatsPhase::centroidingStage(float factorX, float factorY, int coordinate, 
 
     GL_CHECK( glDisableVertexAttribArray ( mProgCentroid.positionLoc ) );
     GL_CHECK( glDisableVertexAttribArray ( mProgCentroid.texCoordLoc ) );
+}
+
+void StatsPhase::debugImage(const char *text, const char *filename)
+{
+    CImg<unsigned char> image(4, mWidth, mHeight, 1, 0);
+    GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, image.data()) );
+    printf("%s", text);
+    printLabels(mWidth, mHeight, image.data());
+    writeImage(mWidth, mHeight, filename, image);
 }

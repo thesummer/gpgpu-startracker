@@ -1,15 +1,16 @@
 #ifndef OGLES_H
 #define OGLES_H
+#include "CImg.h"
+using namespace cimg_library;
+#include "phase.h"
+#include "labelPhase.h"
+#include "reductionPhase.h"
+#include "statsPhase.h"
 
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
 
 #include<string>
-#include "phase.h"
-#include "labelPhase.h"
-#include "reductionPhase.h"
-#include "statsPhase.h"
-#include "tga.h"
 
 /*!
  \brief Class which manages all the OpenGL handling for gpulabeling
@@ -74,12 +75,12 @@ public:
      \brief Constructor which creates object and loads inital file
 
      It creates and initializes the EGLContext the OpenGL-structures
-     and the Phase-Objects. The file \param tgaFilename is copied to a
+     and the Phase-Objects. The file \param imageFilename is copied to a
      texture and will be used as a starting point for the computation.
 
-     \param tgaFilename Path to the file which is to be evaluated
+     \param imageFilename Path to the file which is to be evaluated
     */
-    Ogles(std::string tgaFilename);
+    Ogles(std::string imageFilename);
 
     /*!
      \brief Function which does all the computation
@@ -108,16 +109,6 @@ private:
     int initEGL(int width, int height);
 
     /*!
-     \brief Loads a tgaImage from file into the TGAData structure
-
-     \param image Handle to the TGA-structure to be created
-     \param data  Returns pointer to the actual image data
-     \param filename Name of the tga file to load
-     \return int Returns TGA_OK on success and the error code otherwise
-    */
-    int loadTgaImage(TGA **image, TGAData *data, const char *filename);
-
-    /*!
      \brief Checks if the EGL error flag is set and prints an error message
 
      This function is mainly called by the debug macro EGL_CHECK when
@@ -136,8 +127,7 @@ private:
     unsigned mUsedTexUnits; /*!< Bitfield of used texture units */
 
     GLuint mFboId[2] ; /*!< Handles to the two framebuffer objects*/
-    TGAData mImgData; /*!< Handle to the data from the loaded tga image*/
-
+    CImg<unsigned char> mImage; /*!< Handle to the loaded image*/
 };
 
 #endif // OGLES_H

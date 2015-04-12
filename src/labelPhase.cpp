@@ -1,3 +1,5 @@
+#include "labelPhase.h"
+
 #include <iostream>
 using std::cerr;
 using std::endl;
@@ -8,7 +10,6 @@ using std::endl;
 #define STAGE_INITIAL_LABELING   0
 #define STAGE_HIGHEST_LABEL      1
 
-#include "labelPhase.h"
 
 LabelPhase::LabelPhase(int width, int height)
     : mVertFilename("../glsl/quad.vert"), mFragFilename("../glsl/labelPhase.frag"),
@@ -89,7 +90,7 @@ GLint LabelPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
     while( (1<<i) & bfUsedTextures) ++i;
 
     GL_CHECK( glActiveTexture( GL_TEXTURE0 + i) );
-    mTexOrigId = createSimpleTexture2D(mWidth, mHeight, mTgaData->img_data);
+    mTexOrigId = createSimpleTexture2D(mWidth, mHeight, mImage.data());
     bfUsedTextures |= (1<<i);
     mTextureUnits[TEX_ORIG] = i;
     GL_CHECK( glBindTexture(GL_TEXTURE_2D, mTexOrigId) );
@@ -193,15 +194,13 @@ double LabelPhase::run()
 
 #ifdef _DEBUG
 {
-        // Make the BYTE array, factor of 3 because it's RGBA.
-        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+        CImg<unsigned char> image(4, mWidth, mHeight, 1, 0);
+        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, image.data()) );
         printf("Pixels after pass %d:\n", 0);
-        printLabels(mWidth, mHeight, pixels);
+        printLabels(mWidth, mHeight, image.data());
         char filename[50];
-        sprintf(filename, "outl%03d.tga", 0);
-        writeTgaImage(mWidth, mHeight, filename, pixels);
-        delete [] pixels;
+        sprintf(filename, "outl%03d.png", 0);
+        writeImage(mWidth, mHeight, filename, image);
 }
 #endif
 
@@ -233,14 +232,13 @@ double LabelPhase::run()
 #ifdef _DEBUG
 {
         // Make the BYTE array, factor of 3 because it's RGBA.
-        GLubyte* pixels = new GLubyte[4*mWidth*mHeight];
-        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels) );
+        CImg<unsigned char> image(4, mWidth, mHeight, 1, 0);
+        GL_CHECK( glReadPixels(0, 0, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, image.data()) );
         printf("Pixels after pass %d:\n", i);
-        printLabels(mWidth, mHeight, pixels);
+        printLabels(mWidth, mHeight, image.data());
         char filename[50];
-        sprintf(filename, "outl%03d.tga", i);
-        writeTgaImage(mWidth, mHeight, filename, pixels);
-        delete [] pixels;
+        sprintf(filename, "outl%03d.png", i);
+        writeImage(mWidth, mHeight, filename, image);
 }
 #endif
 
