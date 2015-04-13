@@ -124,6 +124,9 @@ int main()
     int height = statsPhase.mImageLabel.height();
     statsPhase.mImageReduced.assign("testReduced.png");
     statsPhase.mImageOrig.assign("testOrig.png");
+    statsPhase.mImageLabel.mirror("y");
+    statsPhase.mImageReduced.mirror("y");
+    statsPhase.mImageLabel.mirror("y");
     statsPhase.mImageLabel.permute_axes("cxyz");
     statsPhase.mImageReduced.permute_axes("cxyz");
     statsPhase.mImageOrig.permute_axes("cxyz");

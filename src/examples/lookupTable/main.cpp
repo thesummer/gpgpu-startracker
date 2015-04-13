@@ -119,6 +119,7 @@ int main()
     int height = lookupPhase.mImage.height();
     lookupPhase.mTexWidth = width;
     lookupPhase.mTexHeight = height;
+    lookupPhase.mImage.mirror("y");
     lookupPhase.mImage.permute_axes("cxyz");
 
     // initialize EGL-context

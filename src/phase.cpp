@@ -232,9 +232,9 @@ void Phase::writeRawImage(int width, int height, const char *filename, CImg<unsi
 
 void Phase::printLabels(int width, int height, GLubyte *pixels)
 {
-    for(int i=0; i<height; i++)
+    for(int i=height-1; i>=0; --i) // Start with top-most line
     {
-        for(int j=0; j<width; j++)
+        for(int j=0; j<width; ++j)
         {
             int index = 4*(i*width + j);
 //            printf("%04x %04x | ", *(GLushort*) (pixels+index), *(GLushort*) (pixels+index+2) );

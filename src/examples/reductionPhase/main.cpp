@@ -124,6 +124,7 @@ int main()
     int height = reductionPhase.mImage.height();
     reductionPhase.mWidth  = width;
     reductionPhase.mHeight = height;
+    reductionPhase.mImage.mirror("y");
     reductionPhase.mImage.permute_axes("cxyz");
 
     // initialize EGL-context

@@ -126,6 +126,7 @@ int main()
     int height = labelPhase.mImage.height();
     labelPhase.mWidth  = width;
     labelPhase.mHeight = height;
+    labelPhase.mImage.mirror("y");
     labelPhase.mImage.permute_axes("cxyz");
 
     // initialize EGL-context

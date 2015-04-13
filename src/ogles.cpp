@@ -60,9 +60,10 @@ Ogles::Ogles(std::string imageFilename)
 
     // Read image-file
     mImage.assign(imageFilename.c_str());
-
     mWidth  = mImage.width();
     mHeight = mImage.height();
+    mImage.mirror("y");          //OpenGL-textures start in the bottom left corner (not the top-left)
+    mImage.permute_axes("cxyz"); //CImg stores the image data planar -> convert it to interleaved RGB for texture
 
     mLabelPhase.mWidth  = mWidth;
     mLabelPhase.mHeight = mHeight;
