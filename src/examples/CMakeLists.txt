@@ -1,5 +1,5 @@
 add_subdirectory(labelPhase)
 add_subdirectory(reductionPhase)
-add_subdirectory(lookupTable)
+#add_subdirectory(lookupTable)
 add_subdirectory(statsPhase)
 add_subdirectory(testPrecision)
