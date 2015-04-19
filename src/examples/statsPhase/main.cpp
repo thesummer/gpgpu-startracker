@@ -126,7 +126,7 @@ int main()
     statsPhase.mImageOrig.assign("testOrig.png");
     statsPhase.mImageLabel.mirror("y");
     statsPhase.mImageReduced.mirror("y");
-    statsPhase.mImageLabel.mirror("y");
+    statsPhase.mImageOrig.mirror("y");
     statsPhase.mImageLabel.permute_axes("cxyz");
     statsPhase.mImageReduced.permute_axes("cxyz");
     statsPhase.mImageOrig.permute_axes("cxyz");
