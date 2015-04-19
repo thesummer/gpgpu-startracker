@@ -1,4 +1,3 @@
-
 /*!
     \ingroup stats
     @{
@@ -99,6 +98,8 @@ void main()
         gl_FragColor = pack2shorts( (cornerX.xy+cornerY.xy+cornerXY.xy) / dot(mask, mask) ) * result;
     }
 }
+
+
 /*!
     @}
 */

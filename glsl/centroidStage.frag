@@ -1,3 +1,7 @@
+/*!
+    \ingroup stats
+    @{
+*/
 
 //////////////////////////////  BEGIN SHADER //////////////////////////
 
@@ -10,6 +14,15 @@ uniform int   u_pass;
 uniform int   u_stage;
 uniform float u_savingOffset;
 uniform vec2  u_factor;
+
+/*!
+ * Last stage of the statistics computation
+ *
+ * @author Jan Sommer
+ * @date 2014
+ * @namespace GLSL
+ * @class centroidingShader
+ */
 
 #define STAGE_CENTROIDING   2
 #define STAGE_BLEND         3
@@ -109,3 +122,8 @@ void main()
 
     }
 }
+
+
+/*!
+    @}
+*/
