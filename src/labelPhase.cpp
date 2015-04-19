@@ -241,8 +241,6 @@ double LabelPhase::run()
         writeImage(mWidth, mHeight, filename, image);
 }
 #endif
-
-        // Switch read and write texture
     }
 
     GL_CHECK( glDisableVertexAttribArray ( mPositionLoc ) );

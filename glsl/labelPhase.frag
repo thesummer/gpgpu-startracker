@@ -120,17 +120,17 @@ void main()
         // Find max yValue from neighbors
         float maxY = max( max(yValues[0], yValues[1]), max(yValues[2], yValues[3]) );
 
-        // Find the pair which belongs to the most bottom-right non-zero pixel
-        // find most bottom pixels
+        // Find the pair which belongs to the most top-right non-zero pixel
+        // find most top pixels
         vec4 mask = step(maxY, yValues);
 
-        // Set x-Values which are not in the bottom-most row to 0
+        // Set x-Values which are not in the top-most row to 0
         xValues *= mask;
 
         // Find max xValue from remaining xValues
         float maxX = max( max(xValues[0], xValues[1]), max(xValues[2], xValues[3]) );
 
-        // Complete mask and compute final x- and y-coordinate of most bottom-right pixel
+        // Complete mask and compute final x- and y-coordinate of most top-right pixel
         mask *= step(maxX, xValues);
         maxX = dot(mask, xValues) / dot(mask, mask);
         maxY = dot(mask, yValues) / dot(mask, mask);
