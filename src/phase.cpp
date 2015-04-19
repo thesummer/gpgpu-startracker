@@ -221,12 +221,14 @@ void Phase::writeImage(int width, int height, const char *filename, CImg<unsigne
         }
     }
     image.permute_axes("yzcx");
+    image.mirror("y");
     image.save(filename);
 }
 
 void Phase::writeRawImage(int width, int height, const char *filename, CImg<unsigned char> &image)
 {
     image.permute_axes("yzcx");
+    image.mirror("y");
     image.save(filename);
 }
 
