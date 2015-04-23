@@ -37,6 +37,8 @@ void main()
         vec2  curFill   = unpack2shorts( texture2D( s_fill, v_texCoord ) );
         vec2  curCoord  = tex2imgCoord(v_texCoord);
 
+        // Initialize the pixel. Copy the luminance value from the original image and
+        // set the inital count to 1 if curLabel == curFill
         if(u_pass == -1)
         {
             float luminance = texture2D( s_orig, v_texCoord ).r * f255 ;
@@ -45,6 +47,10 @@ void main()
             return;
         }
 
+        // The whole statsPhase is run multiple times with different factors in x- and y-direction
+        // However, to avoid overlabs of the tiles an offset of ONE has to be applied if factor is != (1.0, 1.0)
+        // The following basically checks if the pixel next to it in the respective direction is the root pixel
+        // and if yes assigns it's label to the current pixel (if it's not already the same)
         vec2 offset = clamp(-u_factor, ZERO, ONE);
         if( all(equal( curCoord+ONE - offset , curFill )) )
         {
@@ -62,11 +68,11 @@ void main()
         cornerY.zw  = unpack2shorts( texture2D( s_result, img2texCoord( curCoord - u_factor * vec2(ZERO, twoPow) ) ) );
         cornerXY.zw = unpack2shorts( texture2D( s_result, img2texCoord( curCoord - u_factor * vec2(twoPow, twoPow))) );
 
-        float isEqual = float( all(equal(cornerX.xy, curLabel) ) );
+        float isEqual = float( all(equal(cornerX.xy, curFill) ) );
         curCount += isEqual * cornerX.zw;
-        isEqual = float( all(equal(cornerY.xy, curLabel) ) );
+        isEqual = float( all(equal(cornerY.xy, curFill) ) );
         curCount += isEqual * cornerY.zw;
-        isEqual = float( all(equal(cornerXY.xy, curLabel) ) );
+        isEqual = float( all(equal(cornerXY.xy, curFill) ) );
         curCount += isEqual * cornerXY.zw;
 
         gl_FragColor = pack2shorts( curCount );
