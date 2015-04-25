@@ -67,6 +67,23 @@
    Centroiding stage
    =================
 
+    The centroiding stage operates the same way as the counting stage, but collects different data.
+    For the weighted centroiding the sum is created after the following formula:
 
+    s_x = sum(x_i * p_i)
+
+    s_y = sum(y_i * p_i)
+
+    with x_i and y_i being the relative position of the the ith pixel of a label with respect to the root pixel and with p_i being the luminance value of the ith pixel.
+    However, due to the multiplication, the sum could easily exceed the 16bit integer range used in the counting stage. Therefore 3 bytes are used per pixel to allow for 24 bit integers
+    with the downside that the centroiding stage has to be executed twice, once for s_x and once for s_y.
+
+    The results of both runs are then stored in the result of the \ref reduction in a similar manner as in the counting stage, but with different offsets.
+    An impression of the final combined results of all stages is shown in Figure 3 for the intial example of \ref reduction. In the bottom-left area results of the \ref reduction act as a 2d-list
+    of all extracted star spots a few columns to the left the results of the counting stage are aligned in the same layout, follwing by the results of the
+    computation of the centroiding sum in x- and y-direction. In real examples the area necessary to download from the graphics memory in order to use
+    the statistics for further processing will be much smaller than the whole image as it would only be a small area around the lower left corner of the image.
+
+    @image html stats-results.svg "Figure 3 Final results of the Stats Phase: Left Initial Image from the \ref labeling, Right: Layout of the statistics result"
 
 */

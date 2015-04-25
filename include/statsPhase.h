@@ -81,23 +81,23 @@ public:
     */
     struct
     {
-        std::string filename; /*!< TODO */
-        GLuint program; /*!< TODO */
+        std::string filename; /*!< Filename of the fragment shader */
+        GLuint program; /*!< Handle to the program object */
         // Sampler locations
-        GLint s_labelLoc; /*!< TODO */
-        GLint s_fillLoc; /*!< TODO */
-        GLint s_resultLoc; /*!< TODO */
-        GLint s_origLoc; /*!< TODO */
+        GLint s_labelLoc; /*!< Handle holding the texture with the results from \ref labeling */
+        GLint s_fillLoc; /*!< Handle holding the texture with the results of the filling stage */
+        GLint s_resultLoc; /*!< Handle holding the texture with the current intermediate results of the centroiding stage */
+        GLint s_origLoc; /*!< Handle holding the texture with the original image */
         // Uniform locations
-        GLint u_texDimLoc; /*!< TODO */
-        GLint u_passLoc; /*!< TODO */
-        GLint u_stageLoc; /*!< TODO */
-        GLint u_savingOffsetLoc; /*!< TODO */
-        GLint u_factorLoc; /*!< TODO */
+        GLint u_texDimLoc; /*!< Handle to the uniform u_texDimensions */
+        GLint u_passLoc; /*!< Handle to the uniform u_pass*/
+        GLint u_stageLoc; /*!< Handle to the uniform u_stage*/
+        GLint u_savingOffsetLoc; /*!< Handle to the uniform u_savingOffset. Holds the column from where to write the results*/
+        GLint u_factorLoc; /*!< Handle to the uniform u_factor */
         // Attribute locations
-        GLint  positionLoc; /*!< TODO */
-        GLint  texCoordLoc; /*!< TODO */
-    } mProgCentroid; /*!< TODO */
+        GLint  positionLoc; /*!< Handle for the attribute a_position*/
+        GLint  texCoordLoc; /*!< Handle for the attribute a_texCoord */
+    } mProgCentroid;
 
     int mWidth; /*!< Width of the scene*/
     int mHeight; /*!< Height of the scene*/
@@ -107,7 +107,6 @@ public:
     GLushort mIndices[6]; /*!< Indices for the quad scene*/
 
     // Texture handle
-    /// TODO: tga somewhere else?
     CImg<unsigned char>  mImageLabel; /*!< Buffer holding the data with result of labeling phase */
     CImg<unsigned char>  mImageReduced; /*!< Buffer holding the data with result of reduction phase*/
     CImg<unsigned char>  mImageOrig; /*!< Buffer holding the data of the original image*/
