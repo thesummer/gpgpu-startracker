@@ -35,5 +35,3 @@ file(GLOB RES_FILES glsl/*.frag glsl/*.vert glsl/*.glsl)
 FILE(GLOB gpulabeling_HEADER include/*.h)
 
 add_subdirectory(src)
-
-
