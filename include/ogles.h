@@ -22,6 +22,7 @@ using namespace cimg_library;
 class Ogles
 {
 public:
+
     /*!
      \brief Keeps all handles necessary to create an EGLContext
 
@@ -57,13 +58,12 @@ public:
     /*!
      \brief Constructor
 
-     Hasn't been used in a long time, so it probably won't work atm.
-     TODO: Either update the constructor or remove it.
+     Minimal constructor Initialization has to be done manually afterwards
 
      \param width
      \param height
     */
-    Ogles(int width, int height);
+    Ogles(int width = 0, int height = 0);
 
     /*!
      \brief Destructor
@@ -91,7 +91,13 @@ public:
     */
     void run();
 
+    void loadImageFromFile(std::string imageFilename, bool updateTexture = true);
+
+    bool isInitialized();
+
 private:
+    void initialize();
+
     /*!
      \brief Initializes an EGLContext
 
@@ -122,12 +128,13 @@ private:
     */
     void checkEGLError(const char* stmt, const char* fname, int line);
 
+
     int mWidth; /*!< Width of the scene */
     int mHeight; /*!< Height of the scene*/
     unsigned mUsedTexUnits; /*!< Bitfield of used texture units */
+    bool mIsInitialized;
 
     GLuint mFboId[2] ; /*!< Handles to the two framebuffer objects*/
-    CImg<unsigned char> mImage; /*!< Handle to the loaded image*/
 };
 
 #endif // OGLES_H

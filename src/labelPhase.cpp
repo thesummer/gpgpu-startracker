@@ -100,6 +100,12 @@ GLint LabelPhase::initIndependent(GLuint fbos[], GLuint &bfUsedTextures)
     return init(fbos, bfUsedTextures);
 }
 
+void LabelPhase::updateOrigTexture()
+{
+    GL_CHECK( glBindTexture ( GL_TEXTURE_2D, mTexOrigId ) );
+    GL_CHECK( glTexImage2D ( GL_TEXTURE_2D, 0, GL_RGBA, mWidth, mHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, mImage.data()) );
+}
+
 GLuint LabelPhase::getOrigTexture()
 {
     return mTexOrigId;

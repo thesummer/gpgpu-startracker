@@ -4,6 +4,7 @@
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
 
+#include <stdexcept>
 #include <fstream>
 #include <iostream>
 using std::cout;
@@ -25,20 +26,10 @@ using std::endl;
 #endif
 
 Ogles::Ogles(int width, int height)
-    :mLabelPhase(width, height), mWidth(width), mHeight(height), mUsedTexUnits(0)
+    :mLabelPhase(width, height), mWidth(width), mHeight(height), mUsedTexUnits(0), mIsInitialized(false)
 {
- /// TODO: update constructor
     // Initialize structs to 0
     esContext = {};
-
-    // initialize EGL-context
-    initEGL(width, height);
-
-    // initialize the 2 frambuffers for ping-pong method
-    GL_CHECK( glGenFramebuffers(2, mFboId) );
-
-//    mLabelPhase.init(mFboId);
-//    mReductionPhase.initIndependent(mFboId, mUsedTexUnits);
 }
 
 Ogles::~Ogles()
@@ -53,39 +44,17 @@ Ogles::~Ogles()
 }
 
 Ogles::Ogles(std::string imageFilename)
-    :mLabelPhase(0, 0), mUsedTexUnits(0)
+    :mLabelPhase(0, 0), mUsedTexUnits(0), mIsInitialized(false)
 {
     // Initialize esContext to 0
     esContext = {};
 
     // Read image-file
-    mImage.assign(imageFilename.c_str());
-    mWidth  = mImage.width();
-    mHeight = mImage.height();
-    mImage.mirror("y");          //OpenGL-textures start in the bottom left corner (not the top-left)
-    mImage.permute_axes("cxyz"); //CImg stores the image data planar -> convert it to interleaved RGB for texture
+    loadImageFromFile(imageFilename, false);
 
-    mLabelPhase.mWidth  = mWidth;
-    mLabelPhase.mHeight = mHeight;
+    initialize();
 
-    // initialize EGL-context
-    initEGL(mWidth, mHeight);
-
-    // initialize the 2 frambuffers for ping-pong method
-    GL_CHECK( glGenFramebuffers(2, mFboId) );
-
-    if(!mLabelPhase.initIndependent(mFboId, mUsedTexUnits) )
-        exit(1);
-
-    mReductionPhase.mWidth   = mWidth;
-    mReductionPhase.mHeight  = mHeight;
-    if (!mReductionPhase.init(mFboId, mUsedTexUnits) )
-        exit(1);
-
-    mStatsPhase.mWidth   = mWidth;
-    mStatsPhase.mHeight  = mHeight;
-    if (!mStatsPhase.init(mFboId, mUsedTexUnits) )
-        exit(1);
+    mIsInitialized = true;
 }
 
 void Ogles::run()
@@ -93,6 +62,16 @@ void Ogles::run()
     double startTime, endTime;
     double labelTime, reductionTime;
     double statsTime;
+
+    if(mLabelPhase.mImage.is_empty())
+    {
+        throw std::runtime_error(std::string("OGLES: Tried to run extraction on empty image"));
+    }
+
+    if(!mIsInitialized)
+    {
+        initialize();
+    }
 
     startTime = getRealTime();
 
@@ -129,6 +108,51 @@ void Ogles::run()
     cout << "Total time: " << (endTime-startTime)*1000 << endl;
 }
 
+void Ogles::loadImageFromFile(std::string imageFilename, bool updateTexture)
+{
+    mLabelPhase.mImage.assign(imageFilename.c_str());
+    mWidth  = mLabelPhase.mImage.width();
+    mHeight = mLabelPhase.mImage.height();
+    mLabelPhase.mImage.mirror("y");          //OpenGL-textures start in the bottom left corner (not the top-left)
+    mLabelPhase.mImage.permute_axes("cxyz"); //CImg stores the image data planar -> convert it to interleaved RGB for texture
+
+    mLabelPhase.mWidth  = mWidth;
+    mLabelPhase.mHeight = mHeight;
+
+    if(updateTexture)
+    {
+        mLabelPhase.updateOrigTexture();
+    }
+}
+
+bool Ogles::isInitialized()
+{
+    return mIsInitialized;
+}
+
+void Ogles::initialize()
+{
+    // initialize EGL-context
+    initEGL(mWidth, mHeight);
+
+    // initialize the 2 frambuffers for ping-pong method
+    GL_CHECK( glGenFramebuffers(2, mFboId) );
+
+    if(!mLabelPhase.initIndependent(mFboId, mUsedTexUnits) )
+        exit(1);
+
+    mReductionPhase.mWidth   = mWidth;
+    mReductionPhase.mHeight  = mHeight;
+    if (!mReductionPhase.init(mFboId, mUsedTexUnits) )
+        exit(1);
+
+    mStatsPhase.mWidth   = mWidth;
+    mStatsPhase.mHeight  = mHeight;
+    if (!mStatsPhase.init(mFboId, mUsedTexUnits) )
+        exit(1);
+
+    mIsInitialized = true;
+}
 
 
 int Ogles::initEGL(int width, int height)

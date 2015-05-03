@@ -119,6 +119,7 @@ public:
     */
     GLint initIndependent(GLuint fbos[], GLuint &bfUsedTextures);
 
+    void updateOrigTexture();
 
     /*!
      \brief Return the handle to the texture holding the original image
