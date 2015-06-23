@@ -123,6 +123,9 @@ public:
     int mWrite; /*!< Holds the index of the FBO/texture which is written to */
     int mRead; /*!< Holds the index of the texture which is read from */
 
+    unsigned mStatsAreaWidth;  /*!< Width of the area extracted at the end of the statistics computation */
+    unsigned mStatsAreaHeight; /*!< Height of the area extracted at the end of the statistics computation */
+
     /*!
      \brief Constructor
 

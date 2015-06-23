@@ -26,7 +26,7 @@ using std::endl;
 
 StatsPhase::StatsPhase(int width, int height)
     : mVertFilename("../glsl/quad.vert"),
-      mWidth(width), mHeight(height),
+      mWidth(width), mHeight(height),mStatsAreaWidth(width), mStatsAreaHeight(height),
       mVertices {-1.0f, -1.0f, 0.0f,  // Position 0
                   0.0f,  0.0f,        // TexCoord 0
                  -1.0f,  1.0f, 0.0f,  // Position 1
@@ -276,6 +276,11 @@ double StatsPhase::run()
     centroidingStage(factorX, factorY,CENTROID_X_COORD, 2*OFFSET);
     centroidingStage(factorX, factorY, CENTROID_Y_COORD, 3*OFFSET);
 
+    // Download the area of the final texture with the results back to program memory
+    unsigned char data[4*mStatsAreaWidth*mStatsAreaHeight];
+    GL_CHECK( glReadPixels(0, 0, mStatsAreaWidth, mStatsAreaHeight, GL_RGBA, GL_UNSIGNED_BYTE, data) );
+
+    // TODO: Iterate throught the results and create a spotlist
     endTime = getRealTime();
 
     return (endTime-startTime)*1000;
