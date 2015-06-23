@@ -20,13 +20,13 @@ using std::endl;
 #define CENTROID_Y_COORD   -2
 
 #define OFFSET 3.0
-#define SIZE 2
 
 #include "getTime.h"
 
 StatsPhase::StatsPhase(int width, int height)
     : mVertFilename("../glsl/quad.vert"),
-      mWidth(width), mHeight(height),mStatsAreaWidth(width), mStatsAreaHeight(height),
+      mWidth(width), mHeight(height),mStatsAreaWidth(width),
+      mStatsAreaHeight(height), mNumFillIterations(2),
       mVertices {-1.0f, -1.0f, 0.0f,  // Position 0
                   0.0f,  0.0f,        // TexCoord 0
                  -1.0f,  1.0f, 0.0f,  // Position 1
@@ -54,7 +54,7 @@ StatsPhase::~StatsPhase()
 
 GLint StatsPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
 {
-    // Save the handles to the 2 framebuffers
+    // Save the handles to the 2 framebuffersc
     mFboId[0] = fbos[0];
     mFboId[1] = fbos[1];
 
@@ -316,7 +316,7 @@ void StatsPhase::fillStage(float factorX, float factorY)
 }
 #endif
 
-    for(int i=1; i<SIZE; ++i)
+    for(int i=1; i<mNumFillIterations; ++i)
     {
         // Bind the FBO to write to
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );

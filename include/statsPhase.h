@@ -126,6 +126,8 @@ public:
     unsigned mStatsAreaWidth;  /*!< Width of the area extracted at the end of the statistics computation */
     unsigned mStatsAreaHeight; /*!< Height of the area extracted at the end of the statistics computation */
 
+    unsigned mNumFillIterations;  /*!< Sets the number of iteration in the filling stage (default is 2) */
+
     /*!
      \brief Constructor
 
