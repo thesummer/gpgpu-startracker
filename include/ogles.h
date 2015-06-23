@@ -89,7 +89,7 @@ public:
      the necessary information of previous phases.
 
     */
-    void run();
+    void extractSpots();
 
     void loadImageFromFile(std::string imageFilename, bool updateTexture = true);
 

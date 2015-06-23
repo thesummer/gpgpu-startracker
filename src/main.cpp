@@ -12,7 +12,7 @@ int main()
 
     Ogles ogles("../test.tga");
 
-    ogles.run();
+    ogles.extractSpots();
 
 #ifdef _RPI
     bcm_host_deinit();

@@ -57,7 +57,7 @@ Ogles::Ogles(std::string imageFilename)
     mIsInitialized = true;
 }
 
-void Ogles::run()
+void Ogles::extractSpots()
 {
     double startTime, endTime;
     double labelTime, reductionTime;
