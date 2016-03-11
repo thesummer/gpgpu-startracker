@@ -39,7 +39,23 @@ struct ESContext
    EGLSurface  eglSurface;
 } esContext;
 
-#define EGL_CHECK(stmt) stmt
+
+#define EGL_CHECK(stmt) do { \
+        if(!stmt) { \
+	   checkEGLError(#stmt, __FILE__, __LINE__); \
+        }\
+    } while(0)
+
+void checkEGLError(const char *stmt, const char *fname, int line)
+{
+    GLenum err = eglGetError();
+    if (err != EGL_SUCCESS)
+    {
+        printf("EGL error %08x, at %s:%i - for %s\n", err, fname, line, stmt);
+        abort();
+    }
+}
+
 
 int initEGL(int width, int height)
 {
@@ -69,7 +85,7 @@ int initEGL(int width, int height)
                          };
 
 // Step 5 - Find a config that matches all requirements.
-   int iConfigs;
+   EGLint iConfigs = 0;
    EGL_CHECK( eglChooseConfig(eglDisplay, attribList, &eglConfig, 1, &iConfigs) );
 
    if (iConfigs != 1) {
@@ -141,6 +157,7 @@ int main()
 
     double labelTime;
 
+
     labelPhase.setupGeometry();
     labelTime = labelPhase.run();
 
@@ -153,3 +170,4 @@ int main()
 
     return 0;
 }
+
