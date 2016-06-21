@@ -79,8 +79,21 @@ void main()
     }
     else if(u_stage == STAGE_BLEND)
     {
+        vec4 texReduced = texture2D( s_label, v_texCoord );
+        /* NOTE: There was a problem that unpacking a long int written to during the centroiding stage
+         *       here would alter its value. Therefore u_factor now has the x1 and x2 bounds within the
+         *       unpacking is safe. In other words only unpack the count values but do NOT unpack centroiding values
+         */
+        vec2 coord = tex2imgCoord(v_texCoord);
+        if (coord.x < u_factor.x || coord.x >= u_factor.y)
+        {
+            // Only copy the value
+            gl_FragColor = texReduced;
+            return;
+        }
+
         vec2 result   = unpack2shorts( texture2D( s_result, v_texCoord ) );
-        vec2 reduced  = unpack2shorts( texture2D( s_label, v_texCoord ) );
+        vec2 reduced  = unpack2shorts( texReduced );
 
         gl_FragColor = pack2shorts( result + reduced);
 
