@@ -132,6 +132,7 @@ int main()
     statsPhase.mImageOrig.permute_axes("cxyz");
     statsPhase.mWidth  = width;
     statsPhase.mHeight = height;
+    statsPhase.mStatsAreaHeight = height;
 
     // initialize EGL-context
     initEGL(width, height);
