@@ -106,6 +106,8 @@ void Ogles::extractSpots()
     cout << "Reduction time: " << reductionTime << endl;
     cout << "Stats time: " << statsTime << endl;
     cout << "Total time: " << (endTime-startTime)*1000 << endl;
+
+    cout << "Found " << mStatsPhase.mSpots.size() << " spots" << endl;
 }
 
 void Ogles::loadImageFromFile(std::string imageFilename, bool updateTexture)
@@ -148,6 +150,7 @@ void Ogles::initialize()
 
     mStatsPhase.mWidth   = mWidth;
     mStatsPhase.mHeight  = mHeight;
+    mStatsPhase.mStatsAreaHeight = mHeight;
     if (!mStatsPhase.init(mFboId, mUsedTexUnits) )
         exit(1);
 
