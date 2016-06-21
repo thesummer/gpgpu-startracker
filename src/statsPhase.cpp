@@ -229,6 +229,16 @@ void StatsPhase::setupGeometry()
     GL_CHECK( glViewport ( 0, 0, mWidth, mHeight ) );
 }
 
+int convertSignedGl(unsigned val)
+{
+    if(val & 0xFF000000)
+    {
+        val &= ~(0xFF000000);
+        val = -val;
+    }
+    return val;
+}
+
 double StatsPhase::run()
 {
     double startTime, endTime;
@@ -479,6 +489,8 @@ void StatsPhase::countStage(float factorX, float factorY, int offset)
     // columns and the count values in the next few columns
     GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
     GL_CHECK( glUniform1i ( mProgCount.u_stageLoc,  STAGE_BLEND ) );
+    // u_factor limits the write, i.e. only write between the columns [OFFSET, 2*OFFSET)
+    GL_CHECK( glUniform2f ( mProgCount.u_factorLoc, OFFSET, 2*OFFSET ) );
     GL_CHECK( glUniform1i ( mProgCount.s_resultLoc, mTextureUnits[TEX_PIPO+mRead] ) );
     GL_CHECK( glUniform1i ( mProgCount.s_labelLoc,  mTextureUnits[TEX_REDUCED] ) );
     GL_CHECK( glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, mIndices ) );
