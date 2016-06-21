@@ -9,13 +9,15 @@ if (TARGET_PI)
     include_directories(/opt/vc/include /opt/vc/include/interface/vcos/pthreads /opt/vc/include/interface/vmcs_host/linux    )
     set(BUILD_POSTFIX "_pi")
 else (TARGET_PI)
-    set(CMAKE_CXX_FLAGS "-Wall -std=gnu++11")  
+    set(CMAKE_CXX_FLAGS "-g -Wall -std=gnu++11")
     set(BUILD_POSTFIX "")
 endif (TARGET_PI)
 
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lrt")
+
 
 message("CMAKE_CXX_FLAGS_DEBUG is ${CMAKE_CXX_FLAGS_DEBUG}")
 message("CMAKE_CXX_FLAGS_RELEASE is ${CMAKE_CXX_FLAGS_RELEASE}")
