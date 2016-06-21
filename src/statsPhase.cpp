@@ -387,7 +387,7 @@ void StatsPhase::fillStage(float factorX, float factorY)
 }
 #endif
 
-    for(int i=1; i<mNumFillIterations; ++i)
+    for(unsigned i=1; i<mNumFillIterations; ++i)
     {
         // Bind the FBO to write to
         GL_CHECK( glBindFramebuffer(GL_FRAMEBUFFER, mFboId[mWrite]) );
