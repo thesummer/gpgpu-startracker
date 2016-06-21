@@ -66,15 +66,15 @@ void main()
         vec4 forwardPixels;   // values of the pixels which are behind current pixel
         vec4 backwardPixels;  // values of the pixels which are before current pixel
 
-        forwardPixels[0] = texture2D( s_texture, img2texCoord( imgCoord + vec2(ONE, ZERO) ) ).r;
-        forwardPixels[1] = texture2D( s_texture, img2texCoord( imgCoord + vec2(-ONE, ONE) ) ).r;
-        forwardPixels[2] = texture2D( s_texture, img2texCoord( imgCoord + vec2(ZERO, ONE) ) ).r;
-        forwardPixels[3] = texture2D( s_texture, img2texCoord( imgCoord + vec2(ONE,  ONE) ) ).r;
+        forwardPixels[0] = BoundedTexture2D( s_texture, img2texCoord( imgCoord + vec2(ONE, ZERO) ) ).r;
+        forwardPixels[1] = BoundedTexture2D( s_texture, img2texCoord( imgCoord + vec2(-ONE, ONE) ) ).r;
+        forwardPixels[2] = BoundedTexture2D( s_texture, img2texCoord( imgCoord + vec2(ZERO, ONE) ) ).r;
+        forwardPixels[3] = BoundedTexture2D( s_texture, img2texCoord( imgCoord + vec2(ONE,  ONE) ) ).r;
 
-        backwardPixels[0] = texture2D( s_texture, img2texCoord( imgCoord - vec2(ONE, ZERO) ) ).r;
-        backwardPixels[1] = texture2D( s_texture, img2texCoord( imgCoord - vec2(-ONE, ONE) ) ).r;
-        backwardPixels[2] = texture2D( s_texture, img2texCoord( imgCoord - vec2(ZERO, ONE) ) ).r;
-        backwardPixels[3] = texture2D( s_texture, img2texCoord( imgCoord - vec2(ONE,  ONE) ) ).r;
+        backwardPixels[0] = BoundedTexture2D( s_texture, img2texCoord( imgCoord - vec2(ONE, ZERO) ) ).r;
+        backwardPixels[1] = BoundedTexture2D( s_texture, img2texCoord( imgCoord - vec2(-ONE, ONE) ) ).r;
+        backwardPixels[2] = BoundedTexture2D( s_texture, img2texCoord( imgCoord - vec2(ZERO, ONE) ) ).r;
+        backwardPixels[3] = BoundedTexture2D( s_texture, img2texCoord( imgCoord - vec2(ONE,  ONE) ) ).r;
 
         // Threshold the values of the neighboring pixels
         forwardPixels  = step(u_threshold, forwardPixels);
@@ -97,22 +97,22 @@ void main()
 
         // Get neighbor pixel
         vec4 xValues, yValues;
-        vec4 tempCol   = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(ONE, 0.0)) );
+        vec4 tempCol   = BoundedTexture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(ONE, 0.0)) );
         vec2 tempLabel = unpack2shorts(tempCol);
         xValues[0] = tempLabel.x;
         yValues[0] = tempLabel.y;
 
-        tempCol = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(-ONE, ONE)) );
+        tempCol = BoundedTexture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(-ONE, ONE)) );
         tempLabel  = unpack2shorts(tempCol);
         xValues[1] = tempLabel.x;
         yValues[1] = tempLabel.y;
 
-        tempCol = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(0.0, ONE)) );
+        tempCol = BoundedTexture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(0.0, ONE)) );
         tempLabel = unpack2shorts(tempCol);
         xValues[2] = tempLabel.x;
         yValues[2] = tempLabel.y;
 
-        tempCol = texture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(ONE, ONE)) );
+        tempCol = BoundedTexture2D(s_texture, img2texCoord(curCoord + u_factor*vec2(ONE, ONE)) );
         tempLabel = unpack2shorts(tempCol);
         xValues[3] = tempLabel.x;
         yValues[3] = tempLabel.y;
@@ -154,7 +154,7 @@ void main()
     else
     {
         vec2 curLabel = unpack2shorts( texture2D(s_texture, v_texCoord) );
-        gl_FragColor  = texture2D(s_texture, img2texCoord(curLabel-ONE) );
+        gl_FragColor  = BoundedTexture2D(s_texture, img2texCoord(curLabel-ONE) );
     }
 }
 

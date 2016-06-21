@@ -64,13 +64,13 @@ void main()
         float twoPow = exp2( float(u_pass) );
         vec3 cornerX, cornerY, cornerXY;
 
-        cornerX.xy  = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord - u_factor * vec2(twoPow, ZERO) ) ) );
-        cornerY.xy  = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord - u_factor * vec2(ZERO, twoPow) ) ) );
-        cornerXY.xy = unpack2shorts( texture2D( s_fill, img2texCoord( curCoord - u_factor * vec2(twoPow, twoPow) ) ) );
+        cornerX.xy  = unpack2shorts( BoundedTexture2D( s_fill, img2texCoord( curCoord - u_factor * vec2(twoPow, ZERO) ) ) );
+        cornerY.xy  = unpack2shorts( BoundedTexture2D( s_fill, img2texCoord( curCoord - u_factor * vec2(ZERO, twoPow) ) ) );
+        cornerXY.xy = unpack2shorts( BoundedTexture2D( s_fill, img2texCoord( curCoord - u_factor * vec2(twoPow, twoPow) ) ) );
 
-        cornerX.z  = unpackLong( texture2D( s_result, img2texCoord( curCoord - u_factor * vec2(twoPow, ZERO) ) ) );
-        cornerY.z  = unpackLong( texture2D( s_result, img2texCoord( curCoord - u_factor * vec2(ZERO, twoPow) ) ) );
-        cornerXY.z = unpackLong( texture2D( s_result, img2texCoord( curCoord - u_factor * vec2(twoPow, twoPow))) );
+        cornerX.z  = unpackLong( BoundedTexture2D( s_result, img2texCoord( curCoord - u_factor * vec2(twoPow, ZERO) ) ) );
+        cornerY.z  = unpackLong( BoundedTexture2D( s_result, img2texCoord( curCoord - u_factor * vec2(ZERO, twoPow) ) ) );
+        cornerXY.z = unpackLong( BoundedTexture2D( s_result, img2texCoord( curCoord - u_factor * vec2(twoPow, twoPow))) );
 
         float isEqual = float( all(equal(cornerX.xy, curFill) ) );
         curCount += isEqual * cornerX.z;
@@ -100,7 +100,7 @@ void main()
     {
         vec2 coord = tex2imgCoord(v_texCoord) - vec2(u_savingOffset, ZERO);
         float outOfBounds = float( coord.x >= ZERO);
-        vec2  lookupLabel = unpack2shorts (texture2D( s_label, img2texCoord( coord ) ) );
+        vec2  lookupLabel = unpack2shorts (BoundedTexture2D( s_label, img2texCoord( coord ) ) );
 
         if( all(equal(lookupLabel, vec2(ZERO) )) )
         {
@@ -110,7 +110,7 @@ void main()
 
         float currCount = unpackLong(texture2D( s_label, v_texCoord ));
         vec2 offset = clamp(-u_factor, ZERO, ONE);
-        gl_FragColor = texture2D( s_result,   img2texCoord( lookupLabel - ONE + offset) ) * outOfBounds;
+        gl_FragColor = BoundedTexture2D( s_result,   img2texCoord( lookupLabel - ONE + offset) ) * outOfBounds;
 
     }
 }

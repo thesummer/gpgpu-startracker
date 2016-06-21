@@ -18,6 +18,18 @@ const float f256 = 256.0;        /*!< Constant for 256.0 otherwise memory is res
 const float f255 = 255.0;        /*!< Constant for 256.0 otherwise memory is reserved for every literal*/
 
 
+/* If the texture coordinates are outside of the texture do not clamp to edge
+ * But return a zero vector */
+vec4 BoundedTexture2D(sampler2D s, vec2 tc)
+{
+    if (tc.x < ZERO || tc.x > ONE || tc.y < ZERO || tc.y > ONE)
+    {
+        return vec4(ZERO, ZERO, ZERO, ZERO);
+    }
+
+    return texture2D(s, tc);
+}
+
 /*!
 Assuming that the texture is 8-bit RGBA 32bits are available for packing.
 This function packs 2 16-bit unsigned short integer values into the 4 texture channels.
