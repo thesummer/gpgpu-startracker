@@ -19,14 +19,21 @@ using std::endl;
 #define CENTROID_X_COORD   -1
 #define CENTROID_Y_COORD   -2
 
-#define OFFSET 3.0
+#define OFFSET 10.0
+#define OFFSET_Y 2
+#define OFFSET_X 0
+#define OFFSET_AREA ((size_t)OFFSET*sizeof(uint32_t))
+#define OFFSET_LUMINANCE ((size_t)OFFSET*sizeof(uint32_t)+2)
+#define OFFSET_SUM_X ((size_t)OFFSET*2*sizeof(uint32_t))
+#define OFFSET_SUM_Y ((size_t)OFFSET*3*sizeof(uint32_t))
 
 #include "getTime.h"
 
+#define _DEBUG
+
 StatsPhase::StatsPhase(int width, int height)
     : mVertFilename("../glsl/quad.vert"),
-      mWidth(width), mHeight(height),mStatsAreaWidth(width),
-      mStatsAreaHeight(height), mNumFillIterations(2),
+      mWidth(width), mHeight(height),
       mVertices {-1.0f, -1.0f, 0.0f,  // Position 0
                   0.0f,  0.0f,        // TexCoord 0
                  -1.0f,  1.0f, 0.0f,  // Position 1
@@ -36,20 +43,18 @@ StatsPhase::StatsPhase(int width, int height)
                   1.0f, -1.0f, 0.0f,  // Position 3
                   1.0f,  0.0f         // TexCoord 3
                 },
-      mIndices { 0, 1, 2, 0, 2, 3 }
+      mIndices { 0, 1, 2, 0, 2, 3 },
+      mStatsAreaWidth(OFFSET*4),
+      mStatsAreaHeight(height),
+      mNumFillIterations(2)
 {
-    mProgFill.filename     = "fillStage.frag";
-    mProgCount.filename    = "countStage.frag";
-    mProgCentroid.filename = "centroidStage.frag";
+    mProgFill.filename     = "../glsl/fillStage.frag";
+    mProgCount.filename    = "../glsl/countStage.frag";
+    mProgCentroid.filename = "../glsl/centroidStage.frag";
 }
 
 StatsPhase::~StatsPhase()
 {
-    GL_CHECK( glDeleteProgram(mProgFill.program) );
-    GL_CHECK( glDeleteProgram(mProgCount.program) );
-    GL_CHECK( glDeleteProgram(mProgCentroid.program) );
-//    GL_CHECK( glDeleteTextures(1, &mTexOrigId) );
-    GL_CHECK( glDeleteTextures(2, mTexPiPoId) );
 }
 
 GLint StatsPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
