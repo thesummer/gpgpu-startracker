@@ -37,10 +37,6 @@ ReductionPhase::ReductionPhase(int width, int height)
 
 ReductionPhase::~ReductionPhase()
 {
-    GL_CHECK( glDeleteProgram(mProgramObject) );
-    GL_CHECK( glDeleteTextures(1, &mTexLabelId) );
-    GL_CHECK( glDeleteTextures(1, &mTexRootId) );
-    GL_CHECK( glDeleteTextures(2, mTexPiPoId) );
 }
 
 GLint ReductionPhase::init(GLuint fbos[], GLuint &bfUsedTextures)

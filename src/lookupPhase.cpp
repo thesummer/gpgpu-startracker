@@ -18,10 +18,6 @@ LookupPhase::LookupPhase(int texWidth, int texHeight, int vertexWidth, int verte
 
 LookupPhase::~LookupPhase()
 {
-    GL_CHECK( glDeleteProgram(mProgramObject) );
-    GL_CHECK( glDeleteTextures(1, &mTexReducedId) );
-    GL_CHECK( glDeleteTextures(1, &mTexLookUpId) );
-    GL_CHECK( glDeleteBuffers(1, &mVboId) );
     delete [] mVertices;
 }
 
@@ -160,5 +156,13 @@ double LookupPhase::run()
     endTime = getRealTime();
 
     return (endTime-startTime)*1000;
+}
+
+void LookupPhase::releaseGlResources()
+{
+    GL_CHECK( glDeleteProgram(mProgramObject) );
+    GL_CHECK( glDeleteTextures(1, &mTexReducedId) );
+    GL_CHECK( glDeleteTextures(1, &mTexLookUpId) );
+    GL_CHECK( glDeleteBuffers(1, &mVboId) );
 }
 
