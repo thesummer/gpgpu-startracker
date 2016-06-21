@@ -248,7 +248,7 @@ void Phase::printLabels(int width, int height, GLubyte *pixels)
 
 void Phase::printSignedLabels(int width, int height, GLubyte *pixels)
 {
-    for(int i=0; i<height; i++)
+    for(int i=height-1; i>=0; --i)
     {
         for(int j=0; j<width; j++)
         {

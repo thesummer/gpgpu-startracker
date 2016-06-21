@@ -5,7 +5,7 @@
 using namespace cimg_library;
 #include "phase.h"
 #include <stdio.h>
-
+#include <vector>
 
 /*!
     \ingroup stats
@@ -27,6 +27,15 @@ using namespace cimg_library;
 class StatsPhase: public Phase
 {
 public:
+    struct Spot
+    {
+        float x;
+        float y;
+        unsigned area;
+    };
+
+    std::vector<Spot> mSpots;
+
     const char * mVertFilename; /*!< Filename for the vertexShader, common for all phases */
     /*!
      \brief Struct which holds all handles for the filling stage
