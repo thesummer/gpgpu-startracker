@@ -22,7 +22,6 @@ using namespace cimg_library;
 class Ogles
 {
 public:
-
     /*!
      \brief Keeps all handles necessary to create an EGLContext
 

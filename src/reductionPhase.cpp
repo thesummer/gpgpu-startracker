@@ -275,6 +275,14 @@ double ReductionPhase::run()
     return (endTime-startTime)*1000;
 }
 
+void ReductionPhase::releaseGlResources()
+{
+    GL_CHECK( glDeleteProgram(mProgramObject) );
+    GL_CHECK( glDeleteTextures(1, &mTexLabelId) );
+    GL_CHECK( glDeleteTextures(1, &mTexRootId) );
+    GL_CHECK( glDeleteTextures(2, mTexPiPoId) );
+}
+
 GLint ReductionPhase::getLastTexture()
 {
     return mTexPiPoId[mRead];

@@ -61,6 +61,8 @@ public:
     void setFbo(GLuint newFbo);
     virtual double run();
 
+    virtual void releaseGlResources();
+
 };
 
 #endif // LOOKUPPHASE_H

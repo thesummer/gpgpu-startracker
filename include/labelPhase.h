@@ -188,6 +188,8 @@ public:
      \return double The time (in ms) the computation took
     */
     virtual double run();
+
+    virtual void releaseGlResources();
 };
 
 /*!

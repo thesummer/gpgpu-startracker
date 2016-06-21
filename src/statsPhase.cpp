@@ -280,10 +280,66 @@ double StatsPhase::run()
     unsigned char data[4*mStatsAreaWidth*mStatsAreaHeight];
     GL_CHECK( glReadPixels(0, 0, mStatsAreaWidth, mStatsAreaHeight, GL_RGBA, GL_UNSIGNED_BYTE, data) );
 
-    // TODO: Iterate throught the results and create a spotlist
+    mSpots.clear();
+    printf("Checking for spots %d x %d\n", mStatsAreaHeight, mStatsAreaWidth);
+    for (unsigned j=0; j<mStatsAreaHeight; ++j)
+    {
+        for (unsigned i=0; i<mStatsAreaWidth/4; ++i)
+        {
+            int index = 4*(j*mStatsAreaWidth+ i);
+
+            if (data[index] != 0)
+            {
+                Spot spot;
+                GLushort sumLuminance = *(GLushort*) (data + index+ OFFSET_LUMINANCE);
+                spot.area = *(GLushort*) (data + index+ OFFSET_AREA);
+                if (spot.area > 2)
+                {
+                spot.x = convertSignedGl(*(GLuint*) (data + index+ OFFSET_SUM_X));
+                spot.y = convertSignedGl(*(GLuint*) (data + index+ OFFSET_SUM_Y));
+                printf("i: %4d j: %4d area: %2d\t x: %4d \t y: %4d \t sx: %f (0x%08x) \tsy: %f (0x%08x)\t lum: %d\n", i, j,
+                       spot.area,
+                       *(GLushort*) (data + index+ OFFSET_X)-1,
+                       *(GLushort*) (data + index+ OFFSET_Y)-1,
+                       spot.x,
+                       *(GLuint*) (data + index+ OFFSET_SUM_X),
+                       spot.y,
+                       *(GLuint*) (data + index+ OFFSET_SUM_Y),
+                       sumLuminance
+                       );
+                }
+                spot.x = *(GLushort*) (data + index+ OFFSET_X)-1 - spot.x / sumLuminance;
+                spot.y = *(GLushort*) (data + index+ OFFSET_Y)-1 - spot.y / sumLuminance;
+                if (spot.area > 2)
+                {
+                    mSpots.push_back(spot);
+                }
+            }
+        }
+    }
+//#ifdef _DEBUG
+    {
+        printf("Found %lu spots\n", mSpots.size());
+        for (unsigned i=0; i<mSpots.size(); ++i)
+        {
+            printf ("i: %d  area: %d  x: %f  y: %f\n", i, mSpots[i].area, mSpots[i].x, mSpots[i].y);
+        }
+    }
+//#endif
+    printLabels(mStatsAreaWidth, mStatsAreaHeight, data);
+
     endTime = getRealTime();
 
     return (endTime-startTime)*1000;
+}
+
+void StatsPhase::releaseGlResources()
+{
+    GL_CHECK( glDeleteProgram(mProgFill.program) );
+    GL_CHECK( glDeleteProgram(mProgCount.program) );
+    GL_CHECK( glDeleteProgram(mProgCentroid.program) );
+    GL_CHECK( glDeleteTextures(1, &mTexOrigId) );
+    GL_CHECK( glDeleteTextures(2, mTexPiPoId) );
 }
 
 void StatsPhase::fillStage(float factorX, float factorY)

@@ -49,6 +49,8 @@ public:
     */
     virtual double run () = 0;
 
+    virtual void releaseGlResources() = 0;
+
     /*!
      \brief Creates a 2d-texture and copies data to it
 

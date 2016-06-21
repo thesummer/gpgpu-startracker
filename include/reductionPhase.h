@@ -150,6 +150,8 @@ public:
     */
     virtual double run();
 
+    virtual void releaseGlResources();
+
     /*!
      \brief Return the handle to the texture holding the result of the phase
 

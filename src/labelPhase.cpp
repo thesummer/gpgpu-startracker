@@ -29,9 +29,6 @@ LabelPhase::LabelPhase(int width, int height)
 
 LabelPhase::~LabelPhase()
 {
-    GL_CHECK( glDeleteProgram(mProgramObject) );
-    GL_CHECK( glDeleteTextures(1, &mTexOrigId) );
-    GL_CHECK( glDeleteTextures(2, mTexPiPoId) );
 }
 
 GLint LabelPhase::init(GLuint fbos[2], GLuint &bfUsedTextures)
@@ -257,3 +254,9 @@ double LabelPhase::run()
     return (endTime-startTime)*1000;
 }
 
+void LabelPhase::releaseGlResources()
+{
+    GL_CHECK( glDeleteProgram(mProgramObject) );
+    GL_CHECK( glDeleteTextures(1, &mTexOrigId) );
+    GL_CHECK( glDeleteTextures(2, mTexPiPoId) );
+}

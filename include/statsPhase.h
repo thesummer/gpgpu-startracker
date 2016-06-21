@@ -215,6 +215,8 @@ public:
      \return double The time (in ms) the computation took for the computation*/
     virtual double run();
 
+    virtual void releaseGlResources();
+
 private:
     /*!
      \brief Function taking care of the execution of the fill stage
